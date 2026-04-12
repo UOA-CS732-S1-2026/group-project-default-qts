@@ -75,7 +75,7 @@
   overflow-y: auto;
 }
 
-/* Help overlay — dipakai semua modal */
+/* Help overlay — shared across all modals */
 .modal-help-overlay {
   position: fixed;
   inset: 0;

@@ -1,10 +1,10 @@
 :root {
   /* === BACKGROUND === */
-  --color-bg-app:          #FEFAE0;  /* background utama app */
-  --color-bg-modal:        #FEFAE0;  /* background modal */
-  --color-bg-form:         #ffffff;  /* background form create/edit */
+  --color-bg-app:          #FEFAE0;
+  --color-bg-modal:        #FEFAE0;
+  --color-bg-form:         #ffffff;
 
-  /* === CARD COLORS (berdasarkan status) === */
+  /* === CARD COLORS (by status) === */
   --color-card-1:   #2D6A4F;  /* dark green */
   --color-card-2:   #7A2E2E;  /* dark red */
   --color-card-3:   #C4873A;  /* orange */
@@ -17,13 +17,13 @@
   --color-badge-expired-bg:    #8B5E00;
   --color-badge-text:          #FEFAE0;  
   /* === TEXT === */
-  --color-text-light:      #FEFAE0;  /* teks di atas card gelap */
-  --color-text-dark:       #1a1a1a;  /* teks di area terang */
+  --color-text-light:      #FEFAE0;  /* text on dark cards */
+  --color-text-dark:       #1a1a1a;  /* text on light areas */
 
   /* === ACCENT === */
-  --color-btn-primary:     #DDA15E;  /* warna tombol utama (Create, dll) */
-  --color-coin:            #D4A017;  /* emas — ikon koin */
-  --color-danger:          #C1121F;  /* merah — tombol delete, X */
+  --color-btn-primary:     #DDA15E;  /* primary button (Create, etc.) */
+  --color-coin:            #D4A017;  /* gold — coin icon */
+  --color-danger:          #C1121F;  /* red — delete button, X */
 
   /* === BORDER & SHADOW (pixel/retro style) === */
   --border-pixel:          3px solid #1a1a1a;
