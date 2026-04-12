@@ -1,0 +1,38 @@
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--card-width));
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(26, 26, 26, 0.35);
+  width: fit-content;
+  margin: 0 auto;
+}
+
+/* Slot (+)  */
+.task-grid-create-slot {
+  width: var(--card-width);
+  height: var(--card-height);
+  border-radius: var(--card-radius);
+  border: 2px dashed rgba(0, 0, 0, 0.3);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.task-grid-create-slot:hover {
+  border-color: var(--color-text-dark);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.task-grid-create-icon {
+  font-size: 40px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.3);
+  line-height: 1;
+}
+
+.task-grid-create-slot:hover .task-grid-create-icon {
+  color: var(--color-text-dark);
+}

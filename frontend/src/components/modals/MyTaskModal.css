@@ -1,0 +1,15 @@
+.mytask-toolbar-row {
+  position: relative;
+}
+
+.mode-hint {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-dark);
+  opacity: 0.6;
+  white-space: nowrap;
+}
