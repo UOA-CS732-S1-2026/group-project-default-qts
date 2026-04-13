@@ -1,3 +1,9 @@
+import DashboardShortcuts from './DashboardShortcuts';
+
 function DashboardFooter(){
-    return()
+    return(
+        <footer className = "dashboard-footer">
+                <DashboardShortcuts/>
+        </footer>
+    )
 }
