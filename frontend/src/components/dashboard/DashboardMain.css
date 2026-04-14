@@ -1,5 +1,42 @@
+main{
+    margin: auto;
+}
+
 .main-content{
     display: flex;
     flex-direction: column;
+}
+
+.main-content button{
+    font-family: var(--font-body);
+    font-weight: 900;
+    letter-spacing: 15%;
+    margin: 0.5rem auto;
+    padding: 1rem 1.5rem;
+    font-size: 2.25rem;
+    border-radius: 12px;
+    background-color: var(--dsh-btn-color-bg);
+    color: var(--dsh-btn-text-color);
+}
+
+.task-slider-container{
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    height: 250px;
+    background-color: var(--color-bg-accent);
+    border-radius: 10px;
+}
+
+.task-slider-container h2{
     margin: auto;
+}
+
+/* Position the aside in the middle-right of the viewport */
+.task-slider-section{
+    position: fixed;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
 }
