@@ -1,11 +1,8 @@
-import { useForm } from 'react-hook-form';  // remember to "npm install react-hook-form"
+import { useForm } from 'react-hook-form';  
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-//TODO
 import { useApp, isValidUniEmail } from '../../context/AppContext';
-//TODO
 import SignupModal from './SignupModal';
-//TODO
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 export default function LoginForm() {
@@ -51,7 +48,7 @@ export default function LoginForm() {
                 </div>
 
                 <form className="login-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-                    //TODO: add username to be another login option
+                    {/* TODO: add username to be another login option */}
                     <div className="field-group">
                         <label className="field-label" htmlFor="login-email">University Email</label>
                         <input
