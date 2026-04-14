@@ -1,16 +1,16 @@
-# React + Vite
+# Notes from Yang
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1. Don't forget to `npm install react-hook-form` and `npm install framer-motion`
 
-Currently, two official plugins are available:
+2. Test Account (Mock Data)
+> The test account exists in localStorage. You can log in with the following credentials the first time:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Field | Value |
+|---|---|
+| Email | `test@auckland.ac.nz` |
+| Password | `Test1234` |
+| Security Answer | `mum` |
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. TODO: add username to be another login option */
+4. TODO: success message can be extracted to a separate component */
