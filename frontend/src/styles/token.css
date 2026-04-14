@@ -17,9 +17,14 @@
   --color-badge-cancelled-bg:  #666666;
   --color-badge-expired-bg:    #8B5E00;
   --color-badge-text:          #FEFAE0;  
+  
   /* === TEXT === */
   --color-text-light:      #FEFAE0;  /* teks di atas card gelap */
   --color-text-dark:       #1a1a1a;  /* teks di area terang */
+
+    /* === DASHBOARD BUTTON COLORS === */
+  --dsh-btn-color-bg:     #283618ff;  /* warna tombol utama (Create, dll) */
+  --dsh-btn-text-color:            #FEFAE0;  /* emas — ikon koin */
 
   /* === ACCENT === */
   --color-btn-primary:     #DDA15E;  /* warna tombol utama (Create, dll) */
