@@ -3,6 +3,7 @@
   --color-bg-app:          #FEFAE0;  /* background utama app */
   --color-bg-modal:        #FEFAE0;  /* background modal */
   --color-bg-form:         #ffffff;  /* background form create/edit */
+  --color-bg-accent:       lightgray;  /* background untuk elemen yang perlu kontras dengan warna utama (misal: badge status) */
 
   /* === CARD COLORS (berdasarkan status) === */
   --color-card-1:   #2D6A4F;  /* dark green */
