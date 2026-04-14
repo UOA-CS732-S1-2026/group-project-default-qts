@@ -1,0 +1,17 @@
+/* only style buttons inside the shortcuts area to avoid affecting global buttons */
+.dashboard-shortcuts button{
+    background-color: transparent;
+    border: none;
+}
+
+img{
+    width: 4rem;
+    height: 4rem;
+}
+
+.dashboard-shortcuts {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    justify-content: right;
+}

@@ -3,6 +3,9 @@ import ModalBase from '../modals/ModalBase';
 import MyTaskModal from '../modals/MyTaskModal';
 import P2PModal from '../modals/P2PModal';
 import CommunityModal from '../modals/CommunityModal';
+import DashboardHeader from './DashboardHeader';
+import DashboardFooter from './DashboardFooter';
+import DasboardMain from './DashboardMain';
 
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
@@ -15,11 +18,13 @@ function Dashboard() {
 
   return (
     <div className="app-container">
-      <h1 className="app-title">GrowFriend</h1>
+      <DashboardHeader></DashboardHeader>
 
-      <button className="btn-open-board" onClick={() => openModal('mytask')}>
+      <DasboardMain></DasboardMain>
+
+      {/* <button className="btn-open-board" onClick={() => openModal('mytask')}>
         Open Task Board
-      </button>
+      </button> */}
 
       <ModalBase
         isOpen={isOpen}
@@ -29,6 +34,8 @@ function Dashboard() {
       >
         {modalType && MODAL_CONTENTS[modalType]}
       </ModalBase>
+
+      <DashboardFooter></DashboardFooter>
     </div>
   );
 }

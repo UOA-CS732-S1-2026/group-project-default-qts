@@ -1,3 +1,4 @@
+import './DashboardHeader.css';
 import CoinBadge from "../shared/CoinBadge";
 
 function DashboardHeader(){
@@ -9,10 +10,12 @@ function DashboardHeader(){
                     <CoinBadge amount={100}/> {/* this will be the amount of coins the user has. Receive a prop named amount */}
                 </div>
                 <button className = "profile-button">
-                    {/* this will be the profile picture of the user */}
+                    <img className='profile-img' src="public/profilemock.jpg" alt="profile picture" />
                 </button>
             </nav>
         </header>
 
     )
 }
+
+export default DashboardHeader;
