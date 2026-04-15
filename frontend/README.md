@@ -12,5 +12,7 @@
 | Security Answer | `mum` |
 
 
-3. TODO: add username to be another login option */
-4. TODO: success message can be extracted to a separate component */
+3. TODO: add username to be another login option 
+4. TODO: success message can be extracted to a separate component 
+5. TODO: complete logic for the statbar in the ProfileModal
+
