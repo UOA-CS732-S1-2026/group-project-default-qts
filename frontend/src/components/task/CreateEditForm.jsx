@@ -9,6 +9,7 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const [objectives, setObjectives] = useState(initialData?.objectives ?? ['']);
   const [timeLimit, setTimeLimit] = useState(initialData?.timeLimit ?? '');
   const [rewardCoins, setRewardCoins] = useState(initialData?.rewardCoins ?? '');
+  const [errors, setErrors] = useState({});
 
   const handleObjectiveChange = (index, value) => {
     const updated = [...objectives];
@@ -24,7 +25,22 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
     setObjectives(objectives.filter((_, i) => i !== index));
   };
 
+  const validate = () => {
+    const newErrors = {};
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!instructions.trim()) newErrors.instructions = 'Instructions are required';
+    if (objectives.filter((o) => o.trim() !== '').length === 0)
+      newErrors.objectives = 'At least one objective is required';
+    if (!timeLimit || Number(timeLimit) <= 0)
+      newErrors.timeLimit = 'Time limit is required';
+    if (!rewardCoins || Number(rewardCoins) <= 0)
+      newErrors.rewardCoins = 'Reward coins is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = () => {
+    if (!validate()) return;
     const taskData = {
       id: initialData?.id ?? `task-${Date.now()}`,
       type: 'mytask',
@@ -59,23 +75,25 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
           <div className="form-field">
             <label className="form-label">Title</label>
             <input
-              className="form-input"
+              className={`form-input ${errors.title ? 'form-input--error' : ''}`}
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); setErrors((p) => ({ ...p, title: '' })); }}
               placeholder="Task title..."
             />
+            {errors.title && <p className="form-error">{errors.title}</p>}
           </div>
 
           <div className="form-field">
             <label className="form-label">Instructions</label>
             <textarea
-              className="form-input form-textarea"
+              className={`form-input form-textarea ${errors.instructions ? 'form-input--error' : ''}`}
               value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
+              onChange={(e) => { setInstructions(e.target.value); setErrors((p) => ({ ...p, instructions: '' })); }}
               placeholder="What needs to be done..."
               rows={3}
             />
+            {errors.instructions && <p className="form-error">{errors.instructions}</p>}
           </div>
 
           <div className="form-field">
@@ -83,10 +101,10 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
             {objectives.map((obj, index) => (
               <div key={index} className="form-objective-row">
                 <input
-                  className="form-input"
+                  className={`form-input ${errors.objectives ? 'form-input--error' : ''}`}
                   type="text"
                   value={obj}
-                  onChange={(e) => handleObjectiveChange(index, e.target.value)}
+                  onChange={(e) => { handleObjectiveChange(index, e.target.value); setErrors((p) => ({ ...p, objectives: '' })); }}
                   placeholder={`Objective ${index + 1}...`}
                 />
                 {objectives.length > 1 && (
@@ -99,6 +117,7 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
                 )}
               </div>
             ))}
+            {errors.objectives && <p className="form-error">{errors.objectives}</p>}
             <button className="form-objective-add" onClick={addObjective}>
               + Add Objective
             </button>
@@ -107,27 +126,27 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
           <div className="form-field">
             <label className="form-label">Time Limit (hours)</label>
             <input
-              className="form-input form-input--short"
+              className={`form-input form-input--short ${errors.timeLimit ? 'form-input--error' : ''}`}
               type="number"
               min="1"
               value={timeLimit}
-              onChange={(e) => setTimeLimit(e.target.value)}
+              onChange={(e) => { setTimeLimit(e.target.value); setErrors((p) => ({ ...p, timeLimit: '' })); }}
               placeholder="e.g. 2"
             />
+            {errors.timeLimit && <p className="form-error">{errors.timeLimit}</p>}
           </div>
 
           <div className="form-field">
-            <label className="form-label">
-              Reward Coins
-            </label>
+            <label className="form-label">Reward Coins</label>
             <input
-              className="form-input form-input--short"
+              className={`form-input form-input--short ${errors.rewardCoins ? 'form-input--error' : ''}`}
               type="number"
               min="1"
               value={rewardCoins}
-              onChange={(e) => setRewardCoins(e.target.value)}
+              onChange={(e) => { setRewardCoins(e.target.value); setErrors((p) => ({ ...p, rewardCoins: '' })); }}
               placeholder="e.g. 10"
             />
+            {errors.rewardCoins && <p className="form-error">{errors.rewardCoins}</p>}
             <p className="form-reward-note">
               * A bond of equal coins will be locked from your wallet when you
               create this task. Coins are returned if the task is cancelled.
