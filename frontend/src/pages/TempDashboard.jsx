@@ -1,6 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import UserMenu from '../components/userconfig/UserMenu';
+import PomodoroModal from '../components/pomodoro/PomodoroModal';
 
 // ============================================================
 //   TempDashboard – route: /dashboard
@@ -131,7 +133,7 @@ const PLACEHOLDER_STYLES = `
 
 export default function DashboardPlaceholder() {
   const { currentUser } = useApp();
-  const navigate = useNavigate();
+  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
 
   return (
     <>
@@ -144,7 +146,7 @@ export default function DashboardPlaceholder() {
             <button
               id="pomodoro-btn"
               className="dash-pomo-btn"
-              onClick={() => navigate('/pomodoro')}
+              onClick={() => setIsPomodoroOpen(true)}
             >
               🍅 POMODORO
             </button>
@@ -172,12 +174,16 @@ export default function DashboardPlaceholder() {
               <li>👤 Click the avatar icon (top-right) → User Menu</li>
               <li>📋 Profile → View profile + stats chart</li>
               <li>⚙️ Setting → Side panel with Username / Pet Name / Password / Dark Mode</li>
-              <li>🍅 Click POMODORO → Full-screen timer</li>
+              <li>🍅 Click POMODORO → Modal timer</li>
               <li>🚪 Sign out → Returns to landing page</li>
             </ul>
           </div>
         </div>
       </div>
+
+      {isPomodoroOpen && (
+        <PomodoroModal onRequestClose={() => setIsPomodoroOpen(false)} />
+      )}
     </>
   );
 }
