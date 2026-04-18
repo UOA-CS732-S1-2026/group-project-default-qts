@@ -1,5 +1,5 @@
 import TaskCard from './TaskCard';
-import './TaskGrid.css';
+import '../../styles/components/TaskGrid.css';
 
 function TaskGrid({
   tasks,

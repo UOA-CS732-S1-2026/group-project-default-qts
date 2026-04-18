@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import './TaskCard.css';
+import '../../styles/components/TaskCard.css';
 import TaskCardFront from './TaskCardFront';
 import TaskCardBack from './TaskCardBack';
-import CoinBadge from '../shared/CoinBadge';
-import StatusBadge from '../shared/StatusBadge';
+import CoinBadge from '../ui/CoinBadge';
+import StatusBadge from '../ui/StatusBadge';
 
 const CARD_COLORS = [
   'var(--color-card-1)',

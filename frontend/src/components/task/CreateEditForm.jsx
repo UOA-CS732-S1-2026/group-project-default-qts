@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import './CreateEditForm.css';
+import '../../styles/components/CreateEditForm.css';
 
 function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const isEdit = initialData !== null;

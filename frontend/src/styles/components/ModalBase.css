@@ -1,4 +1,4 @@
-.modal-overlay {
+.task-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
@@ -8,7 +8,7 @@
   z-index: 100;
 }
 
-.modal-container {
+.task-modal-container {
   width: 80vw;
   max-width: 900px;
   height: 80vh;
@@ -19,7 +19,7 @@
   flex-direction: column;
 }
 
-.modal-header {
+.task-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,12 +27,12 @@
   border-bottom: var(--border-card);
 }
 
-.modal-tabs {
+.task-modal-tabs {
   display: flex;
   gap: 6px;
 }
 
-.modal-tab {
+.task-modal-tab {
   font-family: var(--font-display);
   font-size: 7px;
   padding: 6px 10px;
@@ -41,16 +41,16 @@
   color: var(--color-text-dark);
 }
 
-.modal-tab:hover {
+.task-modal-tab:hover {
   background: rgba(0, 0, 0, 0.06);
 }
 
-.modal-tab--active {
+.task-modal-tab--active {
   background: var(--color-btn-primary);
   box-shadow: var(--shadow-pixel);
 }
 
-.modal-close {
+.task-modal-close {
   background: none;
   border: none;
   font-size: 18px;
@@ -58,25 +58,25 @@
   line-height: 1;
 }
 
-.modal-close:hover {
+.task-modal-close:hover {
   color: var(--color-danger);
 }
 
-.modal-description {
+.task-modal-description {
   font-family: var(--font-body);
   font-size: 16px;
   color: var(--color-text-dark);
   padding: 10px 20px 0;
 }
 
-.modal-body {
+.task-modal-body {
   padding: 16px 20px;
   flex: 1;
   overflow-y: auto;
 }
 
 /* Help overlay — shared across all modals */
-.modal-help-overlay {
+.task-modal-help-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
@@ -86,7 +86,7 @@
   z-index: 200;
 }
 
-.modal-help-box {
+.task-modal-help-box {
   width: 340px;
   background: var(--color-bg-form);
   border: var(--border-pixel);
@@ -97,13 +97,13 @@
   gap: 14px;
 }
 
-.modal-help-title {
+.task-modal-help-title {
   font-family: var(--font-display);
   font-size: 9px;
   color: var(--color-text-dark);
 }
 
-.modal-help-list {
+.task-modal-help-list {
   font-family: var(--font-body);
   font-size: 16px;
   color: var(--color-text-dark);
@@ -113,7 +113,7 @@
   gap: 6px;
 }
 
-.modal-help-close {
+.task-modal-help-close {
   font-family: var(--font-display);
   font-size: 7px;
   padding: 8px 14px;
