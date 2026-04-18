@@ -30,9 +30,9 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
       return;
     }
 
-    // when parent closes, keep rendered state and animate closing for `store`
+    // when parent closes, keep rendered state and animate closing for `store` or `inventory`
     if (render) {
-      if (activeType === 'store') {
+      if (activeType === 'store' || activeType === 'inventory') {
         setClosing(true);
         const t = setTimeout(() => {
           setRender(false);
@@ -50,26 +50,31 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
 
   if (!render) return null;
 
-  const overlayClass = `modal-overlay ${activeType === 'store' ? 'modal-overlay--no-bg' : ''}`;
-  const containerClass = `modal-container ${activeType === 'store' ? 'modal--slide-left' : ''} ${closing ? 'modal--closing' : ''}`;
+  const isPassThrough = activeType === 'store' || activeType === 'inventory';
+  const overlayClass = `modal-overlay ${isPassThrough ? 'modal-overlay--pass-through' : ''}`;
+  const containerClass = `modal-container ${isPassThrough ? 'modal--slide-left' : ''} ${closing ? 'modal--closing' : ''}`;
+
+  const overlayProps = isPassThrough ? {} : { onClick: onClose };
 
   return (
-    <div className={overlayClass} onClick={onClose}>
+    <div className={overlayClass} {...overlayProps}>
       <div className={containerClass} onClick={(e) => e.stopPropagation()}>
 
-        {activeType !== 'store' ? (
+        {activeType !== 'store' && activeType !== 'inventory' ? (
           <>
             <div className="modal-header">
               <div className="modal-tabs">
-                {MODAL_TABS.map((tab) => (
-                  <button
-                    key={tab.type}
-                    className={`modal-tab ${activeType === tab.type ? 'modal-tab--active' : ''}`}
-                    onClick={() => onChangeType(tab.type)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+                {MODAL_TABS
+                  .filter((tab) => tab.type !== 'store')
+                  .map((tab) => (
+                    <button
+                      key={tab.type}
+                      className={`modal-tab ${activeType === tab.type ? 'modal-tab--active' : ''}`}
+                      onClick={() => onChangeType(tab.type)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
               </div>
               <button className="modal-close" onClick={onClose}>✕</button>
             </div>
@@ -81,7 +86,7 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
             </div>
           </>
         ) : (
-          <div className="modal-body modal-body--store">
+          <div className={`modal-body modal-body--store modal-body--inventory`}>
             {children}
           </div>
         )}

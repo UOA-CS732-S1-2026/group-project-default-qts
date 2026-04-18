@@ -5,6 +5,7 @@ import MyTaskModal from '../modals/MyTaskModal';
 import P2PModal from '../modals/P2PModal';
 import CommunityModal from '../modals/CommunityModal';
 import StoreModal from '../modals/StoreModal';
+import InventoryModal from '../modals/InventoryModal';
 import DashboardHeader from './DashboardHeader';
 import DashboardFooter from './DashboardFooter';
 import DasboardMain from './DashboardMain';
@@ -14,6 +15,7 @@ const MODAL_CONTENTS = {
   p2p: <P2PModal />,
   community: <CommunityModal />,
   store: <StoreModal />,
+  inventory: <InventoryModal />,
 };
 
 function Dashboard() {
@@ -38,7 +40,7 @@ function Dashboard() {
         {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
       </ModalBase>
 
-      <DashboardFooter openModal={openModal}></DashboardFooter>
+      <DashboardFooter openModal={openModal} modalType={modalType} closeModal={closeModal} />
     </div>
   );
 }
