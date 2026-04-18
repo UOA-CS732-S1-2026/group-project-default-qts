@@ -2,7 +2,7 @@
 # look at other .gitignore files in the provided examples for inspiration.
 
 .DS_Store
-node_modules
+node_modules/
 .vite/
 # Environment variables - Edit if necessary
 .env
