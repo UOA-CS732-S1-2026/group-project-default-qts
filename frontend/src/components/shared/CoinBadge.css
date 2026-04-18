@@ -1,0 +1,16 @@
+.coin-badge{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.coin-badge-icon{
+    font-size: 18px;
+    line-height: 1;
+}
+
+.coin-badge-amount{
+    font-family: var(--font-display);
+    font-size: 10px;
+    color: var(--color-text-light);
+}

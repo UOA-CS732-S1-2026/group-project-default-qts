@@ -1,0 +1,125 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-container {
+  width: 80vw;
+  max-width: 900px;
+  height: 80vh;
+  background: var(--color-bg-modal);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: var(--border-card);
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.modal-tab {
+  font-family: var(--font-display);
+  font-size: 7px;
+  padding: 6px 10px;
+  border: var(--border-card);
+  background: transparent;
+  color: var(--color-text-dark);
+}
+
+.modal-tab:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.modal-tab--active {
+  background: var(--color-btn-primary);
+  box-shadow: var(--shadow-pixel);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-dark);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--color-danger);
+}
+
+.modal-description {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-dark);
+  padding: 10px 20px 0;
+}
+
+.modal-body {
+  padding: 16px 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Help overlay — shared across all modals */
+.modal-help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-help-box {
+  width: 340px;
+  background: var(--color-bg-form);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-help-title {
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--color-text-dark);
+}
+
+.modal-help-list {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-dark);
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-help-close {
+  font-family: var(--font-display);
+  font-size: 7px;
+  padding: 8px 14px;
+  background: var(--color-btn-primary);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  color: var(--color-text-dark);
+  align-self: flex-end;
+}

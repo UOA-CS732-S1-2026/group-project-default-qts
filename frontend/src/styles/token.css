@@ -1,0 +1,41 @@
+:root {
+  /* === BACKGROUND === */
+  --color-bg-app:          #FEFAE0;
+  --color-bg-modal:        #FEFAE0;
+  --color-bg-form:         #ffffff;
+
+  /* === CARD COLORS (by status) === */
+  --color-card-1:   #2D6A4F;  /* dark green */
+  --color-card-2:   #7A2E2E;  /* dark red */
+  --color-card-3:   #C4873A;  /* orange */
+  --color-card-4:   #1B4D5C;  /* dark teal */
+
+  /* === BADGE COLORS === */
+  --color-badge-open-bg:       #3a7d5a;
+  --color-badge-active-bg:     #C1121F;
+  --color-badge-cancelled-bg:  #666666;
+  --color-badge-expired-bg:    #8B5E00;
+  --color-badge-text:          #FEFAE0;  
+  /* === TEXT === */
+  --color-text-light:      #FEFAE0;  /* text on dark cards */
+  --color-text-dark:       #1a1a1a;  /* text on light areas */
+
+  /* === ACCENT === */
+  --color-btn-primary:     #DDA15E;  /* primary button (Create, etc.) */
+  --color-coin:            #D4A017;  /* gold — coin icon */
+  --color-danger:          #C1121F;  /* red — delete button, X */
+
+  /* === BORDER & SHADOW (pixel/retro style) === */
+  --border-pixel:          3px solid #1a1a1a;
+  --border-card:           2px solid #1a1a1a;
+  --shadow-pixel:          4px 4px 0px #1a1a1a;
+
+  /* === CARD DIMENSIONS === */
+  --card-width:            160px;
+  --card-height:           220px;
+  --card-radius:           8px;
+
+  /* === FONTS === */
+  --font-display:          'Press Start 2P', monospace;
+  --font-body:             'Source Code Pro', monospace;
+}
