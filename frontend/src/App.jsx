@@ -1,9 +1,18 @@
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { AppProvider } from './context/AppContext';
+
+import LandingPage from './pages/LandingPage';
+import TempDashboard from './pages/TempDashboard';
+import NotFound from './components/404page/NotFound';
+
 import useModal from './hooks/useModal';
-import ModalBase from './components/modals/ModalBase';
-import MyTaskModal from './components/modals/MyTaskModal';
-import P2PModal from './components/modals/P2PModal';
-import CommunityModal from './components/modals/CommunityModal';
+import ModalBase from './components/taskSystemModals/ModalBase';
+import MyTaskModal from './components/taskSystemModals/MyTaskModal';
+import P2PModal from './components/taskSystemModals/P2PModal';
+import CommunityModal from './components/taskSystemModals/CommunityModal';
+
+import './App.css';
 
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
@@ -11,17 +20,9 @@ const MODAL_CONTENTS = {
   community: <CommunityModal />,
 };
 
-function App() {
+function TaskSystemDemo() {
   const { isOpen, modalType, openModal, closeModal } = useModal();
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import { AppProvider } from './context/AppContext';
-import LandingPage from './pages/LandingPage';
-import NotFound from './components/404page/NotFound';
-import TempDashboard from './pages/TempDashboard';
 
-//   GrowFriend – App Router
-function AppRoutes() {
   return (
     <div className="app-container">
       <h1 className="app-title">GrowFriend</h1>
@@ -42,15 +43,14 @@ function AppRoutes() {
   );
 }
 
-export default App;
+function AppRoutes() {
+  return (
     <AnimatePresence mode="wait">
       <Routes>
         <Route path="/" element={<Navigate to="/landingpage" replace />} />
-
         <Route path="/landingpage" element={<LandingPage />} />
-
         <Route path="/dashboard" element={<TempDashboard />} />
-
+        <Route path="/tasks" element={<TaskSystemDemo />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

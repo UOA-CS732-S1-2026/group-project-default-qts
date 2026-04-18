@@ -1,34 +1,19 @@
-@import './styles/token.css';
 
-
-*,
-*::before,
-*::after{
-  box-sizing:border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body{
-  background-color: var(--color-bg-app);
-  font-family: var(--font-body);
-  color: var(--color-text-dark);
-  min-height: 100vh;
-}
-
-button{
-  cursor: pointer;
-}
 /* ============================================================
    GrowFriend – Global Base Styles
    ============================================================ */
 
 @import './styles/variables.css';
+@import './styles/token.css';
 @import './styles/userconfig.css';
-@import './styles/pomodoro.css'; 
+@import './styles/pomodoro.css';
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html, body {
@@ -46,6 +31,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background var(--transition-base), color var(--transition-base);
+}
+
+button {
+  cursor: pointer;
 }
 
 #root {

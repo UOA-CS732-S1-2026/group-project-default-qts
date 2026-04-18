@@ -32,16 +32,16 @@ function CommunityModal() {
       />
 
       {showHelp && (
-        <div className="modal-help-overlay" onClick={() => setShowHelp(false)}>
-          <div className="modal-help-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-help-title">How Community Tasks Works</h3>
-            <ul className="modal-help-list">
+        <div className="task-modal-help-overlay" onClick={() => setShowHelp(false)}>
+          <div className="task-modal-help-box" onClick={(e) => e.stopPropagation()}>
+            <h3 className="task-modal-help-title">How Community Tasks Works</h3>
+            <ul className="task-modal-help-list">
               <li>Browse tasks created by GrowFriend admins</li>
               <li>Click Details then Accept to take a task</li>
               <li>Community tasks have a difficulty rating</li>
               <li>Higher difficulty means higher reward</li>
             </ul>
-            <button className="modal-help-close" onClick={() => setShowHelp(false)}>
+            <button className="task-modal-help-close" onClick={() => setShowHelp(false)}>
               Close
             </button>
           </div>

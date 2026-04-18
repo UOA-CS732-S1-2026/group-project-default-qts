@@ -1,4 +1,4 @@
-import './ModalBase.css';
+import '../../styles/components/ModalBase.css';
 
 const MODAL_TABS = [
   { type: 'mytask', label: 'My Tasks' },
@@ -16,27 +16,27 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+    <div className="task-modal-overlay" onClick={onClose}>
+      <div className="task-modal-container" onClick={(e) => e.stopPropagation()}>
 
-        <div className="modal-header">
-          <div className="modal-tabs">
+        <div className="task-modal-header">
+          <div className="task-modal-tabs">
             {MODAL_TABS.map((tab) => (
               <button
                 key={tab.type}
-                className={`modal-tab ${modalType === tab.type ? 'modal-tab--active' : ''}`}
+                className={`task-modal-tab ${modalType === tab.type ? 'task-modal-tab--active' : ''}`}
                 onClick={() => onChangeType(tab.type)}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="task-modal-close" onClick={onClose}>✕</button>
         </div>
 
-        <p className="modal-description">{MODAL_DESCRIPTIONS[modalType]}</p>
+        <p className="task-modal-description">{MODAL_DESCRIPTIONS[modalType]}</p>
 
-        <div className="modal-body">
+        <div className="task-modal-body">
           {children}
         </div>
 

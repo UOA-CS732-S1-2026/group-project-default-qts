@@ -1,5 +1,5 @@
-import CoinBadge from '../shared/CoinBadge'
-import StatusBadge from '../shared/StatusBadge'
+import CoinBadge from '../ui/CoinBadge'
+import StatusBadge from '../ui/StatusBadge'
 
 function TaskCardFront({ task, cardColor, onFlip, onClose }) {
   const expiredDate = new Date(task.expiredAt).toLocaleDateString('en-NZ', {

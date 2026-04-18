@@ -1,4 +1,4 @@
-import './Toolbar.css';
+import '../../styles/components/Toolbar.css';
 
 function Toolbar({
   taskType,
