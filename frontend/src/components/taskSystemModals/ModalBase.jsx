@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import './ModalBase.css';
 import '../../styles/components/ModalBase.css';
 
 const MODAL_TABS = [

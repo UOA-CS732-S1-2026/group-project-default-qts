@@ -1,5 +1,5 @@
 import './DashboardHeader.css';
-import CoinBadge from "../shared/CoinBadge";
+import CoinBadge from "../ui/CoinBadge";
 
 function DashboardHeader(){
     return(
