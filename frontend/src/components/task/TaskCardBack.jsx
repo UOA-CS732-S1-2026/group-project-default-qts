@@ -1,4 +1,4 @@
-import CoinBadge from '../shared/CoinBadge'
+import CoinBadge from '../ui/CoinBadge'
 
 function TaskCardBack({ task, cardColor, onFlip, onClose }) {
   return (

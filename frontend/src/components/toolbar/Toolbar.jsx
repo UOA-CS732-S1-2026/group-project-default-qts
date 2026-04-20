@@ -1,4 +1,4 @@
-import './Toolbar.css';
+import '../../styles/components/Toolbar.css';
 
 function Toolbar({
   taskType,
@@ -13,13 +13,28 @@ function Toolbar({
   onDeleteToggle,
   onHelpClick,
 }) {
+  const isFilterActive = filterStatus !== 'all';
+  const isSortActive = sortBy !== '';
+  const showReset = isFilterActive || isSortActive;
+
+  const handleReset = () => {
+    onFilterChange('all');
+    onSortChange('');
+  };
+
   return (
     <div className="toolbar">
 
       <div className="toolbar-controls">
         <div className="toolbar-row">
+          {showReset && (
+            <button className="toolbar-btn toolbar-btn--reset" onClick={handleReset} title="Reset">
+              ↺
+            </button>
+          )}
+
           <select
-            className="toolbar-select"
+            className={`toolbar-select ${isFilterActive ? 'toolbar-select--active' : ''}`}
             value={filterStatus}
             onChange={(e) => onFilterChange(e.target.value)}
           >
@@ -31,7 +46,7 @@ function Toolbar({
           </select>
 
           <select
-            className="toolbar-select"
+            className={`toolbar-select ${isSortActive ? 'toolbar-select--active' : ''}`}
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value)}
           >
@@ -49,6 +64,7 @@ function Toolbar({
               <option value="expiry-late">Latest</option>
             </optgroup>
           </select>
+
         </div>
 
         <div className="toolbar-row">

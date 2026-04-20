@@ -32,16 +32,16 @@ function P2PModal() {
       />
 
       {showHelp && (
-        <div className="modal-help-overlay" onClick={() => setShowHelp(false)}>
-          <div className="modal-help-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-help-title">How P2P Tasks Works</h3>
-            <ul className="modal-help-list">
+        <div className="task-modal-help-overlay" onClick={() => setShowHelp(false)}>
+          <div className="task-modal-help-box" onClick={(e) => e.stopPropagation()}>
+            <h3 className="task-modal-help-title">How P2P Tasks Works</h3>
+            <ul className="task-modal-help-list">
               <li>Browse tasks created by other players</li>
               <li>Click Details then Accept to take a task</li>
               <li>Filter by status to find open tasks</li>
               <li>Sort by reward to find the best tasks</li>
             </ul>
-            <button className="modal-help-close" onClick={() => setShowHelp(false)}>
+            <button className="task-modal-help-close" onClick={() => setShowHelp(false)}>
               Close
             </button>
           </div>

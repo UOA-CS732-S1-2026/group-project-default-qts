@@ -1,4 +1,4 @@
-import './CoinBadge.css';
+import '../../styles/components/CoinBadge.css';
 
 
 function CoinBadge({amount}){

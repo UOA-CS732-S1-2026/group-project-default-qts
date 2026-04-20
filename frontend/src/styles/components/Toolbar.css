@@ -73,3 +73,23 @@
   background: var(--color-bg-form);
   padding: 6px 12px;
 }
+
+.toolbar-btn--reset {
+  background: var(--color-bg-form);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  padding: 4px 7px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.toolbar-btn--reset:hover {
+  background: var(--color-danger);
+  color: var(--color-text-light);
+  opacity: 1;
+}
+
+.toolbar-select--active {
+  border-color: var(--color-coin);
+  box-shadow: 0 0 6px 1px var(--color-coin);
+}
