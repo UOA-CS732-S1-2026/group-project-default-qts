@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { AppProvider } from './context/AppContext';
 
 import LandingPage from './pages/LandingPage';
-import TempDashboard from './pages/TempDashboard';
+import Dashboard from './components/dashboard/Dashboard.jsx';
 import NotFound from './components/404page/NotFound';
 
 import useModal from './hooks/useModal';
@@ -49,7 +49,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to="/landingpage" replace />} />
         <Route path="/landingpage" element={<LandingPage />} />
-        <Route path="/dashboard" element={<TempDashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tasks" element={<TaskSystemDemo />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
