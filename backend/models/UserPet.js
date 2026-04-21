@@ -9,6 +9,7 @@ const UserPetSchema = new mongoose.Schema(
     level: { type: Number, default: 1, min: 1, max: 10 },
     growthPoints: { type: Number, default: 0, min: 0, max: 99 },
     evolutionReady: { type: Boolean, default: false },
+    isGrowthFrozen: { type: Boolean, default: false },
     status: { type: String, enum: ['ACTIVE', 'INVENTORY'], default: 'INVENTORY' }
   },
   { timestamps: true }

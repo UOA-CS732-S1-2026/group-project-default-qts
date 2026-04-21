@@ -5,6 +5,9 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
+const storeRoutes = require('./routes/storeRoutes');
+const petRoutes = require('./routes/petRoutes');
+
 
 const app = express();
 
@@ -17,6 +20,9 @@ app.use(morgan('dev'));
 app.get('/', (_req, res) => {
   res.json({ message: 'GrowFriend API running!' });
 });
+
+app.use('/api/store', storeRoutes);
+app.use('/api/pets', petRoutes);
 
 const PORT = process.env.PORT || 5000;
 
