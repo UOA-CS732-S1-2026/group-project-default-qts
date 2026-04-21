@@ -33,6 +33,8 @@ function Dashboard() {
 
       {modalType === 'inventory' ? (
         isOpen && <InventoryModal onClose={closeModal} />
+      ) : modalType === 'store' ? (
+        isOpen && <StoreModal onClose={closeModal} />
       ) : (
         <ModalBase
           isOpen={isOpen}

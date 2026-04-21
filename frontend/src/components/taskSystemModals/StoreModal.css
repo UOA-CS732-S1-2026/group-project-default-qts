@@ -60,3 +60,65 @@
   border: var(--border-pixel);
   background: var(--color-btn-primary);
 }
+
+/* store-panel overrides for the sliding panel container */
+.store-panel{
+  width: min(420px, 88vw);
+  height: calc(100vh - 100px);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* overlay + sliding behaviour for Store (kept in store css) */
+.store-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.1);
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.store-panel{
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  border-right: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  background: var(--color-bg-modal);
+  overflow: hidden;
+  z-index: 120;
+  animation: storeSlideIn 320ms ease-out forwards;
+}
+
+@keyframes storeSlideIn {
+  from { transform: translate(-100%, -50%); }
+  to { transform: translate(0%, -50%); }
+}
+
+@keyframes storeSlideOut {
+  from { transform: translate(0%, -50%); }
+  to { transform: translate(-100%, -50%); }
+}
+
+.store-panel.store--closing{
+  animation: storeSlideOut 320ms ease-in forwards;
+}
+
+/* make inner content scrollable */
+.store-modal{ height: 100%; overflow: auto; }
+
+/* make grid more compact inside the panel */
+.store-grid{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .store-panel{ width: 92vw; height: calc(100vh - 80px); padding: 10px; }
+  .store-grid{ grid-template-columns: repeat(1, 1fr); gap: 8px; }
+  .store-item-img{ width: 64px; height: 64px; }
+}
