@@ -31,14 +31,18 @@ function Dashboard() {
         Open Task Board
       </button> */}
 
-      <ModalBase
-        isOpen={isOpen}
-        onClose={closeModal}
-        modalType={modalType}
-        onChangeType={openModal}
-      >
-        {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
-      </ModalBase>
+      {modalType === 'inventory' ? (
+        isOpen && <InventoryModal onClose={closeModal} />
+      ) : (
+        <ModalBase
+          isOpen={isOpen}
+          onClose={closeModal}
+          modalType={modalType}
+          onChangeType={openModal}
+        >
+          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
+        </ModalBase>
+      )}
 
       <DashboardFooter openModal={openModal} modalType={modalType} closeModal={closeModal} />
     </div>
