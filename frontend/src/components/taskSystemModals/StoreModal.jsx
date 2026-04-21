@@ -1,13 +1,18 @@
 import './StoreModal.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function StoreModal({ onClose }) {
     const CLOSE_ANIM_MS = 320;
     const [closing, setClosing] = useState(false);
+    const timeoutRef = useRef(null);
 
     function handleClose() {
+        if (closing) return;
         setClosing(true);
-        setTimeout(() => onClose && onClose(), CLOSE_ANIM_MS);
+        timeoutRef.current = setTimeout(() => {
+            onClose && onClose();
+            timeoutRef.current = null;
+        }, CLOSE_ANIM_MS);
     }
 
     useEffect(() => {
@@ -15,7 +20,13 @@ function StoreModal({ onClose }) {
             if (e.key === 'Escape') handleClose();
         }
         window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+        };
     }, []);
 
     return (
