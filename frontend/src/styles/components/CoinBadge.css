@@ -10,7 +10,7 @@
 }
 
 .coin-badge-amount{
-    font-family: var(--font-display);
+    font-family: var(--font-code);
     font-size: 10px;
     color: var(--color-text-light);
 }

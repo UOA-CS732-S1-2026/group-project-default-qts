@@ -6,6 +6,8 @@ function Toolbar({
   onFilterChange,
   sortBy,
   onSortChange,
+  categoryFilter = null,
+  onCategoryFilter = () => {},
   onCreateClick,
   isEditMode,
   onEditToggle,
@@ -15,11 +17,12 @@ function Toolbar({
 }) {
   const isFilterActive = filterStatus !== 'all';
   const isSortActive = sortBy !== '';
-  const showReset = isFilterActive || isSortActive;
+  const showReset = isFilterActive || isSortActive || categoryFilter;
 
   const handleReset = () => {
     onFilterChange('all');
     onSortChange('');
+    onCategoryFilter(null);
   };
 
   return (
@@ -31,6 +34,23 @@ function Toolbar({
             <button className="toolbar-btn toolbar-btn--reset" onClick={handleReset} title="Reset">
               ↺
             </button>
+          )}
+
+          {taskType === 'community' && (
+            <>
+              <button
+                className={`toolbar-btn toolbar-btn--org ${categoryFilter === 'organization' ? 'toolbar-btn--org-active' : ''}`}
+                onClick={() => onCategoryFilter(categoryFilter === 'organization' ? null : 'organization')}
+              >
+                Organization
+              </button>
+              <button
+                className={`toolbar-btn toolbar-btn--act ${categoryFilter === 'activity' ? 'toolbar-btn--act-active' : ''}`}
+                onClick={() => onCategoryFilter(categoryFilter === 'activity' ? null : 'activity')}
+              >
+                Activity
+              </button>
+            </>
           )}
 
           <select

@@ -4,6 +4,7 @@ function useTaskManager(initialTasks){
     const [tasks, setTasks] = useState(initialTasks);
     const [filterStatus, setFilterStatus] = useState('all');
     const [sortBy, setSortBy] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
 
@@ -12,6 +13,10 @@ function useTaskManager(initialTasks){
 
     if (filterStatus !== 'all') {
       result = result.filter((task) => task.status === filterStatus);
+    }
+
+    if (categoryFilter) {
+      result = result.filter((task) => task.category === categoryFilter);
     }
 
     switch (sortBy) {
@@ -38,7 +43,7 @@ function useTaskManager(initialTasks){
     }
 
     return result;
-  }, [tasks, filterStatus, sortBy]);
+  }, [tasks, filterStatus, sortBy, categoryFilter]);
 
   const toggleEditMode = () => {
     setIsEditMode((prev) => !prev);
@@ -70,6 +75,8 @@ function useTaskManager(initialTasks){
     setFilterStatus,
     sortBy,
     setSortBy,
+    categoryFilter,
+    setCategoryFilter,
     isEditMode,
     toggleEditMode,
     isDeleteMode,

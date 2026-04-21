@@ -11,6 +11,7 @@ function CommunityModal() {
     filteredTasks,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,
+    categoryFilter, setCategoryFilter,
   } = useTaskManager(communityData);
 
   const [showHelp, setShowHelp] = useState(false);
@@ -23,6 +24,8 @@ function CommunityModal() {
         onFilterChange={setFilterStatus}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        categoryFilter={categoryFilter}
+        onCategoryFilter={setCategoryFilter}
         onHelpClick={() => setShowHelp(true)}
       />
 
