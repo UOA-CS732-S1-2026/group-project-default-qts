@@ -15,6 +15,12 @@ function TaskCardFront({ task, cardColor, onFlip, onClose }) {
         <button className="task-card-close" onClick={onClose}>✕</button>
       </div>
 
+      {task.type === 'community' && task.category && (
+        <span className={`task-card-category task-card-category--${task.category}`}>
+          {task.category === 'organization' ? 'Organization' : 'Activity'}
+        </span>
+      )}
+
       <h3 className="task-card-title">{task.title}</h3>
 
       <p className="task-card-instructions">{task.instructions}</p>

@@ -106,7 +106,7 @@
 
 .form-objective-add {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 12px;
   background: none;
   border: 1px dashed #1a1a1a;
   padding: 4px 8px;
@@ -141,7 +141,7 @@
 
 .form-btn--submit {
   font-family: var(--font-display);
-  font-size: 8px;
+  font-size: 12px;
   padding: 8px 16px;
   background: var(--color-btn-primary);
   border: var(--border-pixel);

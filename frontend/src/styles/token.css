@@ -27,7 +27,7 @@
   --dsh-btn-text-color:            #FEFAE0;  /* emas — ikon koin */
 
   /* === ACCENT === */
-  --color-btn-primary: var(--btn-primary-bg);
+  --color-btn-primary: #DDA15E;
   --color-coin: #d4a017;
   --color-danger: var(--text-error);
 
