@@ -4,13 +4,13 @@ import '../../styles/components/ModalBase.css';
 const MODAL_TABS = [
   { type: 'mytask', label: 'My Tasks' },
   { type: 'p2p', label: 'P2P Tasks' },
-  { type: 'community', label: 'Community' },
+  { type: 'community', label: 'System' },
 ];
 
 const MODAL_DESCRIPTIONS = {
   mytask: 'My Tasks — personal tasks you have created',
   p2p: 'P2P Tasks — tasks from other players you can accept',
-  community: 'Community Tasks — tasks created by admins for all players',
+  community: 'System Tasks — tasks created by admins for all players',
 };
 
 function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
