@@ -30,7 +30,7 @@ function StoreModal({ onClose }) {
                 <div className="store-modal">
                     <div className="store-header">
                         <h3 className="store-title">Store</h3>
-                        <button className="modal-close" onClick={handleClose}>✕</button>
+                        <button className="modal-close" aria-label="Close" onClick={handleClose}>✕</button>
                     </div>
 
                     <p className="store-desc">Spend coins to buy items for your pet (mock data).</p>

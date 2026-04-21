@@ -14,8 +14,6 @@ const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
   p2p: <P2PModal />,
   community: <CommunityModal />,
-  store: <StoreModal />,
-  inventory: <InventoryModal />,
 };
 
 function Dashboard() {
