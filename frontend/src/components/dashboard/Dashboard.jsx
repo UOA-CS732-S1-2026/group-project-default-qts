@@ -14,8 +14,6 @@ const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
   p2p: <P2PModal />,
   community: <CommunityModal />,
-  store: <StoreModal />,
-  inventory: <InventoryModal />,
 };
 
 function Dashboard() {
@@ -31,14 +29,20 @@ function Dashboard() {
         Open Task Board
       </button> */}
 
-      <ModalBase
-        isOpen={isOpen}
-        onClose={closeModal}
-        modalType={modalType}
-        onChangeType={openModal}
-      >
-        {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
-      </ModalBase>
+      {modalType === 'inventory' ? (
+        isOpen && <InventoryModal onClose={closeModal} />
+      ) : modalType === 'store' ? (
+        isOpen && <StoreModal onClose={closeModal} />
+      ) : (
+        <ModalBase
+          isOpen={isOpen}
+          onClose={closeModal}
+          modalType={modalType}
+          onChangeType={openModal}
+        >
+          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
+        </ModalBase>
+      )}
 
       <DashboardFooter openModal={openModal} modalType={modalType} closeModal={closeModal} />
     </div>

@@ -2,8 +2,11 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding-right: 8px;
 }
-
 .inventory-header{
   display: flex;
   justify-content: space-between;
@@ -97,3 +100,60 @@
 }
 
 /* sections are stacked by default now; responsive adjustments not required */
+
+/* Overlay and sliding panel */
+.inventory-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.1);
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.inventory-panel{
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  width: min(520px, 92vw);
+  height: fit-content;
+  max-width: none;
+  border-right: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  background: var(--color-bg-modal);
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  z-index: 120;
+  animation: inventorySlideIn 320ms ease-out forwards;
+}
+
+@keyframes inventorySlideIn {
+  from { transform: translate(-100%, -50%); }
+  to { transform: translate(0%, -50%); }
+}
+
+@keyframes inventorySlideOut {
+  from { transform: translate(0%, -50%); }
+  to { transform: translate(-100%, -50%); }
+}
+
+.inventory-panel.inventory--closing{
+  animation: inventorySlideOut 320ms ease-in forwards;
+}
+
+/* content area inside the sliding panel */
+
+@media (max-width: 420px) {
+  .inventory-panel{
+    width: 92vw;
+    padding: 10px;
+  }
+  .inventory-grid{ grid-template-columns: repeat(4, 1fr); }
+  .pets-grid{ grid-template-columns: repeat(3, 1fr); }
+}
