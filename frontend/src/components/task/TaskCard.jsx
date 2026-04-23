@@ -12,7 +12,21 @@ const CARD_COLORS = [
   'var(--color-card-4)',
 ];
 
-function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdit, onDelete }) {
+function TaskCard({
+  task,
+  index,
+  isEditMode = false,
+  isDeleteMode = false,
+  onEdit,
+  onDelete,
+  onUpdate,
+  showSourceBadge = false,
+  hideAccept = false,
+  onCancel,
+  isAccepted = false,
+  onAccept,
+  isCreatorView = false,
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -29,17 +43,34 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
     month: 'short',
   });
 
+  const showAssignee =
+    isCreatorView &&
+    task.type === 'p2p' &&
+    task.assignee &&
+    (task.status === 'active' || task.status === 'disputed');
+
   return (
     <>
       <div
         className="task-card-small"
         style={{ backgroundColor: cardColor }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); setShowDeleteConfirm(false); }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setShowDeleteConfirm(false);
+        }}
       >
         <div className="task-card-header">
           <div className="task-card-badges">
-            <StatusBadge status={task.status} />
+            {showSourceBadge ? (
+              <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
+                {task.type === 'p2p' ? 'P2P' : 'System'}
+              </span>
+            ) : (
+              task.status !== 'cancelled' || task.type !== 'community' ? (
+                <StatusBadge status={isAccepted && task.status === 'open' ? 'active' : task.type === 'community' && task.status === 'active' ? 'open' : task.status} />
+              ) : null
+            )}
             {task.type === 'community' && task.category && (
               <span className={`task-card-category task-card-category--${task.category}`}>
                 {task.category === 'organization' ? 'Organization' : 'Activity'}
@@ -50,6 +81,9 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
 
         <h3 className="task-card-title">{task.title}</h3>
         <p className="task-card-instructions">{task.instructions}</p>
+        {showAssignee && (
+          <p className="task-card-assignee">👤 {task.assignee.name}</p>
+        )}
         <p className="task-card-expired">Expired: {expiredDate}</p>
 
         <div className="task-card-footer">
@@ -59,7 +93,7 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
           </button>
         </div>
 
-        {isEditMode && isHovered && (
+        {isEditMode && isHovered && task.status !== 'active' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--edit"
@@ -111,12 +145,23 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
                 cardColor={cardColor}
                 onFlip={() => setIsFlipped(true)}
                 onClose={handleClose}
+                hideAccept={hideAccept}
+                onCancel={onCancel}
+                isAccepted={isAccepted}
+                onAccept={onAccept}
+                isCreatorView={isCreatorView}
+                onUpdateTask={onUpdate}
+                onEditTask={() => { handleClose(); onEdit && onEdit(task); }}
+                onDeleteTask={(id) => { onDelete && onDelete(id); handleClose(); }}
               />
               <TaskCardBack
                 task={task}
                 cardColor={cardColor}
                 onFlip={() => setIsFlipped(false)}
                 onClose={handleClose}
+                isQuest={hideAccept}
+                isAccepted={isAccepted}
+                isCreatorView={isCreatorView}
               />
             </div>
           </div>

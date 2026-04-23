@@ -117,3 +117,27 @@
   opacity: 1;
   box-shadow: 0 0 10px 3px #7b5ea7;
 }
+
+.toolbar-btn--p2p {
+  background: #1a5eb8;
+  color: white;
+  border-color: #1249a0;
+  opacity: 0.5;
+}
+
+.toolbar-btn--p2p-active {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #1a5eb8;
+}
+
+.toolbar-btn--comm {
+  background: #6d28d9;
+  color: white;
+  border-color: #5b21b6;
+  opacity: 0.5;
+}
+
+.toolbar-btn--comm-active {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #6d28d9;
+}

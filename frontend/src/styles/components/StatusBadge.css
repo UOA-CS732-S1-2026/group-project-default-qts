@@ -25,3 +25,11 @@
   background-color: var(--color-badge-expired-bg);
 }
 
+.status-badge--disputed {
+  background-color: #b45309;
+}
+
+.status-badge--completed {
+  background-color: #059669;
+}
+

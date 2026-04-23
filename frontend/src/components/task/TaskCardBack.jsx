@@ -1,6 +1,16 @@
 import CoinBadge from '../ui/CoinBadge'
+import { CURRENT_USER_ID } from '../../constants/mockUser'
 
-function TaskCardBack({ task, cardColor, onFlip, onClose }) {
+function TaskCardBack({ task, cardColor, onFlip, onClose, isQuest = false, isAccepted = false, isCreatorView = false }) {
+  const getTakenByName = () => {
+    if (!task.assignee) return null
+    if (isCreatorView) return task.assignee.name
+    if (isAccepted || task.assignee.id === CURRENT_USER_ID) return 'You'
+    return task.assignee.name
+  }
+
+  const takenByName = getTakenByName()
+
   return (
     <div className="task-card-face task-card-back" style={{ backgroundColor: cardColor }}>
 
@@ -23,10 +33,10 @@ function TaskCardBack({ task, cardColor, onFlip, onClose }) {
         </ul>
       </div>
 
-      {task.assignee && (
+      {!isQuest && task.type === 'p2p' && takenByName && (
         <div className="task-card-detail">
           <span className="task-card-detail-label">Taken by</span>
-          <span>{task.assignee.name}</span>
+          <span>{takenByName}</span>
         </div>
       )}
 

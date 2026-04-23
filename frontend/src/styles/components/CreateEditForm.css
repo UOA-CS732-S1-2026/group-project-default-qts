@@ -61,7 +61,7 @@
 
 .form-label {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 14px;
   color: var(--color-text-dark);
   display: flex;
   align-items: center;

@@ -43,6 +43,13 @@
   align-items: center;
 }
 
+.task-card-badges {
+  display: flex;
+  gap: 1.3px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 /* close button */
 .task-card-close {
   background: none;
@@ -59,11 +66,13 @@
 
 /* for title */
 .task-card-title {
-  font-family: var(--font-display);
-  font-size: 7px;
+  font-family: var(--font-body);
+  font-size: 14px;
   color: var(--color-text-light);
   line-height: 1.5;
   margin-top: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* instructions */
@@ -130,6 +139,35 @@
   color: white;
 }
 
+/* accepted button */
+.task-card-btn--accepted {
+  background: #4caf50;
+  border-color: #2d6a2d;
+  color: white;
+}
+
+/* cancel / delete button */
+.task-card-btn--cancel,
+.task-card-btn--delete {
+  background: var(--color-danger);
+  border-color: #7f1d1d;
+  color: white;
+}
+
+/* report button */
+.task-card-btn--report {
+  background: #b45309;
+  border-color: #78350f;
+  color: white;
+}
+
+/* reassign button */
+.task-card-btn--reassign {
+  background: #1a5eb8;
+  border-color: #1e3a8a;
+  color: white;
+}
+
 /* details */
 .task-card-back-label {
   font-family: var(--font-display);
@@ -167,9 +205,9 @@
   display: inline-block;
 }
 
-.task-card-difficulty--easy   { background: #2D6A4F; color: white; }
-.task-card-difficulty--medium { background: #C4873A; color: white; }
-.task-card-difficulty--hard   { background: #C1121F; color: white; }
+.task-card-difficulty--easy   { background: #059669; color: white; }
+.task-card-difficulty--medium { background: #b45309; color: white; }
+.task-card-difficulty--hard   { background: #dc2626; color: white; }
 
 /* ===== EXPANDED OVERLAY ===== */
 
@@ -195,7 +233,7 @@
   height: var(--card-height);
   border-radius: var(--card-radius);
   border: var(--border-card);
-  padding: 10px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -282,8 +320,56 @@
   color: var(--color-text-light);
   border: 1px solid rgba(255, 255, 255, 0.3);
   display: inline-block;
-  align-self: flex-start;
+  width: fit-content;
 }
 
 .task-card-category--organization { background: #4a6fa5; }
 .task-card-category--activity     { background: #7b5ea7; }
+
+/* Assignee on small card (creator view) */
+.task-card-assignee {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Report checklist overlay */
+.task-card-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0 12px;
+}
+
+.task-card-report-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-light);
+  cursor: pointer;
+}
+
+.task-card-report-item input[type='checkbox'] {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Source badge for Quest tab cards */
+.task-card-source-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  color: var(--color-text-light);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.task-card-source-badge--p2p        { background: #1a5eb8; }
+.task-card-source-badge--community  { background: #6d28d9; }

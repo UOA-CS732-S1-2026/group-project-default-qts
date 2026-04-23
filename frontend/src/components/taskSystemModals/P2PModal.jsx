@@ -1,18 +1,24 @@
-import {useState} from 'react';
+import { useState, useMemo } from 'react';
 import useTaskManager from '../../hooks/useTaskManager';
-import {mockTasks} from '../../data/mockTasks';
+import { useTasks } from '../../context/TasksContext';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
-
-const p2pData = mockTasks.filter((t) => t.type === 'p2p');
+import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 
 function P2PModal() {
+  const { tasks } = useTasks();
+
+  const p2pData = useMemo(() =>
+    tasks.filter((t) => t.type === 'p2p' && (t.status === 'open' || t.status === 'active')),
+    [tasks]);
+
   const {
     filteredTasks,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,
   } = useTaskManager(p2pData);
 
+  const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
 
   return (
@@ -29,6 +35,8 @@ function P2PModal() {
       <TaskGrid
         tasks={filteredTasks}
         taskType="p2p"
+        acceptedIds={acceptedIds}
+        onAcceptCard={acceptTask}
       />
 
       {showHelp && (

@@ -3,6 +3,7 @@ import useTaskManager from '../../hooks/useTaskManager';
 import { mockTasks } from '../../data/mockTasks';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
+import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 
 const communityData = mockTasks.filter((t) => t.type === 'community');
 
@@ -14,6 +15,7 @@ function CommunityModal() {
     categoryFilter, setCategoryFilter,
   } = useTaskManager(communityData);
 
+  const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
 
   return (
@@ -32,6 +34,8 @@ function CommunityModal() {
       <TaskGrid
         tasks={filteredTasks}
         taskType="community"
+        acceptedIds={acceptedIds}
+        onAcceptCard={acceptTask}
       />
 
       {showHelp && (

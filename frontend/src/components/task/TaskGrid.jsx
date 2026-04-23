@@ -9,9 +9,13 @@ function TaskGrid({
   isDeleteMode = false,
   onEditCard,
   onDeleteCard,
+  onUpdateCard,
+  onCancelCard,
+  acceptedIds,
+  onAcceptCard,
+  isCreatorView = false,
 }) {
-  const MAX_CARDS = 7;
-  const showCreateSlot = taskType === 'mytask' && tasks.length < MAX_CARDS;
+  const showCreateSlot = isCreatorView && onCreateClick;
 
   return (
     <div className="task-grid">
@@ -24,6 +28,13 @@ function TaskGrid({
           isDeleteMode={isDeleteMode}
           onEdit={onEditCard}
           onDelete={onDeleteCard}
+          onUpdate={onUpdateCard}
+          showSourceBadge={taskType === 'quest'}
+          hideAccept={taskType === 'quest'}
+          onCancel={taskType === 'quest' ? onCancelCard : undefined}
+          isAccepted={acceptedIds ? acceptedIds.has(task.id) : false}
+          onAccept={onAcceptCard}
+          isCreatorView={isCreatorView}
         />
       ))}
 

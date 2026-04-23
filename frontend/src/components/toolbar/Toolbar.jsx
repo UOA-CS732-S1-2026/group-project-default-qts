@@ -14,20 +14,26 @@ function Toolbar({
   isDeleteMode,
   onDeleteToggle,
   onHelpClick,
+  questMode = false,
+  sourceFilter = null,
+  onSourceFilter = () => {},
 }) {
-  const isFilterActive = filterStatus !== 'all';
+  const isFilterActive = questMode ? sourceFilter !== null : filterStatus !== 'all';
   const isSortActive = sortBy !== '';
   const showReset = isFilterActive || isSortActive || categoryFilter;
 
   const handleReset = () => {
-    onFilterChange('all');
+    if (!questMode) onFilterChange('all');
     onSortChange('');
     onCategoryFilter(null);
+    onSourceFilter(null);
   };
+
+  const showCategoryButtons =
+    taskType === 'community' || (questMode && sourceFilter === 'community');
 
   return (
     <div className="toolbar">
-
       <div className="toolbar-controls">
         <div className="toolbar-row">
           {showReset && (
@@ -36,7 +42,24 @@ function Toolbar({
             </button>
           )}
 
-          {taskType === 'community' && (
+          {questMode && (
+            <>
+              <button
+                className={`toolbar-btn toolbar-btn--p2p ${sourceFilter === 'p2p' ? 'toolbar-btn--p2p-active' : ''}`}
+                onClick={() => onSourceFilter('p2p')}
+              >
+                P2P
+              </button>
+              <button
+                className={`toolbar-btn toolbar-btn--comm ${sourceFilter === 'community' ? 'toolbar-btn--comm-active' : ''}`}
+                onClick={() => onSourceFilter('community')}
+              >
+                System
+              </button>
+            </>
+          )}
+
+          {showCategoryButtons && !questMode && (
             <>
               <button
                 className={`toolbar-btn toolbar-btn--org ${categoryFilter === 'organization' ? 'toolbar-btn--org-active' : ''}`}
@@ -53,17 +76,21 @@ function Toolbar({
             </>
           )}
 
-          <select
-            className={`toolbar-select ${isFilterActive ? 'toolbar-select--active' : ''}`}
-            value={filterStatus}
-            onChange={(e) => onFilterChange(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="active">Active</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="expired">Expired</option>
-          </select>
+          {!questMode && (
+            <select
+              className={`toolbar-select ${isFilterActive ? 'toolbar-select--active' : ''}`}
+              value={filterStatus}
+              onChange={(e) => onFilterChange(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="open">Open</option>
+              {taskType !== 'community' && <option value="active">Active</option>}
+              {taskType === 'mytask' && <option value="disputed">Disputed</option>}
+              {taskType === 'mytask' && <option value="completed">Completed</option>}
+              {taskType !== 'community' && taskType !== 'p2p' && <option value="cancelled">Cancelled</option>}
+              {taskType !== 'p2p' && <option value="expired">Expired</option>}
+            </select>
+          )}
 
           <select
             className={`toolbar-select ${isSortActive ? 'toolbar-select--active' : ''}`}
@@ -84,10 +111,25 @@ function Toolbar({
               <option value="expiry-late">Latest</option>
             </optgroup>
           </select>
-
         </div>
 
         <div className="toolbar-row">
+          {showCategoryButtons && questMode && (
+            <>
+              <button
+                className={`toolbar-btn toolbar-btn--org ${categoryFilter === 'organization' ? 'toolbar-btn--org-active' : ''}`}
+                onClick={() => onCategoryFilter(categoryFilter === 'organization' ? null : 'organization')}
+              >
+                Organization
+              </button>
+              <button
+                className={`toolbar-btn toolbar-btn--act ${categoryFilter === 'activity' ? 'toolbar-btn--act-active' : ''}`}
+                onClick={() => onCategoryFilter(categoryFilter === 'activity' ? null : 'activity')}
+              >
+                Activity
+              </button>
+            </>
+          )}
           {taskType === 'mytask' && (
             <>
               <button className="toolbar-btn toolbar-btn--create" onClick={onCreateClick}>
@@ -112,9 +154,8 @@ function Toolbar({
           </button>
         </div>
       </div>
-
     </div>
-  )
+  );
 }
 
 export default Toolbar;
