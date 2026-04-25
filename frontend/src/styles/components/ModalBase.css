@@ -176,3 +176,120 @@
   color: var(--color-text-dark);
   align-self: flex-end;
 }
+
+/* ===== LOADING STATE ===== */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.task-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.task-loading-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  animation: spin 1.2s linear infinite;
+}
+
+.task-loading-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--color-text-dark);
+}
+
+.task-loading-sub {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-dark);
+  opacity: 0.6;
+}
+
+/* ===== ERROR STATE ===== */
+
+.task-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.task-error-icon  { font-size: 32px; }
+
+.task-error-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--color-text-dark);
+}
+
+.task-error-msg {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-dark);
+  opacity: 0.6;
+}
+
+.task-error-retry {
+  font-family: var(--font-display);
+  font-size: 12px;
+  padding: 8px 16px;
+  background: var(--color-btn-primary);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  color: var(--color-text-dark);
+  margin-top: 8px;
+}
+
+/* ===== EMPTY STATE (shared) ===== */
+
+.task-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.task-empty-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--color-text-dark);
+}
+
+.task-empty-sub {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-dark);
+  opacity: 0.6;
+  max-width: 280px;
+}
+
+.task-empty-create-btn {
+  font-family: var(--font-display);
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-btn-primary);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  color: var(--color-text-dark);
+  margin-top: 8px;
+}

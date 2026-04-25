@@ -1,15 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 import { CURRENT_USER_ID } from '../../constants/mockUser';
 import Toolbar from '../toolbar/Toolbar';
+import loadIconSmall from '../../assets/load-icon-small.png';
 import TaskGrid from '../task/TaskGrid';
 import CreateEditForm from '../task/CreateEditForm';
 
+const devToggleStyle = {
+  position: 'fixed', bottom: 12, right: 12,
+  fontSize: 10, opacity: 0.35, padding: '2px 6px',
+  cursor: 'pointer', zIndex: 9999,
+};
+
 function MyTaskModal() {
   const { tasks, createTask, updateTask, deleteTask } = useTasks();
+  const [isLoadingCreated, setIsLoadingCreated] = useState(true);
+  const [isLoadingQuest, setIsLoadingQuest] = useState(false);
+  const [error, setError] = useState(false); // set to true to test error UI
 
   const createdTasks = useMemo(() =>
     tasks.filter((t) =>
@@ -35,6 +45,30 @@ function MyTaskModal() {
   const [questCategory, setQuestCategory] = useState(null);
   const [questSort, setQuestSort] = useState('');
   const [cancelledQuestIds, setCancelledQuestIds] = useState(new Set());
+
+  const fetchData = () => {
+    setError(false);
+    setIsLoadingCreated(true);
+    setIsLoadingQuest(true);
+    // TODO: ganti setTimeout dengan axios.get('/api/tasks') saat integrasi backend
+    setTimeout(() => {
+      setIsLoadingCreated(false);
+      setIsLoadingQuest(false);
+    }, 1000);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleSubTabChange = (tab) => {
+    setActiveSubTab(tab);
+    if (tab === 'created' && !isLoadingCreated) {
+      setIsLoadingCreated(true);
+      setTimeout(() => setIsLoadingCreated(false), 1000);
+    } else if (tab === 'quest' && !isLoadingQuest) {
+      setIsLoadingQuest(true);
+      setTimeout(() => setIsLoadingQuest(false), 1000);
+    }
+  };
 
   const handleCancelQuest = (id) => {
     cancelTask(id);
@@ -88,95 +122,123 @@ function MyTaskModal() {
     <div className="subtab-row">
       <button
         className={`subtab-btn ${activeSubTab === 'created' ? 'subtab-btn--active' : ''}`}
-        onClick={() => setActiveSubTab('created')}
+        onClick={() => handleSubTabChange('created')}
       >
         Created
       </button>
       <button
         className={`subtab-btn ${activeSubTab === 'quest' ? 'subtab-btn--active' : ''}`}
-        onClick={() => setActiveSubTab('quest')}
+        onClick={() => handleSubTabChange('quest')}
       >
         Quest
       </button>
     </div>
   );
 
+  const skeletonLoader = (
+    <div className="task-loading-state">
+      <img src={loadIconSmall} alt="" className="task-loading-icon" />
+      <p className="task-loading-title">Loading...</p>
+      <p className="task-loading-sub">Fetching tasks...</p>
+    </div>
+  );
+
+  const errorState = (
+    <div className="task-error-state">
+      <p className="task-error-icon">⚠️</p>
+      <p className="task-error-title">Oops!</p>
+      <p className="task-error-msg">Failed to load tasks</p>
+      <button className="task-error-retry" onClick={fetchData}>Try Again</button>
+    </div>
+  );
+
+  const renderContent = () => {
+    if (error) return errorState;
+
+    if (activeSubTab === 'created') {
+      if (isLoadingCreated) return skeletonLoader;
+      return filteredTasks.length === 0 ? (
+        <div className="task-empty-state">
+          <p className="task-empty-title">📝 No tasks created yet</p>
+          <p className="task-empty-sub">Tap + to create your first task!</p>
+          <button className="task-empty-create-btn" onClick={handleCreate}>+</button>
+        </div>
+      ) : (
+        <TaskGrid
+          tasks={filteredTasks}
+          taskType="mytask"
+          isCreatorView={true}
+          onCreateClick={handleCreate}
+          isEditMode={isEditMode}
+          isDeleteMode={isDeleteMode}
+          onEditCard={handleEdit}
+          onDeleteCard={deleteTask}
+          onUpdateCard={updateTask}
+        />
+      );
+    }
+
+    if (isLoadingQuest) return skeletonLoader;
+    return filteredQuest.length === 0 ? (
+      <div className="task-empty-state">
+        <p className="task-empty-title">🎯 No active quests</p>
+        <p className="task-empty-sub">Accept a task from P2P or SystemTask to get started!</p>
+      </div>
+    ) : (
+      <TaskGrid
+        tasks={filteredQuest}
+        taskType="quest"
+        acceptedIds={acceptedIds}
+        onCancelCard={handleCancelQuest}
+        onUpdateCard={updateTask}
+      />
+    );
+  };
+
   return (
     <>
-      {activeSubTab === 'created' && (
-        <>
-          <div className="mytask-toolbar-row">
-            {(isEditMode || isDeleteMode) && (
-              <p className="mode-hint">
-                {isEditMode
-                  ? '✏ Move cursor to the card to edit'
-                  : '🗑 Move cursor to the card to delete'}
-              </p>
-            )}
-            {subtabButtons}
-            <Toolbar
-              taskType="mytask"
-              filterStatus={filterStatus}
-              onFilterChange={setFilterStatus}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              onCreateClick={handleCreate}
-              isEditMode={isEditMode}
-              onEditToggle={toggleEditMode}
-              isDeleteMode={isDeleteMode}
-              onDeleteToggle={toggleDeleteMode}
-              onHelpClick={() => setShowHelp(true)}
-            />
-          </div>
-
-          <TaskGrid
-            tasks={filteredTasks}
+      <div className="mytask-toolbar-row">
+        {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isLoadingCreated && !error && (
+          <p className="mode-hint">
+            {isEditMode
+              ? '✏ Move cursor to the card to edit'
+              : '🗑 Move cursor to the card to delete'}
+          </p>
+        )}
+        {subtabButtons}
+        {!isLoadingCreated && !error && activeSubTab === 'created' && (
+          <Toolbar
             taskType="mytask"
-            isCreatorView={true}
+            filterStatus={filterStatus}
+            onFilterChange={setFilterStatus}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
             onCreateClick={handleCreate}
             isEditMode={isEditMode}
+            onEditToggle={toggleEditMode}
             isDeleteMode={isDeleteMode}
-            onEditCard={handleEdit}
-            onDeleteCard={deleteTask}
-            onUpdateCard={updateTask}
+            onDeleteToggle={toggleDeleteMode}
+            onHelpClick={() => setShowHelp(true)}
           />
-        </>
-      )}
+        )}
+        {!isLoadingQuest && !error && activeSubTab === 'quest' && (
+          <Toolbar
+            taskType="quest"
+            questMode
+            filterStatus="all"
+            onFilterChange={() => {}}
+            sortBy={questSort}
+            onSortChange={setQuestSort}
+            sourceFilter={questSource}
+            onSourceFilter={handleQuestSourceFilter}
+            categoryFilter={questSource !== 'p2p' ? questCategory : null}
+            onCategoryFilter={(cat) => setQuestCategory((prev) => (prev === cat ? null : cat))}
+            onHelpClick={() => setShowHelp(true)}
+          />
+        )}
+      </div>
 
-      {activeSubTab === 'quest' && (
-        <>
-          <div className="mytask-toolbar-row">
-            {subtabButtons}
-            <Toolbar
-              taskType="quest"
-              questMode
-              filterStatus="all"
-              onFilterChange={() => {}}
-              sortBy={questSort}
-              onSortChange={setQuestSort}
-              sourceFilter={questSource}
-              onSourceFilter={handleQuestSourceFilter}
-              categoryFilter={questSource !== 'p2p' ? questCategory : null}
-              onCategoryFilter={(cat) => setQuestCategory((prev) => (prev === cat ? null : cat))}
-              onHelpClick={() => setShowHelp(true)}
-            />
-          </div>
-
-          {filteredQuest.length === 0 ? (
-            <div className="quest-empty-state">
-              <p className="quest-empty-title">No active quests</p>
-              <p className="quest-empty-sub">Accept tasks from the P2P or Community tab to see them here.</p>
-            </div>
-          ) : (
-            <TaskGrid
-              tasks={filteredQuest}
-              taskType="quest"
-              acceptedIds={acceptedIds}
-              onCancelCard={handleCancelQuest}
-            />
-          )}
-        </>
-      )}
+      {renderContent()}
 
       {showForm && (
         <CreateEditForm
@@ -202,6 +264,12 @@ function MyTaskModal() {
             </button>
           </div>
         </div>
+      )}
+
+      {process.env.NODE_ENV === 'development' && (
+        <button style={devToggleStyle} onClick={() => setError((e) => !e)}>
+          Toggle Error
+        </button>
       )}
     </>
   );

@@ -161,6 +161,19 @@
   color: white;
 }
 
+/* pending review buttons */
+.task-card-btn--confirm {
+  background: #059669;
+  border-color: #047857;
+  color: white;
+}
+
+.task-card-btn--dispute {
+  background: #d97706;
+  border-color: #b45309;
+  color: white;
+}
+
 /* reassign button */
 .task-card-btn--reassign {
   background: #1a5eb8;
@@ -226,6 +239,11 @@
   width: 320px;
   height: 440px;
   perspective: 1000px;
+}
+
+.task-card-small .task-card-instructions {
+  -webkit-line-clamp: 2;
+  flex: none;
 }
 
 .task-card-small {
@@ -326,6 +344,30 @@
 .task-card-category--organization { background: #4a6fa5; }
 .task-card-category--activity     { background: #7b5ea7; }
 
+/* Posted by on P2P tab cards */
+.task-card-posted-by {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.task-card-user-icon {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+}
+
+/* Wrapper for posted-by + expired on P2P card small */
+.task-card-meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 /* Assignee on small card (creator view) */
 .task-card-assignee {
   font-family: var(--font-body);
@@ -373,3 +415,20 @@
 
 .task-card-source-badge--p2p        { background: #1a5eb8; }
 .task-card-source-badge--community  { background: #6d28d9; }
+
+.task-card-submitted-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: #d97706;
+  color: var(--color-text-light);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.task-card-waiting-text {
+  font-style: italic;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}

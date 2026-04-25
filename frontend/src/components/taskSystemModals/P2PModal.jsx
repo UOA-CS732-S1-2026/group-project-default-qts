@@ -1,12 +1,21 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
+import loadIconSmall from '../../assets/load-icon-small.png';
+
+const devToggleStyle = {
+  position: 'fixed', bottom: 12, right: 12,
+  fontSize: 10, opacity: 0.35, padding: '2px 6px',
+  cursor: 'pointer', zIndex: 9999,
+};
 
 function P2PModal() {
   const { tasks } = useTasks();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false); // set to true to test error UI
 
   const p2pData = useMemo(() =>
     tasks.filter((t) => t.type === 'p2p' && (t.status === 'open' || t.status === 'active')),
@@ -21,23 +30,60 @@ function P2PModal() {
   const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
 
+  const fetchData = () => {
+    setError(false);
+    setIsLoading(true);
+    // TODO: ganti setTimeout dengan axios.get('/api/tasks') saat integrasi backend
+    setTimeout(() => setIsLoading(false), 1000);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
   return (
     <>
-      <Toolbar
-        taskType="p2p"
-        filterStatus={filterStatus}
-        onFilterChange={setFilterStatus}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        onHelpClick={() => setShowHelp(true)}
-      />
+      {isLoading && (
+        <div className="task-loading-state">
+          <img src={loadIconSmall} alt="" className="task-loading-icon" />
+          <p className="task-loading-title">Loading...</p>
+          <p className="task-loading-sub">Fetching tasks...</p>
+        </div>
+      )}
 
-      <TaskGrid
-        tasks={filteredTasks}
-        taskType="p2p"
-        acceptedIds={acceptedIds}
-        onAcceptCard={acceptTask}
-      />
+      {!isLoading && error && (
+        <div className="task-error-state">
+          <p className="task-error-icon">⚠️</p>
+          <p className="task-error-title">Oops!</p>
+          <p className="task-error-msg">Failed to load tasks</p>
+          <button className="task-error-retry" onClick={fetchData}>Try Again</button>
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <>
+          <Toolbar
+            taskType="p2p"
+            filterStatus={filterStatus}
+            onFilterChange={setFilterStatus}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            onHelpClick={() => setShowHelp(true)}
+          />
+
+          {filteredTasks.length === 0 ? (
+            <div className="task-empty-state">
+              <p className="task-empty-title">📭 No P2P tasks available</p>
+              <p className="task-empty-sub">Check back later for new tasks!</p>
+            </div>
+          ) : (
+            <TaskGrid
+              tasks={filteredTasks}
+              taskType="p2p"
+              acceptedIds={acceptedIds}
+              onAcceptCard={acceptTask}
+            />
+          )}
+        </>
+      )}
 
       {showHelp && (
         <div className="task-modal-help-overlay" onClick={() => setShowHelp(false)}>
@@ -54,6 +100,12 @@ function P2PModal() {
             </button>
           </div>
         </div>
+      )}
+
+      {process.env.NODE_ENV === 'development' && (
+        <button style={devToggleStyle} onClick={() => setError((e) => !e)}>
+          Toggle Error
+        </button>
       )}
     </>
   );

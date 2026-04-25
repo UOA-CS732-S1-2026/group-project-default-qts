@@ -29,6 +29,10 @@
   background-color: #b45309;
 }
 
+.status-badge--pending_review {
+  background-color: #d97706;
+}
+
 .status-badge--completed {
   background-color: #059669;
 }

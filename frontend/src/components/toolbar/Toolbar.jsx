@@ -85,6 +85,7 @@ function Toolbar({
               <option value="all">All Status</option>
               <option value="open">Open</option>
               {taskType !== 'community' && <option value="active">Active</option>}
+              {taskType === 'mytask' && <option value="pending_review">Pending Review</option>}
               {taskType === 'mytask' && <option value="disputed">Disputed</option>}
               {taskType === 'mytask' && <option value="completed">Completed</option>}
               {taskType !== 'community' && taskType !== 'p2p' && <option value="cancelled">Cancelled</option>}

@@ -4,6 +4,8 @@ import TaskCardFront from './TaskCardFront';
 import TaskCardBack from './TaskCardBack';
 import CoinBadge from '../ui/CoinBadge';
 import StatusBadge from '../ui/StatusBadge';
+import { CURRENT_USER_ID } from '../../constants/mockUser';
+import userIconSmall from '../../assets/user-icon-small.png';
 
 const CARD_COLORS = [
   'var(--color-card-1)',
@@ -63,9 +65,14 @@ function TaskCard({
         <div className="task-card-header">
           <div className="task-card-badges">
             {showSourceBadge ? (
-              <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
-                {task.type === 'p2p' ? 'P2P' : 'System'}
-              </span>
+              <>
+                <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
+                  {task.type === 'p2p' ? 'P2P' : 'System'}
+                </span>
+                {task.status === 'pending_review' && (
+                  <span className="task-card-submitted-badge">Submitted</span>
+                )}
+              </>
             ) : (
               task.status !== 'cancelled' || task.type !== 'community' ? (
                 <StatusBadge status={isAccepted && task.status === 'open' ? 'active' : task.type === 'community' && task.status === 'active' ? 'open' : task.status} />
@@ -84,7 +91,15 @@ function TaskCard({
         {showAssignee && (
           <p className="task-card-assignee">👤 {task.assignee.name}</p>
         )}
-        <p className="task-card-expired">Expired: {expiredDate}</p>
+        <div className="task-card-meta-group">
+          {task.type === 'p2p' && !isCreatorView && !showSourceBadge && (
+            <p className="task-card-posted-by">
+              <img src={userIconSmall} alt="" className="task-card-user-icon" />
+              {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
+            </p>
+          )}
+          <p className="task-card-expired">Exp: {expiredDate}</p>
+        </div>
 
         <div className="task-card-footer">
           <CoinBadge amount={task.rewardCoins} />
@@ -93,7 +108,7 @@ function TaskCard({
           </button>
         </div>
 
-        {isEditMode && isHovered && task.status !== 'active' && (
+        {isEditMode && isHovered && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'disputed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--edit"
@@ -104,7 +119,7 @@ function TaskCard({
           </div>
         )}
 
-        {isDeleteMode && isHovered && !showDeleteConfirm && (
+        {isDeleteMode && isHovered && !showDeleteConfirm && task.status !== 'pending_review' && task.status !== 'disputed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--delete"
