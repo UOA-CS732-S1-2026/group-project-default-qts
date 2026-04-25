@@ -27,6 +27,7 @@ function TaskCardFront({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showAcceptConfirm, setShowAcceptConfirm] = useState(false)
+  const [showReassignConfirm, setShowReassignConfirm] = useState(false)
   const [showConfirmReview, setShowConfirmReview] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [showReportChecklist, setShowReportChecklist] = useState(false)
@@ -130,7 +131,7 @@ function TaskCardFront({
               </button>
               <button
                 className="task-card-btn task-card-btn--reassign"
-                onClick={handleReassign}
+                onClick={() => setShowReassignConfirm(true)}
               >
                 Re-assign
               </button>
@@ -282,6 +283,28 @@ function TaskCardFront({
             <button
               className="task-card-confirm-btn task-card-confirm-btn--no"
               onClick={() => setShowDeleteConfirm(false)}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showReassignConfirm && (
+        <div className="task-card-mode-overlay">
+          <p className="task-card-confirm-text">
+            Re-assign this task? The current assignee will be removed.
+          </p>
+          <div className="task-card-confirm-actions">
+            <button
+              className="task-card-confirm-btn task-card-confirm-btn--yes"
+              onClick={() => { handleReassign(); setShowReassignConfirm(false) }}
+            >
+              Yes
+            </button>
+            <button
+              className="task-card-confirm-btn task-card-confirm-btn--no"
+              onClick={() => setShowReassignConfirm(false)}
             >
               No
             </button>
