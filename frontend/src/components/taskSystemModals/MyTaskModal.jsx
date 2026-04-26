@@ -198,13 +198,6 @@ function MyTaskModal() {
   return (
     <>
       <div className="mytask-toolbar-row">
-        {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isLoadingCreated && !error && (
-          <p className="mode-hint">
-            {isEditMode
-              ? '✏ Move cursor to the card to edit'
-              : '🗑 Move cursor to the card to delete'}
-          </p>
-        )}
         {subtabButtons}
         {!isLoadingCreated && !error && activeSubTab === 'created' && (
           <Toolbar
@@ -237,6 +230,14 @@ function MyTaskModal() {
           />
         )}
       </div>
+
+      {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isLoadingCreated && !error && (
+        <p className="mode-hint">
+          {isEditMode
+            ? '✏ Move cursor to the card to edit'
+            : '🗑 Move cursor to the card to delete'}
+        </p>
+      )}
 
       {renderContent()}
 
