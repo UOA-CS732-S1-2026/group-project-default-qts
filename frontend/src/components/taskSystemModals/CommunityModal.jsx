@@ -5,6 +5,8 @@ import { mockTasks } from '../../data/mockTasks';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
+import { useTasks } from '../../context/TasksContext';
+import { CURRENT_USER_ID } from '../../constants/mockUser';
 import loadIconSmall from '../../assets/load-icon-small.png';
 
 const communityData = mockTasks.filter((t) => t.type === 'community');
@@ -26,8 +28,14 @@ function CommunityModal() {
     categoryFilter, setCategoryFilter,
   } = useTaskManager(communityData);
 
+  const { updateTask } = useTasks();
   const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
+
+  const handleAccept = (id) => {
+    acceptTask(id)
+    updateTask(id, { status: 'active', assignee: { id: CURRENT_USER_ID, name: 'Me' } })
+  };
 
   const fetchData = () => {
     setError(false);
@@ -80,7 +88,7 @@ function CommunityModal() {
               tasks={filteredTasks}
               taskType="community"
               acceptedIds={acceptedIds}
-              onAcceptCard={acceptTask}
+              onAcceptCard={handleAccept}
             />
           )}
         </>

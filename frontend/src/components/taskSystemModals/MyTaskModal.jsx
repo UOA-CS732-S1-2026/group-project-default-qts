@@ -73,6 +73,14 @@ function MyTaskModal() {
   const handleCancelQuest = (id) => {
     cancelTask(id);
     setCancelledQuestIds((prev) => new Set([...prev, id]));
+    updateTask(id, { status: 'open', assignee: null });
+  };
+
+  const handleUpdateCard = (id, fields) => {
+    updateTask(id, fields);
+    if (fields.status === 'open' && fields.assignee === null) {
+      cancelTask(id);
+    }
   };
 
   const filteredQuest = useMemo(() => {
@@ -173,7 +181,7 @@ function MyTaskModal() {
           isDeleteMode={isDeleteMode}
           onEditCard={handleEdit}
           onDeleteCard={deleteTask}
-          onUpdateCard={updateTask}
+          onUpdateCard={handleUpdateCard}
         />
       );
     }

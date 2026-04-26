@@ -4,6 +4,7 @@ import { useTasks } from '../../context/TasksContext';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
+import { CURRENT_USER_ID } from '../../constants/mockUser';
 import loadIconSmall from '../../assets/load-icon-small.png';
 
 const devToggleStyle = {
@@ -13,7 +14,7 @@ const devToggleStyle = {
 };
 
 function P2PModal() {
-  const { tasks } = useTasks();
+  const { tasks, updateTask } = useTasks();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false); // set to true to test error UI
 
@@ -29,6 +30,11 @@ function P2PModal() {
 
   const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
+
+  const handleAccept = (id) => {
+    acceptTask(id)
+    updateTask(id, { status: 'active', assignee: { id: CURRENT_USER_ID, name: 'Me' } })
+  };
 
   const fetchData = () => {
     setError(false);
@@ -79,7 +85,7 @@ function P2PModal() {
               tasks={filteredTasks}
               taskType="p2p"
               acceptedIds={acceptedIds}
-              onAcceptCard={acceptTask}
+              onAcceptCard={handleAccept}
             />
           )}
         </>
