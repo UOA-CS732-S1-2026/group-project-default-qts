@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const UserPet = require('../models/UserPet');
-require('../models/PetSpecies'); // ensure PetSpecies model is registered for population
+const PetSpecies = require('../models/PetSpecies');
+const InventoryItem = require('../models/InventoryItem');
+const StoreItem = require('../models/StoreItem');
 
 const getActivePet = async (req, res) => {
   try {
@@ -76,6 +78,218 @@ const getActivePet = async (req, res) => {
   }
 };
 
+const getStageCap = (stage) => {
+  if (stage === 'EGG') return 4;
+  if (stage === 'KID') return 9;
+  if (stage === 'ADULT') return 10;
+  return 10;
+};
+
+const applyGrowthToPet = (pet, growthValue) => {
+  let growth = pet.growthPoints + growthValue;
+
+  // Adult max state: allow bar to fill visually up to 99
+  if (pet.stage === 'ADULT' && pet.level === 10) {
+    pet.growthPoints = Math.min(99, growth);
+    pet.evolutionReady = false;
+    pet.isGrowthFrozen = false;
+    return;
+  }
+
+  while (growth >= 100) {
+    const stageCap = getStageCap(pet.stage);
+
+    if (pet.level < stageCap) {
+      pet.level += 1;
+      growth -= 100;
+    } else {
+      pet.growthPoints = 99;
+      pet.evolutionReady = true;
+      pet.isGrowthFrozen = true;
+      return;
+    }
+  }
+
+  pet.growthPoints = growth;
+};
+
+const feedPet = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, itemCode } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_PET_ID',
+          message: 'Pet id is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'USER_ID_REQUIRED',
+          message: 'userId is required',
+          details: {}
+        }
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_USER_ID',
+          message: 'userId is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    if (!itemCode) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ITEM_CODE_REQUIRED',
+          message: 'itemCode is required',
+          details: {}
+        }
+      });
+    }
+
+    const pet = await UserPet.findOne({
+      _id: id,
+      userId
+    }).populate('speciesId', 'code displayName');
+
+    if (!pet) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PET_NOT_FOUND',
+          message: 'Pet not found for this user',
+          details: {}
+        }
+      });
+    }
+
+    if (pet.isGrowthFrozen) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_EVOLVE_REQUIRED',
+          message: 'Pet must evolve before it can be fed again',
+          details: {}
+        }
+      });
+    }
+
+    const storeItem = await StoreItem.findOne({
+      code: itemCode.toUpperCase().trim()
+    });
+
+    if (!storeItem) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'STORE_ITEM_NOT_FOUND',
+          message: 'Store item not found',
+          details: {}
+        }
+      });
+    }
+
+    if (storeItem.type !== 'FOOD') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_FEED_ITEM',
+          message: 'Only FOOD items can be used to feed pets',
+          details: {}
+        }
+      });
+    }
+
+    const inventoryItem = await InventoryItem.findOne({
+      userId,
+      storeItemId: storeItem._id
+    }).populate('storeItemId', 'code name type price growthValue');
+
+    if (!inventoryItem) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'INVENTORY_ITEM_NOT_FOUND',
+          message: 'This item is not in the user inventory',
+          details: {}
+        }
+      });
+    }
+
+    if (inventoryItem.quantity < 1) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVENTORY_INSUFFICIENT_QUANTITY',
+          message: 'Not enough item quantity to feed the pet',
+          details: {}
+        }
+      });
+    }
+
+    inventoryItem.quantity -= 1;
+    await inventoryItem.save();
+
+    applyGrowthToPet(pet, storeItem.growthValue || 0);
+    await pet.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Pet fed successfully',
+      data: {
+        pet: {
+          id: pet._id,
+          speciesCode: pet.speciesId?.code || null,
+          speciesName: pet.speciesId?.displayName || null,
+          nickname: pet.nickname,
+          stage: pet.stage,
+          level: pet.level,
+          growthPoints: pet.growthPoints,
+          evolutionReady: pet.evolutionReady,
+          isGrowthFrozen: pet.isGrowthFrozen,
+          status: pet.status
+        },
+        inventoryItem: {
+          id: inventoryItem._id,
+          itemCode: inventoryItem.storeItemId?.code || null,
+          itemName: inventoryItem.storeItemId?.name || null,
+          type: inventoryItem.storeItemId?.type || null,
+          price: inventoryItem.storeItemId?.price ?? null,
+          growthValue: inventoryItem.storeItemId?.growthValue ?? null,
+          quantity: inventoryItem.quantity
+        }
+      }
+    });
+  } catch (error) {
+    console.error('feedPet error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'PET_FEED_FAILED',
+        message: 'Failed to feed pet',
+        details: {}
+      }
+    });
+  }
+};
+
 module.exports = {
-  getActivePet
+  getActivePet,
+  feedPet
 };
