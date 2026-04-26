@@ -57,10 +57,7 @@ function TaskCard({
         className="task-card-small"
         style={{ backgroundColor: cardColor }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          setShowDeleteConfirm(false);
-        }}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="task-card-header">
           <div className="task-card-badges">
@@ -130,9 +127,12 @@ function TaskCard({
           </div>
         )}
 
-        {showDeleteConfirm && (
-          <div className="task-card-mode-overlay task-card-mode-overlay--confirm">
-            <p className="task-card-confirm-text">Delete this task?</p>
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="task-card-delete-modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="task-card-delete-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="task-card-delete-modal-text">Delete this task?</p>
             <div className="task-card-confirm-actions">
               <button
                 className="task-card-confirm-btn task-card-confirm-btn--yes"
@@ -148,8 +148,8 @@ function TaskCard({
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isExpanded && (
         <div className="task-card-overlay" onClick={handleClose}>
