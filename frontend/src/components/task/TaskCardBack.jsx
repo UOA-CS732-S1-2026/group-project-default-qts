@@ -3,9 +3,10 @@ import { CURRENT_USER_ID } from '../../constants/mockUser'
 
 function TaskCardBack({ task, cardColor, onFlip, onClose, isQuest = false, isAccepted = false, isCreatorView = false }) {
   const getTakenByName = () => {
+    if (isAccepted) return 'You'
     if (!task.assignee) return null
     if (isCreatorView) return task.assignee.name
-    if (isAccepted || task.assignee.id === CURRENT_USER_ID) return 'You'
+    if (task.assignee.id === CURRENT_USER_ID) return 'You'
     return task.assignee.name
   }
 

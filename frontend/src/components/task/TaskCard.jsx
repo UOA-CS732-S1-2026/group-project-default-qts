@@ -92,7 +92,7 @@ function TaskCard({
           <p className="task-card-assignee">👤 {task.assignee.name}</p>
         )}
         <div className="task-card-meta-group">
-          {task.type === 'p2p' && !isCreatorView && !showSourceBadge && (
+          {task.type === 'p2p' && !isCreatorView && (
             <p className="task-card-posted-by">
               <img src={userIconSmall} alt="" className="task-card-user-icon" />
               {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
