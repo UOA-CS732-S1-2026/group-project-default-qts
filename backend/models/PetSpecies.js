@@ -16,6 +16,6 @@ const PetSpeciesSchema = new mongoose.Schema({
 );
 
 // keeps seed/upsert clean
-PetSpeciesSchema.index({ code: 1 }, { unique: true });
+// PetSpeciesSchema.index({ code: 1 }, { unique: true });
 
 module.exports = mongoose.model('PetSpecies', PetSpeciesSchema);
