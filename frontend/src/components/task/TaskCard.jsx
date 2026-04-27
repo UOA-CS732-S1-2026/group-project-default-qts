@@ -118,7 +118,7 @@ function TaskCard({
           </div>
         )}
 
-        {isDeleteMode && isHovered && !showDeleteConfirm && task.status !== 'pending_review' && task.status !== 'disputed' && (
+        {isDeleteMode && isHovered && !showDeleteConfirm && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'disputed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--delete"
