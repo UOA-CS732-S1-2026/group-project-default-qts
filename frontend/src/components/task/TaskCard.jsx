@@ -38,7 +38,14 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
         onMouseLeave={() => { setIsHovered(false); setShowDeleteConfirm(false); }}
       >
         <div className="task-card-header">
-          <StatusBadge status={task.status} />
+          <div className="task-card-badges">
+            <StatusBadge status={task.status} />
+            {task.type === 'community' && task.category && (
+              <span className={`task-card-category task-card-category--${task.category}`}>
+                {task.category === 'organization' ? 'Organization' : 'Activity'}
+              </span>
+            )}
+          </div>
         </div>
 
         <h3 className="task-card-title">{task.title}</h3>

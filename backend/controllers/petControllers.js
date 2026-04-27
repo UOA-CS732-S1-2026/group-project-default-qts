@@ -7,25 +7,15 @@ const User = require('../models/User');
 
 const getActivePet = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = req.userId;
 
-    if (!userId) {
-      return res.status(400).json({
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
         success: false,
         error: {
-          code: 'USER_ID_REQUIRED',
-          message: 'userId is required in query string',
-          details: {}
-        }
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_USER_ID',
-          message: 'userId is not a valid ObjectId',
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
           details: {}
         }
       });
@@ -117,7 +107,8 @@ const applyGrowthToPet = (pet, growthValue) => {
 const feedPet = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, itemCode } = req.body;
+    const userId = req.userId;
+    const { itemCode } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -130,23 +121,13 @@ const feedPet = async (req, res) => {
       });
     }
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'USER_ID_REQUIRED',
-          message: 'userId is required',
-          details: {}
-        }
-      });
-    }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
         success: false,
         error: {
-          code: 'INVALID_USER_ID',
-          message: 'userId is not a valid ObjectId',
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
           details: {}
         }
       });
@@ -293,7 +274,7 @@ const feedPet = async (req, res) => {
 const evolvePet = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.userId;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -306,23 +287,13 @@ const evolvePet = async (req, res) => {
       });
     }
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'USER_ID_REQUIRED',
-          message: 'userId is required',
-          details: {}
-        }
-      });
-    }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
         success: false,
         error: {
-          code: 'INVALID_USER_ID',
-          message: 'userId is not a valid ObjectId',
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
           details: {}
         }
       });
@@ -439,7 +410,7 @@ const activatePet = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.userId;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -452,23 +423,13 @@ const activatePet = async (req, res) => {
       });
     }
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'USER_ID_REQUIRED',
-          message: 'userId is required',
-          details: {}
-        }
-      });
-    }
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
         success: false,
         error: {
-          code: 'INVALID_USER_ID',
-          message: 'userId is not a valid ObjectId',
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
           details: {}
         }
       });

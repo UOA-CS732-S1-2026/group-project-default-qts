@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import ProfileModal from './ProfileModal';
@@ -8,6 +8,7 @@ import avatarPlaceholder from '../../assets/avatar_placeholder.png';
 export default function UserMenu() {
     const { currentUser, logout } = useApp();
     const [open, setOpen] = useState(false);
+    const wrapperRef = useRef(null);
     const [showProfile, setShowProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
 
@@ -16,9 +17,27 @@ export default function UserMenu() {
         window.location.href = '/landingpage';
     }
 
+    useEffect(() => {
+        function handlePointer(e) {
+            if (!wrapperRef.current) return;
+            if (open && !wrapperRef.current.contains(e.target)) {
+                setOpen(false);
+            }
+        }
+        function handleKey(e) {
+            if (e.key === 'Escape') setOpen(false);
+        }
+        document.addEventListener('pointerdown', handlePointer);
+        window.addEventListener('keydown', handleKey);
+        return () => {
+            document.removeEventListener('pointerdown', handlePointer);
+            window.removeEventListener('keydown', handleKey);
+        };
+    }, [open]);
+
     return (
         <>
-            <div className="user-menu-wrapper">
+            <div className="user-menu-wrapper" ref={wrapperRef}>
                 <button
                     id="user-icon-btn"
                     className="user-icon-btn"

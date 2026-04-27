@@ -4,25 +4,14 @@ const StoreItem = require('../models/StoreItem');
 
 const getInventory = async (req, res) => {
   try {
-    const { userId } = req.query;
+    const userId = req.userId;
 
-    if (!userId) {
-      return res.status(400).json({
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
         success: false,
         error: {
-          code: 'USER_ID_REQUIRED',
-          message: 'userId is required in query string',
-          details: {}
-        }
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_USER_ID',
-          message: 'userId is not a valid ObjectId',
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
           details: {}
         }
       });

@@ -8,10 +8,27 @@
   z-index: 100;
 }
 
+/* Transparent overlay variant used by the store so background isn't darkened */
+.modal-overlay--no-bg {
+  background: transparent;
+}
+
+/* Pass-through overlay: transparent and allows clicks to reach the page behind the modal.
+   The modal container itself remains interactive. */
+.modal-overlay--pass-through{
+  background: transparent;
+  pointer-events: none;
+}
+
+.modal-overlay--pass-through .modal-container{
+  pointer-events: auto;
+}
+
+/* .modal-container { */
 .task-modal-container {
   width: 80vw;
   max-width: 900px;
-  height: 80vh;
+  height: 90vh;
   background: var(--color-bg-modal);
   border: var(--border-pixel);
   box-shadow: var(--shadow-pixel);
@@ -34,10 +51,10 @@
 
 .task-modal-tab {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 12px;
   padding: 6px 10px;
   border: var(--border-card);
-  background: transparent;
+  background: var(--color-btn-primary);
   color: var(--color-text-dark);
 }
 
@@ -75,6 +92,42 @@
   overflow-y: auto;
 }
 
+/* Slide-in from left variant for store modal */
+.modal-container.modal--slide-left {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  height: 70vh;
+  width: 500px;
+  max-width: none;
+  border-right: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  transform: translate(-100%, -50%);
+  animation: slideInFromLeft 320ms ease-out forwards;
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translate(-100%, -50%); }
+  to { transform: translate(0%, -50%); }
+}
+
+@keyframes slideOutToLeft {
+  from { transform: translate(0%, -50%); }
+  to { transform: translate(-100%, -50%); }
+}
+
+/* When modal is in closing state, play slide-out */
+.modal-container.modal--slide-left.modal--closing {
+  animation: slideOutToLeft 320ms ease-in forwards;
+}
+
+/* remove extra padding for the store body so content fits nicely */
+.modal-body--store{
+  padding: 12px;
+}
+
+/* Help overlay — dipakai semua modal */
+/* .modal-help-overlay { */
 /* Help overlay — shared across all modals */
 .task-modal-help-overlay {
   position: fixed;
@@ -115,7 +168,7 @@
 
 .task-modal-help-close {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 12px;
   padding: 8px 14px;
   background: var(--color-btn-primary);
   border: var(--border-pixel);

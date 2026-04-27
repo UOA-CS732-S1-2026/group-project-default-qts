@@ -26,6 +26,7 @@ export const mockTasks = [
     assignee: { id: 'user-002', name: 'Sarah' },
     createdBy: { id: 'user-003', name: 'Tom' },
     createdAt: '2026-04-10T10:00:00Z',
+    category: 'activity',
   },
   {
     id: 'task-003',
@@ -41,6 +42,7 @@ export const mockTasks = [
     createdBy: { id: 'admin-001', name: 'Admin' },
     createdAt: '2026-04-10T08:00:00Z',
     difficulty: 'Easy',
+    category: 'activity',
   },
   {
     id: 'task-004',
@@ -55,6 +57,7 @@ export const mockTasks = [
     assignee: null,
     createdBy: { id: 'user-001', name: 'Alex' },
     createdAt: '2026-04-11T06:00:00Z',
+    category: 'activity',
   },
   {
     id: 'task-005',
@@ -83,6 +86,7 @@ export const mockTasks = [
     assignee: null,
     createdBy: { id: 'user-004', name: 'Jamie' },
     createdAt: '2026-04-11T09:00:00Z',
+    category: 'organization',
   },
   {
     id: 'task-007',
@@ -97,6 +101,7 @@ export const mockTasks = [
     assignee: { id: 'user-005', name: 'Leo' },
     createdBy: { id: 'user-006', name: 'Priya' },
     createdAt: '2026-04-10T15:00:00Z',
+    category: 'organization',
   },
   {
     id: 'task-008',
@@ -112,6 +117,7 @@ export const mockTasks = [
     createdBy: { id: 'admin-001', name: 'Admin' },
     createdAt: '2026-04-08T10:00:00Z',
     difficulty: 'Medium',
+    category: 'organization',
   },
   {
     id: 'task-009',
@@ -127,5 +133,6 @@ export const mockTasks = [
     createdBy: { id: 'admin-001', name: 'Admin' },
     createdAt: '2026-04-07T08:00:00Z',
     difficulty: 'Hard',
+    category: 'activity',
   },
 ]

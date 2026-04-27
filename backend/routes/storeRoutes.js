@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
 
 const {
   getStoreItems,
@@ -7,6 +8,6 @@ const {
 } = require('../controllers/storeControllers');
 
 router.get('/items', getStoreItems);
-router.post('/purchase', purchaseStoreItem);
+router.post('/purchase', requireAuth, purchaseStoreItem);
 
 module.exports = router;

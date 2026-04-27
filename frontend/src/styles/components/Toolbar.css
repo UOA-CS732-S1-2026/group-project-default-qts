@@ -19,7 +19,7 @@
 
 .toolbar-select {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 12px;
   padding: 6px 8px;
   border: var(--border-pixel);
   background: var(--color-bg-form);
@@ -45,7 +45,7 @@
 
 .toolbar-btn {
   font-family: var(--font-display);
-  font-size: 7px;
+  font-size: 12px;
   padding: 6px 10px;
   border: var(--border-pixel);
   box-shadow: var(--shadow-pixel);
@@ -70,7 +70,7 @@
 }
 
 .toolbar-btn--help {
-  background: var(--color-bg-form);
+  background: var(--color-btn-primary);
   padding: 6px 12px;
 }
 
@@ -92,4 +92,28 @@
 .toolbar-select--active {
   border-color: var(--color-coin);
   box-shadow: 0 0 6px 1px var(--color-coin);
+}
+
+.toolbar-btn--org {
+  background: #4a6fa5;
+  color: white;
+  border-color: #3a5f95;
+  opacity: 0.5;
+}
+
+.toolbar-btn--org-active {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #4a6fa5;
+}
+
+.toolbar-btn--act {
+  background: #7b5ea7;
+  color: white;
+  border-color: #6b4e97;
+  opacity: 0.5;
+}
+
+.toolbar-btn--act-active {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #7b5ea7;
 }

@@ -38,7 +38,8 @@ const purchaseStoreItem = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
-    const { userId, itemCode, quantity = 1 } = req.body;
+    const userId = req.userId;
+    const { itemCode, quantity = 1 } = req.body;
 
     if (!userId) {
       return res.status(400).json({

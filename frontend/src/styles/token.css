@@ -1,8 +1,9 @@
 :root {
   /* === BACKGROUND === */
-  --color-bg-app: var(--bg-main);
-  --color-bg-modal: var(--bg-modal);
-  --color-bg-form: var(--bg-card);
+  --color-bg-app:          #FEFAE0;  /* background utama app */
+  --color-bg-modal:        #FEFAE0;  /* background modal */
+  --color-bg-form:         #ffffff;  /* background form create/edit */
+  --color-bg-accent:       lightgray;  /* background untuk elemen yang perlu kontras dengan warna utama (misal: badge status) */
 
   /* === CARD COLORS (by status) === */
   --color-card-1: #2d6a4f; /* open / easy */
@@ -21,8 +22,12 @@
   --color-text-light: var(--text-inverted);
   --color-text-dark: var(--text-main);
 
+    /* === DASHBOARD BUTTON COLORS === */
+  --dsh-btn-color-bg:     #283618ff;  /* warna tombol utama (Create, dll) */
+  --dsh-btn-text-color:            #FEFAE0;  /* emas — ikon koin */
+
   /* === ACCENT === */
-  --color-btn-primary: var(--btn-primary-bg);
+  --color-btn-primary: #DDA15E;
   --color-coin: #d4a017;
   --color-danger: var(--text-error);
 

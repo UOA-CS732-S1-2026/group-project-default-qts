@@ -16,6 +16,6 @@ const TaskEscrowSchema = new mongoose.Schema(
 );
 
 // one escrow record per P2P task
-TaskEscrowSchema.index({ taskId: 1 }, { unique: true });
+// TaskEscrowSchema.index({ taskId: 1 }, { unique: true });
 
 module.exports = mongoose.model('TaskEscrow', TaskEscrowSchema);
