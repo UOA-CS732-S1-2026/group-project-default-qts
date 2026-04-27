@@ -66,6 +66,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/inventory', inventoryRoutes);
+
 app.use('/api/tasks', taskRoutes);
 app.use('/api/focus', focusRoutes);
 app.use('/api/admin', adminRoutes);
