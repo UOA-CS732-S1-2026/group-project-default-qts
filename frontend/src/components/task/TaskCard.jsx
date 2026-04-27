@@ -27,6 +27,7 @@ function TaskCard({
   hideAccept = false,
   onCancel,
   isAccepted = false,
+  isSubmitted = false,
   onAccept,
   isCreatorView = false,
 }) {
@@ -67,7 +68,7 @@ function TaskCard({
                 <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
                   {task.type === 'p2p' ? 'P2P' : 'System'}
                 </span>
-                {task.status === 'pending_review' && (
+                {(task.status === 'pending_review' || isSubmitted) && (
                   <span className="task-card-submitted-badge">Submitted</span>
                 )}
               </>
@@ -164,6 +165,7 @@ function TaskCard({
                 hideAccept={hideAccept}
                 onCancel={onCancel}
                 isAccepted={isAccepted}
+                isSubmitted={isSubmitted}
                 onAccept={onAccept}
                 isCreatorView={isCreatorView}
                 onUpdateTask={onUpdate}

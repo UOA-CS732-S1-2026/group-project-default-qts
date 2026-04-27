@@ -130,6 +130,39 @@
   box-shadow: 0 0 10px 3px #1a5eb8;
 }
 
+.toolbar-btn--status-active {
+  background: #2e7d32;
+  color: white;
+  border-color: #1b5e20;
+  opacity: 0.5;
+}
+.toolbar-btn--status-active-on {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #2e7d32;
+}
+
+.toolbar-btn--status-submitted {
+  background: #f57c00;
+  color: white;
+  border-color: #e65100;
+  opacity: 0.5;
+}
+.toolbar-btn--status-submitted-on {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #f57c00;
+}
+
+.toolbar-btn--status-disputed {
+  background: #c62828;
+  color: white;
+  border-color: #b71c1c;
+  opacity: 0.5;
+}
+.toolbar-btn--status-disputed-on {
+  opacity: 1;
+  box-shadow: 0 0 10px 3px #c62828;
+}
+
 .toolbar-btn--comm {
   background: #6d28d9;
   color: white;

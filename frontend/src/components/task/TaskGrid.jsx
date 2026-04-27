@@ -12,6 +12,7 @@ function TaskGrid({
   onUpdateCard,
   onCancelCard,
   acceptedIds,
+  submittedIds,
   onAcceptCard,
   isCreatorView = false,
 }) {
@@ -33,6 +34,7 @@ function TaskGrid({
           hideAccept={taskType === 'quest'}
           onCancel={taskType === 'quest' ? onCancelCard : undefined}
           isAccepted={acceptedIds ? acceptedIds.has(task.id) : false}
+          isSubmitted={submittedIds ? submittedIds.has(task.id) : false}
           onAccept={onAcceptCard}
           isCreatorView={isCreatorView}
         />

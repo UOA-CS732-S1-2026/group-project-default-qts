@@ -40,8 +40,9 @@ function MyTaskModal({ onNavigate }) {
   const [editingTask, setEditingTask] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
 
-  const { acceptedIds, cancelTask } = useAcceptedTasks();
+  const { acceptedIds, cancelTask, submittedIds, submitTask } = useAcceptedTasks();
   const [questSource, setQuestSource] = useState(null);
+  const [questStatus, setQuestStatus] = useState(null);
   const [questCategory, setQuestCategory] = useState(null);
   const [questSort, setQuestSort] = useState('');
   const [cancelledQuestIds, setCancelledQuestIds] = useState(new Set());
@@ -83,15 +84,30 @@ function MyTaskModal({ onNavigate }) {
     }
   };
 
+  const handleQuestUpdate = (id, fields) => {
+    const task = tasks.find((t) => t.id === id);
+    // Community tasks: track submission locally only — never change global status
+    // (multiple players can accept the same task; one submit must not affect others)
+    if (task?.type === 'community' && fields.status === 'pending_review') {
+      submitTask(id);
+    } else {
+      updateTask(id, fields);
+    }
+  };
+
+  const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_review', 'disputed'];
+
   const filteredQuest = useMemo(() => {
     let result = tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
       if (cancelledQuestIds.has(t.id)) return false;
+      if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
       const iExplicitlyAccepted = acceptedIds.has(t.id);
       const isAssignedToMe = t.assignee?.id === CURRENT_USER_ID;
       return iExplicitlyAccepted || isAssignedToMe;
     });
     if (questSource) result = result.filter((t) => t.type === questSource);
+    if (questStatus) result = result.filter((t) => t.status === questStatus);
     if (questCategory && questSource !== 'p2p') result = result.filter((t) => t.category === questCategory);
     if (questSort === 'reward-high') result.sort((a, b) => b.rewardCoins - a.rewardCoins);
     if (questSort === 'reward-low') result.sort((a, b) => a.rewardCoins - b.rewardCoins);
@@ -100,12 +116,16 @@ function MyTaskModal({ onNavigate }) {
     if (questSort === 'expiry-early') result.sort((a, b) => new Date(a.expiredAt) - new Date(b.expiredAt));
     if (questSort === 'expiry-late') result.sort((a, b) => new Date(b.expiredAt) - new Date(a.expiredAt));
     return result;
-  }, [tasks, questSource, questCategory, questSort, cancelledQuestIds, acceptedIds]);
+  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds]);
 
   const handleQuestSourceFilter = (source) => {
     const next = questSource === source ? null : source;
     setQuestSource(next);
     if (next === 'p2p') setQuestCategory(null);
+  };
+
+  const handleQuestStatusFilter = (status) => {
+    setQuestStatus(status === 'all' ? null : status);
   };
 
   const handleCreate = () => {
@@ -187,22 +207,37 @@ function MyTaskModal({ onNavigate }) {
     }
 
     if (isLoadingQuest) return skeletonLoader;
-    return filteredQuest.length === 0 ? (
-      <div className="task-empty-state">
-        <p className="task-empty-title">🎯 No active quests</p>
-        <p className="task-empty-sub">Accept a task from P2P or System to get started!</p>
-        <div className="task-empty-nav-btns">
-          <button className="task-empty-nav-btn" onClick={() => onNavigate?.('p2p')}>P2P Tasks</button>
-          <button className="task-empty-nav-btn" onClick={() => onNavigate?.('community')}>System Tasks</button>
+
+    if (filteredQuest.length === 0) {
+      const hasFilter = questStatus !== null || questSource !== null || questCategory !== null;
+      if (hasFilter) {
+        return (
+          <div className="task-empty-state">
+            <p className="task-empty-title">🔍 No quests found</p>
+            <p className="task-empty-sub">No quests match the current filter.</p>
+          </div>
+        );
+      }
+      return (
+        <div className="task-empty-state">
+          <p className="task-empty-title">🎯 No active quests</p>
+          <p className="task-empty-sub">Accept a task from P2P or System to get started!</p>
+          <div className="task-empty-nav-btns">
+            <button className="task-empty-nav-btn" onClick={() => onNavigate?.('p2p')}>P2P Tasks</button>
+            <button className="task-empty-nav-btn" onClick={() => onNavigate?.('community')}>System Tasks</button>
+          </div>
         </div>
-      </div>
-    ) : (
+      );
+    }
+
+    return (
       <TaskGrid
         tasks={filteredQuest}
         taskType="quest"
         acceptedIds={acceptedIds}
+        submittedIds={submittedIds}
         onCancelCard={handleCancelQuest}
-        onUpdateCard={updateTask}
+        onUpdateCard={handleQuestUpdate}
       />
     );
   };
@@ -230,8 +265,8 @@ function MyTaskModal({ onNavigate }) {
           <Toolbar
             taskType="quest"
             questMode
-            filterStatus="all"
-            onFilterChange={() => {}}
+            filterStatus={questStatus}
+            onFilterChange={handleQuestStatusFilter}
             sortBy={questSort}
             onSortChange={setQuestSort}
             sourceFilter={questSource}

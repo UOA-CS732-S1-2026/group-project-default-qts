@@ -19,6 +19,7 @@ function TaskCardFront({
   hideAccept = false,
   onCancel,
   isAccepted = false,
+  isSubmitted = false,
   onAccept,
   isCreatorView = false,
   onUpdateTask,
@@ -156,7 +157,7 @@ function TaskCardFront({
         {!hideAccept && (task.status !== 'cancelled' || task.type !== 'community') && (
           <StatusBadge status={getDisplayStatus(task, isAccepted)} />
         )}
-        {hideAccept && task.status === 'pending_review' && (
+        {hideAccept && (task.status === 'pending_review' || isSubmitted) && (
           <span className="task-card-submitted-badge">Submitted</span>
         )}
         <button className="task-card-close" onClick={onClose}>✕</button>
@@ -198,7 +199,7 @@ function TaskCardFront({
                   {isAccepted ? 'Accepted!' : 'Accept'}
                 </button>
               )}
-              {hideAccept && isAcceptable && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
+              {hideAccept && isAcceptable && !isSubmitted && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
                 <button
                   className="task-card-btn task-card-btn--cancel"
                   onClick={() => setShowCancelConfirm(true)}
@@ -206,7 +207,7 @@ function TaskCardFront({
                   Cancel
                 </button>
               )}
-              {hideAccept && isAcceptable && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
+              {hideAccept && isAcceptable && !isSubmitted && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
                 <button
                   className="task-card-btn task-card-btn--confirm"
                   onClick={() => setShowSubmitConfirm(true)}
@@ -214,7 +215,7 @@ function TaskCardFront({
                   Submit
                 </button>
               )}
-              {hideAccept && task.status === 'pending_review' && (
+              {hideAccept && (task.status === 'pending_review' || isSubmitted) && (
                 <p className="task-card-waiting-text">
                   {task.type === 'community'
                     ? 'Waiting for admin confirmation...'

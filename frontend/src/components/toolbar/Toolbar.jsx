@@ -18,12 +18,13 @@ function Toolbar({
   sourceFilter = null,
   onSourceFilter = () => {},
 }) {
-  const isFilterActive = questMode ? sourceFilter !== null : filterStatus !== 'all';
+  const isFilterActive = questMode ? (sourceFilter !== null || filterStatus !== null) : filterStatus !== 'all';
   const isSortActive = sortBy !== '';
   const showReset = isFilterActive || isSortActive || categoryFilter;
 
   const handleReset = () => {
     if (!questMode) onFilterChange('all');
+    else onFilterChange(null);
     onSortChange('');
     onCategoryFilter(null);
     onSourceFilter(null);
@@ -56,6 +57,16 @@ function Toolbar({
               >
                 System
               </button>
+              <select
+                className={`toolbar-select ${isFilterActive ? 'toolbar-select--active' : ''}`}
+                value={filterStatus ?? 'all'}
+                onChange={(e) => onFilterChange(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="pending_review">Submitted</option>
+                <option value="disputed">Disputed</option>
+              </select>
             </>
           )}
 
