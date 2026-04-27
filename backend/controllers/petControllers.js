@@ -3,6 +3,7 @@ const UserPet = require('../models/UserPet');
 const PetSpecies = require('../models/PetSpecies');
 const InventoryItem = require('../models/InventoryItem');
 const StoreItem = require('../models/StoreItem');
+const User = require('../models/User');
 
 const getActivePet = async (req, res) => {
   try {
@@ -433,8 +434,116 @@ const evolvePet = async (req, res) => {
   }
 };
 
+const activatePet = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_PET_ID',
+          message: 'Pet id is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'USER_ID_REQUIRED',
+          message: 'userId is required',
+          details: {}
+        }
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_USER_ID',
+          message: 'userId is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    session.startTransaction();
+
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw {
+        status: 404,
+        code: 'USER_NOT_FOUND',
+        message: 'User not found'
+      };
+    }
+
+    const targetPet = await UserPet.findById(id).session(session);
+    if (!targetPet) {
+      throw {
+        status: 404,
+        code: 'PET_NOT_FOUND',
+        message: 'Pet not found'
+      };
+    }
+
+    if (String(targetPet.userId) !== String(userId)) {
+      throw {
+        status: 403,
+        code: 'PET_NOT_OWNED',
+        message: 'This pet does not belong to the user'
+      };
+    }
+
+    await UserPet.updateMany(
+      { userId: user._id, status: 'ACTIVE' },
+      { $set: { status: 'INVENTORY' } },
+      { session }
+    );
+
+    targetPet.status = 'ACTIVE';
+    await targetPet.save({ session });
+
+    user.activePetId = targetPet._id;
+    await user.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Active pet updated successfully',
+      data: {
+        activePetId: targetPet._id
+      }
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error('activatePet error:', error);
+
+    return res.status(error.status || 500).json({
+      success: false,
+      error: {
+        code: error.code || 'PET_ACTIVATE_FAILED',
+        message: error.message || 'Failed to activate pet',
+        details: {}
+      }
+    });
+  }
+};
+
 module.exports = {
   getActivePet,
   feedPet,
-  evolvePet
+  evolvePet,
+  activatePet
 };
