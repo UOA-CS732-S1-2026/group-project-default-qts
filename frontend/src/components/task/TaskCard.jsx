@@ -6,6 +6,7 @@ import CoinBadge from '../ui/CoinBadge';
 import StatusBadge from '../ui/StatusBadge';
 import { CURRENT_USER_ID } from '../../constants/mockUser';
 import userIconSmall from '../../assets/user-icon-small.png';
+import { getDisplayStatus } from '../../utils/taskUtils';
 
 const CARD_COLORS = [
   'var(--color-card-1)',
@@ -72,7 +73,7 @@ function TaskCard({
               </>
             ) : (
               task.status !== 'cancelled' || task.type !== 'community' ? (
-                <StatusBadge status={isAccepted && task.status === 'open' ? 'active' : task.type === 'community' && task.status === 'active' ? 'open' : task.status} />
+                <StatusBadge status={getDisplayStatus(task, isAccepted)} />
               ) : null
             )}
             {task.type === 'community' && task.category && (

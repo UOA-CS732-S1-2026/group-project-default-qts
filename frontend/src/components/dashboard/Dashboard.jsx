@@ -44,7 +44,7 @@ function Dashboard() {
           modalType={modalType}
           onChangeType={openModal}
         >
-          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
+          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal, onNavigate: openModal })}
         </ModalBase>
       )}
 

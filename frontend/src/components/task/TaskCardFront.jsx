@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CoinBadge from '../ui/CoinBadge'
 import StatusBadge from '../ui/StatusBadge'
 import { CURRENT_USER_ID } from '../../constants/mockUser'
+import { getDisplayStatus } from '../../utils/taskUtils'
 
 const REPORT_REASONS = [
   'Task not completed',
@@ -153,7 +154,7 @@ function TaskCardFront({
 
       <div className="task-card-header">
         {!hideAccept && (task.status !== 'cancelled' || task.type !== 'community') && (
-          <StatusBadge status={isAccepted && task.status === 'open' ? 'active' : task.type === 'community' && task.status === 'active' ? 'open' : task.status} />
+          <StatusBadge status={getDisplayStatus(task, isAccepted)} />
         )}
         {hideAccept && task.status === 'pending_review' && (
           <span className="task-card-submitted-badge">Submitted</span>
@@ -205,7 +206,7 @@ function TaskCardFront({
                   Cancel
                 </button>
               )}
-              {hideAccept && task.type === 'p2p' && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
+              {hideAccept && isAcceptable && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
                 <button
                   className="task-card-btn task-card-btn--confirm"
                   onClick={() => setShowSubmitConfirm(true)}
@@ -214,7 +215,11 @@ function TaskCardFront({
                 </button>
               )}
               {hideAccept && task.status === 'pending_review' && (
-                <p className="task-card-waiting-text">Waiting for creator confirmation...</p>
+                <p className="task-card-waiting-text">
+                  {task.type === 'community'
+                    ? 'Waiting for admin confirmation...'
+                    : 'Waiting for creator confirmation...'}
+                </p>
               )}
               {/* TODO: Report button — nice-to-have, implement later when dispute system is ready */}
             </>

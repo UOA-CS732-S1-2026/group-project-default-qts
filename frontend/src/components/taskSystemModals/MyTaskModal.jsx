@@ -15,7 +15,7 @@ const devToggleStyle = {
   cursor: 'pointer', zIndex: 9999,
 };
 
-function MyTaskModal() {
+function MyTaskModal({ onNavigate }) {
   const { tasks, createTask, updateTask, deleteTask } = useTasks();
   const [isLoadingCreated, setIsLoadingCreated] = useState(true);
   const [isLoadingQuest, setIsLoadingQuest] = useState(false);
@@ -50,7 +50,7 @@ function MyTaskModal() {
     setError(false);
     setIsLoadingCreated(true);
     setIsLoadingQuest(true);
-    // TODO: ganti setTimeout dengan axios.get('/api/tasks') saat integrasi backend
+    // TODO: replace setTimeout with axios.get('/api/tasks') when integrating backend
     setTimeout(() => {
       setIsLoadingCreated(false);
       setIsLoadingQuest(false);
@@ -190,7 +190,11 @@ function MyTaskModal() {
     return filteredQuest.length === 0 ? (
       <div className="task-empty-state">
         <p className="task-empty-title">🎯 No active quests</p>
-        <p className="task-empty-sub">Accept a task from P2P or SystemTask to get started!</p>
+        <p className="task-empty-sub">Accept a task from P2P or System to get started!</p>
+        <div className="task-empty-nav-btns">
+          <button className="task-empty-nav-btn" onClick={() => onNavigate?.('p2p')}>P2P Tasks</button>
+          <button className="task-empty-nav-btn" onClick={() => onNavigate?.('community')}>System Tasks</button>
+        </div>
       </div>
     ) : (
       <TaskGrid

@@ -312,7 +312,7 @@ export const mockTasks = [
     timeLimit: 3,
     rewardCoins: 40,
     status: 'active',
-    assignee: { id: 'user-001', name: 'Alex' },
+    assignee: { id: 'user-002', name: 'Sarah' },
     createdBy: { id: 'user-006', name: 'Priya' },
     createdAt: '2026-04-23T11:00:00Z',
     category: 'organization',
@@ -342,7 +342,7 @@ export const mockTasks = [
     timeLimit: 2,
     rewardCoins: 15,
     status: 'active',
-    assignee: { id: 'user-001', name: 'Alex' },
+    assignee: { id: 'user-002', name: 'Sarah' },
     createdBy: { id: 'admin-001', name: 'Admin' },
     createdAt: '2026-04-12T09:00:00Z',
     difficulty: 'Easy',
@@ -448,6 +448,8 @@ export const mockTasks = [
   },
 
   // --- Quest tab mock data (assigned to CURRENT_USER_ID = 'user-001') ---
+  // Temporarily commented out to test empty state navigation buttons
+  /*
   {
     id: 'task-040',
     type: 'p2p',
@@ -509,4 +511,5 @@ export const mockTasks = [
     createdAt: '2026-04-21T10:00:00Z',
     category: 'organization',
   },
+  */
 ]

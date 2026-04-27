@@ -279,6 +279,27 @@
   max-width: 280px;
 }
 
+.task-empty-nav-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.task-empty-nav-btn {
+  font-family: var(--font-display);
+  font-size: 12px;
+  padding: 6px 14px;
+  background: var(--color-btn-primary);
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  color: var(--color-text-dark);
+  cursor: pointer;
+}
+
+.task-empty-nav-btn:hover {
+  opacity: 0.85;
+}
+
 .task-empty-create-btn {
   font-family: var(--font-display);
   font-size: 20px;

@@ -39,7 +39,7 @@ function P2PModal() {
   const fetchData = () => {
     setError(false);
     setIsLoading(true);
-    // TODO: ganti setTimeout dengan axios.get('/api/tasks') saat integrasi backend
+    // TODO: replace setTimeout with axios.get('/api/tasks') when integrating backend
     setTimeout(() => setIsLoading(false), 1000);
   };
 
