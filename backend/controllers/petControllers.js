@@ -289,7 +289,152 @@ const feedPet = async (req, res) => {
   }
 };
 
+const evolvePet = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_PET_ID',
+          message: 'Pet id is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'USER_ID_REQUIRED',
+          message: 'userId is required',
+          details: {}
+        }
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_USER_ID',
+          message: 'userId is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    const pet = await UserPet.findOne({
+      _id: id,
+      userId
+    }).populate('speciesId', 'code displayName');
+
+    if (!pet) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PET_NOT_FOUND',
+          message: 'Pet not found for this user',
+          details: {}
+        }
+      });
+    }
+
+    if (pet.stage === 'ADULT') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_ALREADY_MAX_STAGE',
+          message: 'Adult pet cannot evolve further',
+          details: {}
+        }
+      });
+    }
+
+    if (!pet.evolutionReady) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_NOT_ELIGIBLE_TO_EVOLVE',
+          message: 'Pet is not ready to evolve',
+          details: {}
+        }
+      });
+    }
+
+    if (pet.stage === 'EGG') {
+      if (pet.level !== 4) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'PET_NOT_ELIGIBLE_TO_EVOLVE',
+            message: 'Egg can only evolve at level 4',
+            details: {}
+          }
+        });
+      }
+
+      pet.stage = 'KID';
+      pet.level = 5;
+    } else if (pet.stage === 'KID') {
+      if (pet.level !== 9) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'PET_NOT_ELIGIBLE_TO_EVOLVE',
+            message: 'Kid can only evolve at level 9',
+            details: {}
+          }
+        });
+      }
+
+      pet.stage = 'ADULT';
+      pet.level = 10;
+    }
+
+    pet.growthPoints = 0;
+    pet.evolutionReady = false;
+    pet.isGrowthFrozen = false;
+
+    await pet.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Pet evolved successfully',
+      data: {
+        pet: {
+          id: pet._id,
+          speciesCode: pet.speciesId?.code || null,
+          speciesName: pet.speciesId?.displayName || null,
+          nickname: pet.nickname,
+          stage: pet.stage,
+          level: pet.level,
+          growthPoints: pet.growthPoints,
+          evolutionReady: pet.evolutionReady,
+          isGrowthFrozen: pet.isGrowthFrozen,
+          status: pet.status
+        }
+      }
+    });
+  } catch (error) {
+    console.error('evolvePet error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'PET_EVOLVE_FAILED',
+        message: 'Failed to evolve pet',
+        details: {}
+      }
+    });
+  }
+};
+
 module.exports = {
   getActivePet,
-  feedPet
+  feedPet,
+  evolvePet
 };
