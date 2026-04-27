@@ -22,6 +22,7 @@ const dashboardRoutes = require('./routes/dashboard');
 
 const storeRoutes = require('./routes/storeRoutes');
 const petRoutes = require('./routes/petRoutes');
+const petBaseRoutes = require('./routes/pet');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 
 
