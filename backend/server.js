@@ -13,6 +13,18 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const dashboardRoutes = require('./routes/dashboard');
 
+const { connectRedis, closeRedis, isRedisReady } = require('./config/redis');
+const { sendError } = require('./utils/apiResponse');
+
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+const dashboardRoutes = require('./routes/dashboard');
+
+const storeRoutes = require('./routes/storeRoutes');
+const petRoutes = require('./routes/petRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+
+
 const app = express();
 
 // Base middleware stack for API app
@@ -54,6 +66,10 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+app.use('/api/store', storeRoutes);
+app.use('/api/pets', petRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // Generic 404 for unknown endpoints
 app.use((req, res) => {

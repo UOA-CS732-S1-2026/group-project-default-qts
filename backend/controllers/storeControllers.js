@@ -1,0 +1,294 @@
+const mongoose = require('mongoose');
+
+const StoreItem = require('../models/StoreItem');
+const User = require('../models/User');
+const InventoryItem = require('../models/InventoryItem');
+const CoinTransaction = require('../models/CoinTransaction');
+const UserPet = require('../models/UserPet');
+const PetSpecies = require('../models/PetSpecies');
+
+const getStoreItems = async (_req, res) => {
+  try {
+    const items = await StoreItem.find({})
+      .select('code name type price growthValue meta createdAt updatedAt')
+      .sort({ price: 1 });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Store items loaded successfully',
+      data: {
+        items
+      }
+    });
+  } catch (error) {
+    console.error('getStoreItems error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'STORE_ITEMS_FETCH_FAILED',
+        message: 'Failed to load store items',
+        details: {}
+      }
+    });
+  }
+};
+
+const purchaseStoreItem = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const userId = req.userId;
+    const { itemCode, quantity = 1 } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'USER_ID_REQUIRED',
+          message: 'userId is required',
+          details: {}
+        }
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_USER_ID',
+          message: 'userId is not a valid ObjectId',
+          details: {}
+        }
+      });
+    }
+
+    if (!itemCode) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'ITEM_CODE_REQUIRED',
+          message: 'itemCode is required',
+          details: {}
+        }
+      });
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_QUANTITY',
+          message: 'quantity must be a positive integer',
+          details: {}
+        }
+      });
+    }
+
+    session.startTransaction();
+
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      throw {
+        status: 404,
+        code: 'USER_NOT_FOUND',
+        message: 'User not found'
+      };
+    }
+
+    const item = await StoreItem.findOne({ code: itemCode.toUpperCase().trim() }).session(session);
+    if (!item) {
+      throw {
+        status: 404,
+        code: 'STORE_ITEM_NOT_FOUND',
+        message: 'Store item not found'
+      };
+    }
+
+    const totalCost = item.price * quantity;
+
+    if (user.coins < totalCost) {
+      throw {
+        status: 400,
+        code: 'INSUFFICIENT_COINS',
+        message: 'Not enough coins to complete this purchase'
+      };
+    }
+
+    // RANDOM_EGG purchase requires max active pet
+    if (item.code === 'RANDOM_EGG') {
+      let activePet = null;
+
+      if (user.activePetId) {
+        activePet = await UserPet.findById(user.activePetId).session(session);
+      }
+
+      if (!activePet) {
+        activePet = await UserPet.findOne({
+          userId: user._id,
+          status: 'ACTIVE'
+        }).session(session);
+      }
+
+      if (!activePet) {
+        throw {
+          status: 400,
+          code: 'ACTIVE_PET_NOT_FOUND',
+          message: 'Active pet is required before purchasing a random egg'
+        };
+      }
+
+      const eggUnlocked =
+        activePet.stage === 'ADULT' &&
+        activePet.level === 10;
+
+      if (!eggUnlocked) {
+        throw {
+          status: 400,
+          code: 'STORE_ITEM_LOCKED',
+          message: 'Random Egg is locked until the active pet reaches max state'
+        };
+      }
+    }
+
+    // deduct coins
+    user.coins -= totalCost;
+    await user.save({ session });
+
+    // create ledger record
+    await CoinTransaction.create(
+      [
+        {
+          userId: user._id,
+          amount: -totalCost,
+          balanceAfter: user.coins,
+          type: 'STORE_PURCHASE',
+          relatedModel: 'StoreItem',
+          relatedId: item._id,
+          note: `Purchased ${quantity} x ${item.code}`
+        }
+      ],
+      { session }
+    );
+
+    // FOOD -> increment inventory
+    if (item.type === 'FOOD') {
+      const updatedInventory = await InventoryItem.findOneAndUpdate(
+        {
+          userId: user._id,
+          storeItemId: item._id
+        },
+        {
+          $inc: { quantity }
+        },
+        {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true,
+          session
+        }
+      ).populate('storeItemId', 'code name type price growthValue');
+
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Purchase completed successfully',
+        data: {
+          coins: user.coins,
+          purchasedItem: {
+            itemCode: item.code,
+            quantity
+          },
+          inventoryItem: {
+            id: updatedInventory._id,
+            itemCode: updatedInventory.storeItemId?.code || null,
+            itemName: updatedInventory.storeItemId?.name || null,
+            type: updatedInventory.storeItemId?.type || null,
+            price: updatedInventory.storeItemId?.price ?? null,
+            growthValue: updatedInventory.storeItemId?.growthValue ?? null,
+            quantity: updatedInventory.quantity
+          }
+        }
+      });
+    }
+
+    // RANDOM_EGG -> create new user pet(s)
+    const allSpecies = await PetSpecies.find({}).session(session);
+
+    if (!allSpecies.length) {
+      throw {
+        status: 500,
+        code: 'PET_SPECIES_NOT_AVAILABLE',
+        message: 'No pet species available for egg purchase'
+      };
+    }
+
+    const newPets = [];
+
+    for (let i = 0; i < quantity; i++) {
+      const randomSpecies = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+
+      const createdPets = await UserPet.create(
+        [
+          {
+            userId: user._id,
+            speciesId: randomSpecies._id,
+            nickname: '',
+            stage: 'EGG',
+            level: 1,
+            growthPoints: 0,
+            evolutionReady: false,
+            isGrowthFrozen: false,
+            status: 'INVENTORY'
+          }
+        ],
+        { session }
+      );
+
+      newPets.push(createdPets[0]);
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Random egg purchase completed successfully',
+      data: {
+        coins: user.coins,
+        purchasedItem: {
+          itemCode: item.code,
+          quantity
+        },
+        newPets: newPets.map((pet) => ({
+          id: pet._id,
+          speciesId: pet.speciesId,
+          stage: pet.stage,
+          level: pet.level,
+          status: pet.status
+        }))
+      }
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error('purchaseStoreItem error:', error);
+
+    return res.status(error.status || 500).json({
+      success: false,
+      error: {
+        code: error.code || 'STORE_PURCHASE_FAILED',
+        message: error.message || 'Failed to complete purchase',
+        details: {}
+      }
+    });
+  }
+};
+
+module.exports = {
+  getStoreItems,
+  purchaseStoreItem
+};
