@@ -29,6 +29,7 @@ function TaskCardFront({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showAcceptConfirm, setShowAcceptConfirm] = useState(false)
+  const [showAcceptSuccess, setShowAcceptSuccess] = useState(false)
   const [showReassignConfirm, setShowReassignConfirm] = useState(false)
   const [showConfirmReview, setShowConfirmReview] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
@@ -157,8 +158,8 @@ function TaskCardFront({
         {!hideAccept && (task.status !== 'cancelled' || task.type !== 'community') && (
           <StatusBadge status={getDisplayStatus(task, isAccepted)} />
         )}
-        {hideAccept && (task.status === 'pending_review' || isSubmitted) && (
-          <span className="task-card-submitted-badge">Submitted</span>
+        {hideAccept && (
+          <StatusBadge status={isSubmitted ? 'pending_review' : getDisplayStatus(task, isAccepted)} />
         )}
         <button className="task-card-close" onClick={onClose}>✕</button>
       </div>
@@ -193,7 +194,11 @@ function TaskCardFront({
                   className={`task-card-btn ${isAccepted ? 'task-card-btn--accepted' : 'task-card-btn--accept'}`}
                   disabled={isAccepted || task.status !== 'open' || isOwnTask}
                   style={(isAccepted || task.status !== 'open' || isOwnTask) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-                  title={isOwnTask ? "You can't accept your own task" : undefined}
+                  title={
+                    isOwnTask ? "You can't accept your own task" :
+                    task.status !== 'open' ? 'This task has already been taken' :
+                    undefined
+                  }
                   onClick={() => !isAccepted && task.status === 'open' && !isOwnTask && setShowAcceptConfirm(true)}
                 >
                   {isAccepted ? 'Accepted!' : 'Accept'}
@@ -222,6 +227,11 @@ function TaskCardFront({
                     : 'Waiting for creator confirmation...'}
                 </p>
               )}
+              {hideAccept && task.status === 'disputed' && (
+                <p className="task-card-waiting-text">
+                  Task is under review. Awaiting admin decision.
+                </p>
+              )}
               {/* TODO: Report button — nice-to-have, implement later when dispute system is ready */}
             </>
           )}
@@ -237,7 +247,12 @@ function TaskCardFront({
           <div className="task-card-confirm-actions">
             <button
               className="task-card-confirm-btn task-card-confirm-btn--yes"
-              onClick={() => { onAccept(task.id); setShowAcceptConfirm(false) }}
+              onClick={() => {
+                onAccept(task.id)
+                setShowAcceptConfirm(false)
+                setShowAcceptSuccess(true)
+                setTimeout(() => onClose(), 1500)
+              }}
             >
               Yes
             </button>
@@ -248,6 +263,14 @@ function TaskCardFront({
               No
             </button>
           </div>
+        </div>
+      )}
+
+      {showAcceptSuccess && (
+        <div className="task-card-mode-overlay task-card-accept-success">
+          <p className="task-card-accept-success-icon">✓</p>
+          <p className="task-card-accept-success-title">Quest Accepted!</p>
+          <p className="task-card-accept-success-sub">Good luck!</p>
         </div>
       )}
 

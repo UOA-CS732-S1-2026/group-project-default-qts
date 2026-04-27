@@ -74,7 +74,11 @@ function MyTaskModal({ onNavigate }) {
   const handleCancelQuest = (id) => {
     cancelTask(id);
     setCancelledQuestIds((prev) => new Set([...prev, id]));
-    updateTask(id, { status: 'open', assignee: null });
+    const task = tasks.find((t) => t.id === id);
+    if (task?.type === 'p2p') {
+      updateTask(id, { status: 'cancelled', assignee: null });
+    }
+    // community: no global status change — other players are unaffected
   };
 
   const handleUpdateCard = (id, fields) => {
@@ -107,7 +111,14 @@ function MyTaskModal({ onNavigate }) {
       return iExplicitlyAccepted || isAssignedToMe;
     });
     if (questSource) result = result.filter((t) => t.type === questSource);
-    if (questStatus) result = result.filter((t) => t.status === questStatus);
+    if (questStatus === 'pending_review') {
+      result = result.filter((t) => t.status === 'pending_review' || submittedIds.has(t.id));
+    } else if (questStatus === 'active') {
+      // Community tasks stay 'open' globally when locally accepted — match both
+      result = result.filter((t) => t.status === 'active' || (t.status === 'open' && acceptedIds.has(t.id)));
+    } else if (questStatus) {
+      result = result.filter((t) => t.status === questStatus);
+    }
     if (questCategory && questSource !== 'p2p') result = result.filter((t) => t.category === questCategory);
     if (questSort === 'reward-high') result.sort((a, b) => b.rewardCoins - a.rewardCoins);
     if (questSort === 'reward-low') result.sort((a, b) => a.rewardCoins - b.rewardCoins);
@@ -116,7 +127,7 @@ function MyTaskModal({ onNavigate }) {
     if (questSort === 'expiry-early') result.sort((a, b) => new Date(a.expiredAt) - new Date(b.expiredAt));
     if (questSort === 'expiry-late') result.sort((a, b) => new Date(b.expiredAt) - new Date(a.expiredAt));
     return result;
-  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds]);
+  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, submittedIds]);
 
   const handleQuestSourceFilter = (source) => {
     const next = questSource === source ? null : source;
@@ -185,13 +196,25 @@ function MyTaskModal({ onNavigate }) {
 
     if (activeSubTab === 'created') {
       if (isLoadingCreated) return skeletonLoader;
-      return filteredTasks.length === 0 ? (
-        <div className="task-empty-state">
-          <p className="task-empty-title">📝 No tasks created yet</p>
-          <p className="task-empty-sub">Tap + to create your first task!</p>
-          <button className="task-empty-create-btn" onClick={handleCreate}>+</button>
-        </div>
-      ) : (
+      if (filteredTasks.length === 0) {
+        const hasFilter = filterStatus !== 'all' || sortBy !== '';
+        if (hasFilter) {
+          return (
+            <div className="task-empty-state">
+              <p className="task-empty-title">🔍 No tasks found</p>
+              <p className="task-empty-sub">No tasks match the current filter.</p>
+            </div>
+          );
+        }
+        return (
+          <div className="task-empty-state">
+            <p className="task-empty-title">📝 No tasks created yet</p>
+            <p className="task-empty-sub">Tap + to create your first task!</p>
+            <button className="task-empty-create-btn" onClick={handleCreate}>+</button>
+          </div>
+        );
+      }
+      return (
         <TaskGrid
           tasks={filteredTasks}
           taskType="mytask"

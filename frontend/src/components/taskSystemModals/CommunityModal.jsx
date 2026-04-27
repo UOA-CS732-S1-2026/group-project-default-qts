@@ -1,13 +1,11 @@
 // Note: this file handles SystemTask (previously called Community)
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import useTaskManager from '../../hooks/useTaskManager';
-import { mockTasks } from '../../data/mockTasks';
+import { useTasks } from '../../context/TasksContext';
 import Toolbar from '../toolbar/Toolbar';
 import TaskGrid from '../task/TaskGrid';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 import loadIconSmall from '../../assets/load-icon-small.png';
-
-const communityData = mockTasks.filter((t) => t.type === 'community');
 
 const devToggleStyle = {
   position: 'fixed', bottom: 12, right: 12,
@@ -16,8 +14,14 @@ const devToggleStyle = {
 };
 
 function CommunityModal() {
+  const { tasks } = useTasks();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false); // set to true to test error UI
+
+  const communityData = useMemo(
+    () => tasks.filter((t) => t.type === 'community'),
+    [tasks]
+  );
 
   const {
     filteredTasks,

@@ -68,9 +68,7 @@ function TaskCard({
                 <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
                   {task.type === 'p2p' ? 'P2P' : 'System'}
                 </span>
-                {(task.status === 'pending_review' || isSubmitted) && (
-                  <span className="task-card-submitted-badge">Submitted</span>
-                )}
+                <StatusBadge status={isSubmitted ? 'pending_review' : getDisplayStatus(task, isAccepted)} />
               </>
             ) : (
               task.status !== 'cancelled' || task.type !== 'community' ? (
@@ -107,7 +105,7 @@ function TaskCard({
           </button>
         </div>
 
-        {isEditMode && isHovered && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'disputed' && (
+        {isEditMode && isHovered && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'disputed' && task.status !== 'completed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--edit"
@@ -126,6 +124,24 @@ function TaskCard({
             >
               🗑
             </button>
+          </div>
+        )}
+
+        {isEditMode && isHovered && task.status === 'completed' && (
+          <div className="task-card-mode-overlay task-card-mode-overlay--locked">
+            <span className="task-card-locked-icon">🔒</span>
+            <span className="task-card-locked-text">Task completed</span>
+          </div>
+        )}
+
+        {(isEditMode || isDeleteMode) && isHovered && (task.status === 'active' || task.status === 'pending_review' || task.status === 'disputed') && (
+          <div className="task-card-mode-overlay task-card-mode-overlay--locked">
+            <span className="task-card-locked-icon">🔒</span>
+            <span className="task-card-locked-text">
+              {task.status === 'active' && 'Task is active'}
+              {task.status === 'pending_review' && 'Awaiting review'}
+              {task.status === 'disputed' && 'Under dispute'}
+            </span>
           </div>
         )}
 

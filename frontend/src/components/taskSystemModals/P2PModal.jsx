@@ -19,7 +19,7 @@ function P2PModal() {
   const [error, setError] = useState(false); // set to true to test error UI
 
   const p2pData = useMemo(() =>
-    tasks.filter((t) => t.type === 'p2p' && (t.status === 'open' || t.status === 'active')),
+    tasks.filter((t) => t.type === 'p2p' && t.status === 'open'),
     [tasks]);
 
   const {
@@ -76,10 +76,17 @@ function P2PModal() {
           />
 
           {filteredTasks.length === 0 ? (
-            <div className="task-empty-state">
-              <p className="task-empty-title">📭 No P2P tasks available</p>
-              <p className="task-empty-sub">Check back later for new tasks!</p>
-            </div>
+            (filterStatus !== 'all' || sortBy !== '') ? (
+              <div className="task-empty-state">
+                <p className="task-empty-title">🔍 No tasks found</p>
+                <p className="task-empty-sub">No tasks match the current filter.</p>
+              </div>
+            ) : (
+              <div className="task-empty-state">
+                <p className="task-empty-title">📭 No P2P tasks available</p>
+                <p className="task-empty-sub">Check back later for new tasks!</p>
+              </div>
+            )
           ) : (
             <TaskGrid
               tasks={filteredTasks}

@@ -87,7 +87,7 @@ function Toolbar({
             </>
           )}
 
-          {!questMode && (
+          {!questMode && taskType !== 'p2p' && (
             <select
               className={`toolbar-select ${isFilterActive ? 'toolbar-select--active' : ''}`}
               value={filterStatus}

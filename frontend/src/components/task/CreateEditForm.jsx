@@ -43,7 +43,7 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
     if (!validate()) return;
     const taskData = {
       id: initialData?.id ?? `task-${Date.now()}`,
-      type: 'p2p',
+      type: initialData?.type ?? 'p2p',
       title,
       instructions,
       objectives: objectives.filter((obj) => obj.trim() !== ''),
