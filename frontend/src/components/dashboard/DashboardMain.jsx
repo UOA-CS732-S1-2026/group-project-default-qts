@@ -4,7 +4,7 @@ import PomodoroModal from '../pomodoro/PomodoroModal';
 import QuestSlider from './QuestSlider';
 import './DashboardMain.css'
 
-function DashboardMain() {
+function DashboardMain({ onQuestDetails }) {
     const [showPomo, setShowPomo] = useState(false);
 
     return(
@@ -14,7 +14,7 @@ function DashboardMain() {
                 <button onClick={() => setShowPomo(true)}>POMODORO</button>
             </div>
             <aside className="task-slider-section">
-                <QuestSlider />
+                <QuestSlider onDetails={onQuestDetails} />
             </aside>
 
             {showPomo && (

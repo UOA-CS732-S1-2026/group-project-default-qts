@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
@@ -15,7 +15,7 @@ const devToggleStyle = {
   cursor: 'pointer', zIndex: 9999,
 };
 
-function MyTaskModal({ onNavigate }) {
+function MyTaskModal({ onNavigate, questTargetId }) {
   const { tasks, createTask, updateTask, deleteTask } = useTasks();
   const [isLoadingCreated, setIsLoadingCreated] = useState(true);
   const [isLoadingQuest, setIsLoadingQuest] = useState(false);
@@ -40,6 +40,22 @@ function MyTaskModal({ onNavigate }) {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [expandedTaskId, setExpandedTaskId] = useState(null);
+  const handledTargetRef = useRef(null);
+
+  useEffect(() => {
+    if (questTargetId && questTargetId !== handledTargetRef.current) {
+      handledTargetRef.current = questTargetId;
+      setActiveSubTab('quest');
+      setIsLoadingQuest(true);
+      setExpandedTaskId(questTargetId);
+      setTimeout(() => {
+        setIsLoadingQuest(false);
+        // Clear after grid renders so TaskCard uses it once on mount only
+        setTimeout(() => setExpandedTaskId(null), 50);
+      }, 1000);
+    }
+  }, [questTargetId]);
 
   const { acceptedIds, cancelTask, submittedIds, submitTask } = useAcceptedTasks();
   const [questSource, setQuestSource] = useState(null);
@@ -266,6 +282,7 @@ function MyTaskModal({ onNavigate }) {
         submittedIds={submittedIds}
         onCancelCard={handleCancelQuest}
         onUpdateCard={handleQuestUpdate}
+        expandedTaskId={expandedTaskId}
       />
     );
   };

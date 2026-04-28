@@ -30,8 +30,10 @@ function TaskCard({
   isSubmitted = false,
   onAccept,
   isCreatorView = false,
+  onDetails,
+  initialExpanded = false,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -104,7 +106,7 @@ function TaskCard({
 
         <div className="task-card-footer">
           <CoinBadge amount={task.rewardCoins} />
-          <button className="task-card-btn" onClick={() => setIsExpanded(true)}>
+          <button className="task-card-btn" onClick={() => onDetails ? onDetails(task.id) : setIsExpanded(true)}>
             Details
           </button>
         </div>

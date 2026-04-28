@@ -15,6 +15,7 @@ function TaskGrid({
   submittedIds,
   onAcceptCard,
   isCreatorView = false,
+  expandedTaskId,
 }) {
   const showCreateSlot = isCreatorView && onCreateClick;
 
@@ -37,6 +38,7 @@ function TaskGrid({
           isSubmitted={submittedIds ? submittedIds.has(task.id) : false}
           onAccept={onAcceptCard}
           isCreatorView={isCreatorView}
+          initialExpanded={expandedTaskId === task.id}
         />
       ))}
 

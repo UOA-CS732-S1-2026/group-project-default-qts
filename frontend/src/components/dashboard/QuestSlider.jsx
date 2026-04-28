@@ -7,7 +7,7 @@ import '../../styles/components/QuestSlider.css';
 
 const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
 
-function QuestSlider() {
+function QuestSlider({ onDetails }) {
   const { tasks, updateTask } = useTasks();
   const { acceptedIds, submittedIds, cancelTask, submitTask } = useAcceptedTasks();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,8 +66,11 @@ function QuestSlider() {
 
   if (questTasks.length === 0) {
     return (
-      <div className="quest-slider-empty">
-        <p>No active quests</p>
+      <div className="quest-slider-section">
+        <h2 className="quest-slider-title">Your Quests</h2>
+        <div className="quest-slider-empty">
+          <p>No active quests</p>
+        </div>
       </div>
     );
   }
@@ -75,22 +78,26 @@ function QuestSlider() {
   const task = questTasks[safeIndex];
 
   return (
-    <div className="quest-slider">
-      <button className="quest-slider-arrow" onClick={handlePrev}>‹</button>
-      <div className="task-slider-container">
-        <TaskCard
-          key={task.id}
-          task={task}
-          index={safeIndex}
-          showSourceBadge
-          hideAccept
-          isAccepted={acceptedIds.has(task.id)}
-          isSubmitted={submittedIds.has(task.id)}
-          onCancel={handleCancel}
-          onUpdate={handleUpdate}
-        />
+    <div className="quest-slider-section">
+      <h2 className="quest-slider-title">Your Quests</h2>
+      <div className="quest-slider">
+        <button className="quest-slider-arrow" onClick={handlePrev}>‹</button>
+        <div className="task-slider-container">
+          <TaskCard
+            key={task.id}
+            task={task}
+            index={safeIndex}
+            showSourceBadge
+            hideAccept
+            isAccepted={acceptedIds.has(task.id)}
+            isSubmitted={submittedIds.has(task.id)}
+            onCancel={handleCancel}
+            onUpdate={handleUpdate}
+            onDetails={onDetails}
+          />
+        </div>
+        <button className="quest-slider-arrow" onClick={handleNext}>›</button>
       </div>
-      <button className="quest-slider-arrow" onClick={handleNext}>›</button>
     </div>
   );
 }
