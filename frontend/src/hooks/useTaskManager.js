@@ -33,6 +33,7 @@ function useTaskManager(tasks) {
 
   const toggleEditMode = () => { setIsEditMode((prev) => !prev); setIsDeleteMode(false); };
   const toggleDeleteMode = () => { setIsDeleteMode((prev) => !prev); setIsEditMode(false); };
+  const resetModes = () => { setIsEditMode(false); setIsDeleteMode(false); };
 
   return {
     filteredTasks,
@@ -41,6 +42,7 @@ function useTaskManager(tasks) {
     categoryFilter, setCategoryFilter,
     isEditMode, toggleEditMode,
     isDeleteMode, toggleDeleteMode,
+    resetModes,
   };
 }
 

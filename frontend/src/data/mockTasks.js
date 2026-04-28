@@ -509,4 +509,80 @@ export const mockTasks = [
     createdAt: '2026-04-21T10:00:00Z',
     category: 'organization',
   },
+
+  // --- Dispute system mock data ---
+
+  // Created sub-tab: creator sees Confirm + Reject + Dispute (pending_confirmation)
+  {
+    id: 'task-050',
+    type: 'p2p',
+    title: 'IRON MY SHIRTS',
+    instructions: 'Need someone to iron 5 dress shirts before my job interview on Friday.',
+    objectives: ['Iron 5 shirts neatly', 'Hang them after ironing'],
+    expiredAt: '2026-05-05T18:00:00Z',
+    timeLimit: 1,
+    rewardCoins: 18,
+    status: 'pending_confirmation',
+    assignee: { id: 'user-002', name: 'Sarah' },
+    createdBy: { id: 'user-001', name: 'Alex' },
+    createdAt: '2026-04-25T10:00:00Z',
+    submittedAt: '2026-04-27T15:00:00Z',
+    category: 'activity',
+  },
+
+  // Quest sub-tab: assignee sees Submit + Cancel + Raise Dispute (active + rejectedAt)
+  {
+    id: 'task-051',
+    type: 'p2p',
+    title: 'WATER MY PLANTS',
+    instructions: 'Going away for the weekend — need someone to water my 4 balcony plants on Saturday and Sunday.',
+    objectives: ['Water all 4 plants on Saturday', 'Water all 4 plants on Sunday'],
+    expiredAt: '2026-05-04T20:00:00Z',
+    timeLimit: 1,
+    rewardCoins: 12,
+    status: 'active',
+    assignee: { id: 'user-001', name: 'Alex' },
+    createdBy: { id: 'user-003', name: 'Tom' },
+    createdAt: '2026-04-24T09:00:00Z',
+    rejectedAt: '2026-04-27T16:00:00Z',
+    category: 'activity',
+  },
+
+  // Created sub-tab: disputed task created by current user (creator raised dispute)
+  {
+    id: 'task-052',
+    type: 'p2p',
+    title: 'EDIT MY VIDEO',
+    instructions: 'Need a 3-minute highlight reel edited from raw footage. Basic cuts, music, and captions.',
+    objectives: ['Cut raw footage to 3 minutes', 'Add background music', 'Add captions'],
+    expiredAt: '2026-05-06T22:59:00Z',
+    timeLimit: 4,
+    rewardCoins: 50,
+    status: 'disputed',
+    assignee: { id: 'user-004', name: 'Jamie' },
+    createdBy: { id: 'user-001', name: 'Alex' },
+    createdAt: '2026-04-20T11:00:00Z',
+    disputeRaisedBy: 'creator',
+    disputeReason: 'Result does not match the objective',
+    category: 'organization',
+  },
+
+  // Quest sub-tab: disputed task assigned to current user (assignee raised dispute)
+  {
+    id: 'task-053',
+    type: 'p2p',
+    title: 'BAKE COOKIES',
+    instructions: 'Bake 24 chocolate chip cookies and deliver to Room 204 by Saturday afternoon.',
+    objectives: ['Bake 24 cookies', 'Deliver to Room 204 before 3pm Saturday'],
+    expiredAt: '2026-05-03T15:00:00Z',
+    timeLimit: 3,
+    rewardCoins: 28,
+    status: 'disputed',
+    assignee: { id: 'user-001', name: 'Alex' },
+    createdBy: { id: 'user-006', name: 'Priya' },
+    createdAt: '2026-04-22T08:00:00Z',
+    disputeRaisedBy: 'assignee',
+    disputeReason: 'Creator is not responding',
+    category: 'activity',
+  },
 ]

@@ -329,7 +329,7 @@
 
 /* Category badge for community tasks */
 .task-card-category {
-  font-family: var(--font-display);
+  font-family: var(--font-code);
   font-size: 10px;
   padding: 4px 8px;
   border-radius: 20px;
@@ -403,7 +403,7 @@
 
 /* Source badge for Quest tab cards */
 .task-card-source-badge {
-  font-family: var(--font-display);
+  font-family: var(--font-code);
   font-size: 10px;
   padding: 4px 8px;
   border-radius: 20px;
@@ -512,4 +512,27 @@
   font-size: 11px;
   color: rgba(255, 255, 255, 0.7);
   margin: 0;
+}
+
+.task-card-toast {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13, 42, 26, 0.95);
+  border: 1px solid #2d5a3a;
+  border-radius: 4px;
+  color: #d4c9b0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  animation: toast-in 0.2s ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }

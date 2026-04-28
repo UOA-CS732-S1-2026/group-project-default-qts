@@ -1,15 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CoinBadge from '../ui/CoinBadge'
 import StatusBadge from '../ui/StatusBadge'
 import { CURRENT_USER_ID } from '../../constants/mockUser'
 import { getDisplayStatus } from '../../utils/taskUtils'
-
-const REPORT_REASONS = [
-  'Task not completed',
-  'Poor quality work',
-  'No communication',
-  'Wrong delivery',
-]
+import DisputeForm from './DisputeForm'
 
 function TaskCardFront({
   task,
@@ -33,8 +27,17 @@ function TaskCardFront({
   const [showReassignConfirm, setShowReassignConfirm] = useState(false)
   const [showConfirmReview, setShowConfirmReview] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
-  const [showReportChecklist, setShowReportChecklist] = useState(false)
-  const [reportReasons, setReportReasons] = useState([])
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false)
+  const [showDisputeForm, setShowDisputeForm] = useState(false)
+  const [disputePov, setDisputePov] = useState(null)
+  const [toastMsg, setToastMsg] = useState(null)
+
+  useEffect(() => {
+    if (!toastMsg) return
+    const t = setTimeout(() => setToastMsg(null), 3000)
+    return () => clearTimeout(t)
+  }, [toastMsg])
 
   const isOwnTask = task.type === 'p2p' && task.createdBy?.id === CURRENT_USER_ID
 
@@ -56,110 +59,149 @@ function TaskCardFront({
     onUpdateTask(task.id, { status: 'open', assignee: null })
   }
 
-  const toggleReason = (reason) => {
-    setReportReasons((prev) =>
-      prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]
-    )
+  const openDisputeForm = (pov) => {
+    setDisputePov(pov)
+    setShowDisputeForm(true)
   }
 
-  const handleSubmitReport = () => {
-    if (reportReasons.length === 0) return
-    onUpdateTask(task.id, { status: 'disputed' })
-    setShowReportChecklist(false)
-    setReportReasons([])
+  const handleDisputeSubmit = ({ reason, details }) => {
+    onUpdateTask(task.id, {
+      status: 'disputed',
+      disputeRaisedBy: disputePov,
+      disputeReason: reason,
+      disputeDetails: details,
+    })
+    setShowDisputeForm(false)
+    setToastMsg('Dispute raised. Awaiting admin review.')
   }
 
   const isAcceptable = task.type === 'p2p' || task.type === 'community'
 
   const renderCreatorButtons = () => {
     switch (task.status) {
-        case 'open':
-          return (
-            <>
-              <button
-                className="task-card-btn task-card-btn--flip"
-                style={{ fontSize: '11px', padding: '4px 8px' }}
-                onClick={onEditTask}
-              >
-                Edit
-              </button>
-              <button
-                className="task-card-btn task-card-btn--delete"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                Delete
-              </button>
-            </>
-          )
-        case 'active':
-          return (
+      case 'open':
+        return (
+          <>
             <button
-              className="task-card-btn task-card-btn--report"
-              onClick={() => setShowReportChecklist(true)}
+              className="task-card-btn task-card-btn--flip"
+              style={{ fontSize: '11px', padding: '4px 8px' }}
+              onClick={onEditTask}
             >
-              Report
+              Edit
             </button>
-          )
-        case 'pending_review':
-          // TODO: Dispute button — nice-to-have, implement later
-          return (
-            <button
-              className="task-card-btn task-card-btn--confirm"
-              onClick={() => setShowConfirmReview(true)}
-            >
-              Confirm
-            </button>
-          )
-        case 'disputed':
-          return null
-        case 'completed':
-          return (
             <button
               className="task-card-btn task-card-btn--delete"
               onClick={() => setShowDeleteConfirm(true)}
             >
               Delete
             </button>
-          )
-        case 'cancelled':
-        case 'expired':
-          return (
-            <>
-              <button
-                className="task-card-btn task-card-btn--flip"
-                style={{ fontSize: '11px', padding: '4px 8px' }}
-                onClick={onEditTask}
-              >
-                Edit
-              </button>
-              <button
-                className="task-card-btn task-card-btn--reassign"
-                onClick={() => setShowReassignConfirm(true)}
-              >
-                Re-assign
-              </button>
-              <button
-                className="task-card-btn task-card-btn--delete"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                Delete
-              </button>
-            </>
-          )
-        default:
-          return null
+          </>
+        )
+      case 'active':
+        return null
+      case 'pending_review':
+        return (
+          <>
+            <button
+              className="task-card-btn task-card-btn--confirm"
+              onClick={() => setShowConfirmReview(true)}
+            >
+              Confirm
+            </button>
+            <button
+              className="task-card-btn task-card-btn--delete"
+              onClick={() => setShowRejectConfirm(true)}
+            >
+              Reject
+            </button>
+            <button
+              className="task-card-btn task-card-btn--dispute"
+              onClick={() => openDisputeForm('creator')}
+            >
+              Dispute
+            </button>
+          </>
+        )
+      case 'pending_confirmation':
+        return (
+          <>
+            <button
+              className="task-card-btn task-card-btn--confirm"
+              onClick={() => setShowConfirmReview(true)}
+            >
+              Confirm
+            </button>
+            <button
+              className="task-card-btn task-card-btn--delete"
+              onClick={() => setShowRejectConfirm(true)}
+            >
+              Reject
+            </button>
+            <button
+              className="task-card-btn task-card-btn--dispute"
+              onClick={() => openDisputeForm('creator')}
+            >
+              Dispute
+            </button>
+          </>
+        )
+      case 'disputed':
+        return null
+      case 'completed':
+        return (
+          <button
+            className="task-card-btn task-card-btn--delete"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Delete
+          </button>
+        )
+      case 'cancelled':
+      case 'expired':
+        return (
+          <>
+            <button
+              className="task-card-btn task-card-btn--flip"
+              style={{ fontSize: '11px', padding: '4px 8px' }}
+              onClick={onEditTask}
+            >
+              Edit
+            </button>
+            <button
+              className="task-card-btn task-card-btn--reassign"
+              onClick={() => setShowReassignConfirm(true)}
+            >
+              Re-assign
+            </button>
+            <button
+              className="task-card-btn task-card-btn--delete"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              Delete
+            </button>
+          </>
+        )
+      default:
+        return null
     }
   }
+
+  const isAssigneeActive = hideAccept && isAcceptable && !isSubmitted &&
+    (task.status === 'active' || (isAccepted && task.status === 'open'))
 
   return (
     <div className="task-card-face task-card-front" style={{ backgroundColor: cardColor }}>
 
       <div className="task-card-header">
         {!hideAccept && (task.status !== 'cancelled' || task.type !== 'community') && (
-          <StatusBadge status={getDisplayStatus(task, isAccepted)} />
+          <StatusBadge status={task.type === 'community' ? 'open' : getDisplayStatus(task, isAccepted)} />
         )}
         {hideAccept && (
-          <StatusBadge status={isSubmitted ? 'pending_review' : getDisplayStatus(task, isAccepted)} />
+          <StatusBadge status={
+            isSubmitted && task.type === 'community' ? 'completed' :
+            isSubmitted ? 'pending_review' :
+            getDisplayStatus(task, isAccepted)
+          } />
         )}
         <button className="task-card-close" onClick={onClose}>✕</button>
       </div>
@@ -204,7 +246,7 @@ function TaskCardFront({
                   {isAccepted ? 'Accepted!' : 'Accept'}
                 </button>
               )}
-              {hideAccept && isAcceptable && !isSubmitted && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
+              {isAssigneeActive && (
                 <button
                   className="task-card-btn task-card-btn--cancel"
                   onClick={() => setShowCancelConfirm(true)}
@@ -212,7 +254,7 @@ function TaskCardFront({
                   Cancel
                 </button>
               )}
-              {hideAccept && isAcceptable && !isSubmitted && (task.status === 'active' || (isAccepted && task.status === 'open')) && (
+              {isAssigneeActive && (
                 <button
                   className="task-card-btn task-card-btn--confirm"
                   onClick={() => setShowSubmitConfirm(true)}
@@ -220,11 +262,22 @@ function TaskCardFront({
                   Submit
                 </button>
               )}
-              {hideAccept && (task.status === 'pending_review' || isSubmitted) && (
+              {isAssigneeActive && task.type === 'p2p' && task.rejectedAt && (
+                <button
+                  className="task-card-btn task-card-btn--dispute"
+                  onClick={() => openDisputeForm('assignee')}
+                >
+                  Raise Dispute
+                </button>
+              )}
+              {hideAccept && (task.status === 'pending_review' || task.status === 'pending_confirmation' || (isSubmitted && task.type !== 'community')) && (
                 <p className="task-card-waiting-text">
-                  {task.type === 'community'
-                    ? 'Waiting for admin confirmation...'
-                    : 'Waiting for creator confirmation...'}
+                  Waiting for creator confirmation...
+                </p>
+              )}
+              {hideAccept && isSubmitted && task.type === 'community' && (
+                <p className="task-card-waiting-text">
+                  Task completed! Coins will be rewarded.
                 </p>
               )}
               {hideAccept && task.status === 'disputed' && (
@@ -232,7 +285,6 @@ function TaskCardFront({
                   Task is under review. Awaiting admin decision.
                 </p>
               )}
-              {/* TODO: Report button — nice-to-have, implement later when dispute system is ready */}
             </>
           )}
           <button className="task-card-btn task-card-btn--flip" onClick={onFlip}>↺</button>
@@ -271,6 +323,14 @@ function TaskCardFront({
           <p className="task-card-accept-success-icon">✓</p>
           <p className="task-card-accept-success-title">Quest Accepted!</p>
           <p className="task-card-accept-success-sub">Good luck!</p>
+        </div>
+      )}
+
+      {showSubmitSuccess && (
+        <div className="task-card-mode-overlay task-card-accept-success">
+          <p className="task-card-accept-success-icon">🎉</p>
+          <p className="task-card-accept-success-title">Task Completed!</p>
+          <p className="task-card-accept-success-sub">Coins will be rewarded to your account.</p>
         </div>
       )}
 
@@ -363,15 +423,47 @@ function TaskCardFront({
         </div>
       )}
 
-      {showSubmitConfirm && (
+      {showRejectConfirm && (
         <div className="task-card-mode-overlay">
           <p className="task-card-confirm-text">
-            Are you sure you want to submit this task? You cannot cancel after submission.
+            Reject this submission? The assignee will be asked to redo the task.
           </p>
           <div className="task-card-confirm-actions">
             <button
               className="task-card-confirm-btn task-card-confirm-btn--yes"
-              onClick={() => { onUpdateTask(task.id, { status: 'pending_review' }); setShowSubmitConfirm(false) }}
+              onClick={() => { onUpdateTask(task.id, { status: 'active', rejectedAt: new Date().toISOString() }); setShowRejectConfirm(false) }}
+            >
+              Yes
+            </button>
+            <button
+              className="task-card-confirm-btn task-card-confirm-btn--no"
+              onClick={() => setShowRejectConfirm(false)}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSubmitConfirm && (
+        <div className="task-card-mode-overlay">
+          <p className="task-card-confirm-text">
+            {task.type === 'community'
+              ? 'Mark this task as completed? Coins will be rewarded to your account.'
+              : 'Are you sure you want to submit this task? You cannot cancel after submission.'}
+          </p>
+          <div className="task-card-confirm-actions">
+            <button
+              className="task-card-confirm-btn task-card-confirm-btn--yes"
+              onClick={() => {
+                const newStatus = task.type === 'p2p' ? 'pending_confirmation' : 'pending_review'
+                onUpdateTask(task.id, { status: newStatus, submittedAt: new Date().toISOString() })
+                setShowSubmitConfirm(false)
+                if (task.type === 'community') {
+                  setShowSubmitSuccess(true)
+                  setTimeout(() => onClose(), 2000)
+                }
+              }}
             >
               Yes
             </button>
@@ -385,39 +477,18 @@ function TaskCardFront({
         </div>
       )}
 
-      {showReportChecklist && (
-        <div className="task-card-mode-overlay">
-          <p className="task-card-confirm-text">Select reason(s):</p>
-          <div className="task-card-report-list">
-            {REPORT_REASONS.map((reason) => (
-              <label key={reason} className="task-card-report-item">
-                <input
-                  type="checkbox"
-                  checked={reportReasons.includes(reason)}
-                  onChange={() => toggleReason(reason)}
-                />
-                {reason}
-              </label>
-            ))}
-          </div>
-          <div className="task-card-confirm-actions">
-            <button
-              className="task-card-confirm-btn task-card-confirm-btn--yes"
-              onClick={handleSubmitReport}
-              disabled={reportReasons.length === 0}
-              style={reportReasons.length === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-            >
-              Submit
-            </button>
-            <button
-              className="task-card-confirm-btn task-card-confirm-btn--no"
-              onClick={() => { setShowReportChecklist(false); setReportReasons([]) }}
-            >
-              Cancel
-            </button>
-          </div>
+      {toastMsg && (
+        <div className="task-card-toast">
+          {toastMsg}
         </div>
       )}
+
+      <DisputeForm
+        isOpen={showDisputeForm}
+        onClose={() => setShowDisputeForm(false)}
+        onSubmit={handleDisputeSubmit}
+        pov={disputePov}
+      />
 
     </div>
   )

@@ -33,6 +33,7 @@ function MyTaskModal({ onNavigate }) {
     sortBy, setSortBy,
     isEditMode, toggleEditMode,
     isDeleteMode, toggleDeleteMode,
+    resetModes,
   } = useTaskManager(createdTasks);
 
   const [activeSubTab, setActiveSubTab] = useState('created');
@@ -62,6 +63,7 @@ function MyTaskModal({ onNavigate }) {
 
   const handleSubTabChange = (tab) => {
     setActiveSubTab(tab);
+    resetModes();
     if (tab === 'created' && !isLoadingCreated) {
       setIsLoadingCreated(true);
       setTimeout(() => setIsLoadingCreated(false), 1000);
@@ -99,7 +101,7 @@ function MyTaskModal({ onNavigate }) {
     }
   };
 
-  const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_review', 'disputed'];
+  const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
 
   const filteredQuest = useMemo(() => {
     let result = tasks.filter((t) => {
@@ -112,7 +114,10 @@ function MyTaskModal({ onNavigate }) {
     });
     if (questSource) result = result.filter((t) => t.type === questSource);
     if (questStatus === 'pending_review') {
-      result = result.filter((t) => t.status === 'pending_review' || submittedIds.has(t.id));
+      result = result.filter((t) =>
+        t.status === 'pending_review' ||
+        t.status === 'pending_confirmation'
+      );
     } else if (questStatus === 'active') {
       // Community tasks stay 'open' globally when locally accepted — match both
       result = result.filter((t) => t.status === 'active' || (t.status === 'open' && acceptedIds.has(t.id)));

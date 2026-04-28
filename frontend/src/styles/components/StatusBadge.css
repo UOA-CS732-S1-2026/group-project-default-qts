@@ -1,5 +1,5 @@
 .status-badge {
-  font-family: var(--font-display);
+  font-family: var(--font-code);
   font-size: 10px;
   padding: 4px 8px;
   border-radius: 20px;
@@ -25,11 +25,20 @@
   background-color: var(--color-badge-expired-bg);
 }
 
+.status-badge--rejected {
+  background-color: #fff1f2;
+  color: #dc2626;
+}
+
 .status-badge--disputed {
-  background-color: #b45309;
+  background-color: #dc2626;
 }
 
 .status-badge--pending_review {
+  background-color: #d97706;
+}
+
+.status-badge--pending_confirmation {
   background-color: #d97706;
 }
 

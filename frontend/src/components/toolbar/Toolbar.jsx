@@ -64,7 +64,7 @@ function Toolbar({
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
-                <option value="pending_review">Submitted</option>
+                <option value="pending_review">Pending Review</option>
                 <option value="disputed">Disputed</option>
               </select>
             </>

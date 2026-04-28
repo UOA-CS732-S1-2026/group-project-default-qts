@@ -5,7 +5,7 @@ import { CURRENT_USER_ID } from '../../constants/mockUser';
 import TaskCard from '../task/TaskCard';
 import '../../styles/components/QuestSlider.css';
 
-const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_review', 'disputed'];
+const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
 
 function QuestSlider() {
   const { tasks, updateTask } = useTasks();
