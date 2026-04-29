@@ -21,15 +21,10 @@ main{
 
 .task-slider-container{
     display: flex;
-    flex-direction: column;
-    width: 200px;
-    height: 250px;
+    width: fit-content;
     background-color: var(--color-bg-accent);
-    border-radius: 10px;
-}
-
-.task-slider-container h2{
-    margin: auto;
+    border-radius: var(--card-radius);
+    overflow: hidden;
 }
 
 /* Position the aside in the middle-right of the viewport */

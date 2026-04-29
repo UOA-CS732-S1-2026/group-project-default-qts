@@ -12,10 +12,10 @@
   --color-card-4: #1b4d5c; /* misc */
 
   /* === BADGE COLORS === */
-  --color-badge-open-bg: #3a7d5a;
+  --color-badge-open-bg: #16a34a;
   --color-badge-active-bg: var(--text-error);
   --color-badge-cancelled-bg: #666666;
-  --color-badge-expired-bg: #8b5e00;
+  --color-badge-expired-bg: #92400e;
   --color-badge-text: var(--text-inverted);
 
   /* === TEXT === */

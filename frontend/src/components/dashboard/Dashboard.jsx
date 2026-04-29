@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import useModal from '../../hooks/useModal';
+import { AcceptedTasksProvider } from '../../context/AcceptedTasksContext';
+import { TasksProvider } from '../../context/TasksContext';
 import ModalBase from '../taskSystemModals/ModalBase';
 import MyTaskModal from '../taskSystemModals/MyTaskModal';
 import P2PModal from '../taskSystemModals/P2PModal';
@@ -18,34 +20,53 @@ const MODAL_CONTENTS = {
 
 function Dashboard() {
   const { isOpen, modalType, openModal, closeModal } = useModal();
+  const [questTargetId, setQuestTargetId] = useState(null);
+
+  const openQuestDetail = (taskId) => {
+    setQuestTargetId(taskId);
+    openModal('mytask');
+  };
+
+  const handleCloseModal = () => {
+    closeModal();
+    setQuestTargetId(null);
+  };
 
   return (
+    <TasksProvider>
+    <AcceptedTasksProvider>
     <div className="app-container">
       <DashboardHeader></DashboardHeader>
 
-      <DasboardMain></DasboardMain>
+      <DasboardMain onQuestDetails={openQuestDetail}></DasboardMain>
 
       {/* <button className="btn-open-board" onClick={() => openModal('mytask')}>
         Open Task Board
       </button> */}
 
       {modalType === 'inventory' ? (
-        isOpen && <InventoryModal onClose={closeModal} />
+        isOpen && <InventoryModal onClose={handleCloseModal} />
       ) : modalType === 'store' ? (
-        isOpen && <StoreModal onClose={closeModal} />
+        isOpen && <StoreModal onClose={handleCloseModal} />
       ) : (
         <ModalBase
           isOpen={isOpen}
-          onClose={closeModal}
+          onClose={handleCloseModal}
           modalType={modalType}
           onChangeType={openModal}
         >
-          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], { onClose: closeModal })}
+          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], {
+            onClose: handleCloseModal,
+            onNavigate: openModal,
+            questTargetId: modalType === 'mytask' ? questTargetId : undefined,
+          })}
         </ModalBase>
       )}
 
-      <DashboardFooter openModal={openModal} modalType={modalType} closeModal={closeModal} />
+      <DashboardFooter openModal={openModal} modalType={modalType} closeModal={handleCloseModal} />
     </div>
+    </AcceptedTasksProvider>
+    </TasksProvider>
   );
 }
 
