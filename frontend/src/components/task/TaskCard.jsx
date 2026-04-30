@@ -4,6 +4,9 @@ import TaskCardFront from './TaskCardFront';
 import TaskCardBack from './TaskCardBack';
 import CoinBadge from '../ui/CoinBadge';
 import StatusBadge from '../ui/StatusBadge';
+import { CURRENT_USER_ID } from '../../constants/mockUser';
+import userIconSmall from '../../assets/user-icon-small.png';
+import { getDisplayStatus } from '../../utils/taskUtils';
 
 const CARD_COLORS = [
   'var(--color-card-1)',
@@ -12,8 +15,25 @@ const CARD_COLORS = [
   'var(--color-card-4)',
 ];
 
-function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdit, onDelete }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function TaskCard({
+  task,
+  index,
+  isEditMode = false,
+  isDeleteMode = false,
+  onEdit,
+  onDelete,
+  onUpdate,
+  showSourceBadge = false,
+  hideAccept = false,
+  onCancel,
+  isAccepted = false,
+  isSubmitted = false,
+  onAccept,
+  isCreatorView = false,
+  onDetails,
+  initialExpanded = false,
+}) {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -29,17 +49,38 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
     month: 'short',
   });
 
+  const showAssignee =
+    isCreatorView &&
+    task.type === 'p2p' &&
+    task.assignee &&
+    (task.status === 'active' || task.status === 'pending_confirmation' || task.status === 'pending_review' || task.status === 'disputed');
+
   return (
     <>
       <div
         className="task-card-small"
         style={{ backgroundColor: cardColor }}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => { setIsHovered(false); setShowDeleteConfirm(false); }}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="task-card-header">
           <div className="task-card-badges">
-            <StatusBadge status={task.status} />
+            {showSourceBadge ? (
+              <>
+                <span className={`task-card-source-badge task-card-source-badge--${task.type}`}>
+                  {task.type === 'p2p' ? 'P2P' : 'System'}
+                </span>
+                <StatusBadge status={
+                  isSubmitted && task.type === 'community' ? 'completed' :
+                  isSubmitted ? 'pending_review' :
+                  getDisplayStatus(task, isAccepted)
+                } />
+              </>
+            ) : (
+              task.status !== 'cancelled' || task.type !== 'community' ? (
+                <StatusBadge status={task.type === 'community' ? 'open' : getDisplayStatus(task, isAccepted)} />
+              ) : null
+            )}
             {task.type === 'community' && task.category && (
               <span className={`task-card-category task-card-category--${task.category}`}>
                 {task.category === 'organization' ? 'Organization' : 'Activity'}
@@ -50,16 +91,27 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
 
         <h3 className="task-card-title">{task.title}</h3>
         <p className="task-card-instructions">{task.instructions}</p>
-        <p className="task-card-expired">Expired: {expiredDate}</p>
+        {showAssignee && (
+          <p className="task-card-assignee">👤 {task.assignee.name}</p>
+        )}
+        <div className="task-card-meta-group">
+          {task.type === 'p2p' && !isCreatorView && (
+            <p className="task-card-posted-by">
+              <img src={userIconSmall} alt="" className="task-card-user-icon" />
+              {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
+            </p>
+          )}
+          <p className="task-card-expired">Exp: {expiredDate}</p>
+        </div>
 
         <div className="task-card-footer">
           <CoinBadge amount={task.rewardCoins} />
-          <button className="task-card-btn" onClick={() => setIsExpanded(true)}>
+          <button className="task-card-btn" onClick={() => onDetails ? onDetails(task.id) : setIsExpanded(true)}>
             Details
           </button>
         </div>
 
-        {isEditMode && isHovered && (
+        {isEditMode && isHovered && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'pending_confirmation' && task.status !== 'disputed' && task.status !== 'completed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--edit"
@@ -70,7 +122,7 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
           </div>
         )}
 
-        {isDeleteMode && isHovered && !showDeleteConfirm && (
+        {isDeleteMode && isHovered && !showDeleteConfirm && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'pending_confirmation' && task.status !== 'disputed' && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--delete"
@@ -81,9 +133,31 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
           </div>
         )}
 
-        {showDeleteConfirm && (
-          <div className="task-card-mode-overlay task-card-mode-overlay--confirm">
-            <p className="task-card-confirm-text">Delete this task?</p>
+        {isEditMode && isHovered && task.status === 'completed' && (
+          <div className="task-card-mode-overlay task-card-mode-overlay--locked">
+            <span className="task-card-locked-icon">🔒</span>
+            <span className="task-card-locked-text">Task completed</span>
+          </div>
+        )}
+
+        {(isEditMode || isDeleteMode) && isHovered && (task.status === 'active' || task.status === 'pending_review' || task.status === 'pending_confirmation' || task.status === 'disputed') && (
+          <div className="task-card-mode-overlay task-card-mode-overlay--locked">
+            <span className="task-card-locked-icon">🔒</span>
+            <span className="task-card-locked-text">
+              {task.status === 'active' && (task.rejectedAt ? 'Task is rejected' : 'Task is active')}
+              {task.status === 'pending_review' && 'Awaiting review'}
+              {task.status === 'pending_confirmation' && 'Awaiting review'}
+              {task.status === 'disputed' && 'Under dispute'}
+            </span>
+          </div>
+        )}
+
+      </div>
+
+      {showDeleteConfirm && (
+        <div className="task-card-delete-modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="task-card-delete-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="task-card-delete-modal-text">Delete this task?</p>
             <div className="task-card-confirm-actions">
               <button
                 className="task-card-confirm-btn task-card-confirm-btn--yes"
@@ -99,8 +173,8 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {isExpanded && (
         <div className="task-card-overlay" onClick={handleClose}>
@@ -111,12 +185,24 @@ function TaskCard({ task, index, isEditMode = false, isDeleteMode = false, onEdi
                 cardColor={cardColor}
                 onFlip={() => setIsFlipped(true)}
                 onClose={handleClose}
+                hideAccept={hideAccept}
+                onCancel={onCancel}
+                isAccepted={isAccepted}
+                isSubmitted={isSubmitted}
+                onAccept={onAccept}
+                isCreatorView={isCreatorView}
+                onUpdateTask={onUpdate}
+                onEditTask={() => { handleClose(); onEdit && onEdit(task); }}
+                onDeleteTask={(id) => { onDelete && onDelete(id); handleClose(); }}
               />
               <TaskCardBack
                 task={task}
                 cardColor={cardColor}
                 onFlip={() => setIsFlipped(false)}
                 onClose={handleClose}
+                isQuest={hideAccept}
+                isAccepted={isAccepted}
+                isCreatorView={isCreatorView}
               />
             </div>
           </div>
