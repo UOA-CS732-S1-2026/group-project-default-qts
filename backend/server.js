@@ -7,12 +7,16 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 
+const { connectRedis, closeRedis, isRedisReady } = require('./config/redis');
+const { sendError } = require('./utils/apiResponse');
+
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+const dashboardRoutes = require('./routes/dashboard');
+
 const storeRoutes = require('./routes/storeRoutes');
 const petRoutes = require('./routes/petRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
-const taskRoutes = require('./routes/taskRoutes');
-const focusRoutes = require('./routes/focusRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 
 
 const app = express();
@@ -60,10 +64,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/inventory', inventoryRoutes);
-
-app.use('/api/tasks', taskRoutes);
-app.use('/api/focus', focusRoutes);
-app.use('/api/admin', adminRoutes);
 
 // Generic 404 for unknown endpoints
 app.use((req, res) => {
