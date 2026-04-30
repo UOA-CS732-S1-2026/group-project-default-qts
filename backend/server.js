@@ -6,6 +6,12 @@ const mongoose = require('mongoose'); // used for Mongo readiness state
 require('dotenv').config();
 
 const connectDB = require('./config/db');
+const { connectRedis, closeRedis, isRedisReady } = require('./config/redis'); // added isRedisReady
+const { sendError } = require('./utils/apiResponse');
+
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+const dashboardRoutes = require('./routes/dashboard');
 
 const { connectRedis, closeRedis, isRedisReady } = require('./config/redis');
 const { sendError } = require('./utils/apiResponse');
