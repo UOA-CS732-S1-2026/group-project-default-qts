@@ -13,7 +13,7 @@ function PetView() {
     const [inventory, setInventory] = useState([]);
     const [selectedItemCode, setSelectedItemCode] = useState('');
 
-    // get active pet data on mount
+    // get active pet and inventory on mount
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
@@ -27,7 +27,7 @@ function PetView() {
                 const [petRes, inventoryRes] = await Promise.all([
                     getActivePet(token),
                     getInventory(token)
-                ]);
+                ]); // get active pet and inventory in parallel
                 const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
                 if (!activePet) setMessage('No active pet found.');
@@ -84,8 +84,6 @@ function PetView() {
 
     const { level, growthPoints } = pet || {};
     const percent = Math.max(0, Math.min(100, Number(growthPoints || 0)));
-
-    const foodItems = inventory.filter((item) => item.type === 'FOOD' && item.quantity > 0);
 
     return (
         <div className="pet-container">
