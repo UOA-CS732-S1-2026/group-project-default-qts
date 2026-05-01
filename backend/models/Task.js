@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const TaskSchema = new mongoose.Schema(
   {
-    type: { type: String, enum: ['COMMUNITY', 'PERSONAL', 'P2P'], required: true },
+    type: { type: String, enum: ['SYSTEM', 'PERSONAL', 'P2P'], required: true },
     visibility: { type: String, enum: ['PUBLIC', 'PRIVATE'], required: true, default: 'PUBLIC' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true },
