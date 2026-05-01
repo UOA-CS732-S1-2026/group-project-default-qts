@@ -21,6 +21,7 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const focusRoutes = require('./routes/focusRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const coinRoutes = require('./routes/coinRoutes');
 
 const app = express();
 
@@ -68,9 +69,10 @@ app.use('/api/store', storeRoutes);
 app.use('/api/pets', petRoutes);
 app.use('/api/inventory', inventoryRoutes);
 
-app.use('/api/tasks', taskRoutes)
+app.use('/api/tasks', taskRoutes);
 app.use('/api/focus', focusRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/coins', coinRoutes);
 
 // Generic 404 for unknown endpoints
 app.use((req, res) => {
