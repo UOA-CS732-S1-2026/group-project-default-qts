@@ -2,6 +2,7 @@ import './PetView.css'
 import petImg from '@/assets/pets/apteryx_1.png'
 import { useState, useEffect } from 'react'
 import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'
+import { getInventory } from '@/utils/inventoryApi'
 
 
 function PetView() {
@@ -9,6 +10,8 @@ function PetView() {
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [inventory, setInventory] = useState([]);
+    const [selectedItemCode, setSelectedItemCode] = useState('');
 
     // get active pet data on mount
     useEffect(() => {
@@ -21,10 +24,16 @@ function PetView() {
             setLoading(true);
             setMessage('');
             try {
-                const data = await getActivePet(token);
-                const activePet = data?.data?.activePet || data?.data?.pet || null;
+                const [petRes, inventoryRes] = await Promise.all([
+                    getActivePet(token),
+                    getInventory(token)
+                ]);
+                const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
                 if (!activePet) setMessage('No active pet found.');
+
+                const items = inventoryRes?.data?.items || [];
+                setInventory(items);
             } catch (error) {
                 setMessage('Failed to fetch pet data.');
             } finally {
@@ -38,11 +47,18 @@ function PetView() {
 
     const handleFeed = async () => {
         if (!pet) return;
+        if (!selectedItemCode) {
+            setMessage('Please select a food item.');
+            return;
+        }
         setLoading(true);
         setMessage('');
         try {
-            const data = await feedPet(pet.id, 'KIWI_FOOD', token); // temporary hardcoded item code
+            const data = await feedPet(pet.id, selectedItemCode, token);
             setPet(data?.data?.pet || data?.data?.activePet || null);
+
+            const inventoryRes = await getInventory(token);
+            setInventory(inventoryRes?.data?.items || []);
             setMessage('Fed pet successfully!');
         } catch (error) {
             setMessage('Failed to feed pet.');
@@ -68,6 +84,8 @@ function PetView() {
 
     const { level, growthPoints } = pet || {};
     const percent = Math.max(0, Math.min(100, Number(growthPoints || 0)));
+
+    const foodItems = inventory.filter((item) => item.type === 'FOOD' && item.quantity > 0);
 
     return (
         <div className="pet-container">
