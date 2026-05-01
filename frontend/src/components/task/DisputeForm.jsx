@@ -18,6 +18,7 @@ const ASSIGNEE_REASONS = [
 function DisputeForm({ isOpen, onClose, onSubmit, pov }) {
   const [selectedReason, setSelectedReason] = useState('')
   const [details, setDetails] = useState('')
+  const [showError, setShowError] = useState(false)
 
   if (!isOpen) return null
 
@@ -26,14 +27,19 @@ function DisputeForm({ isOpen, onClose, onSubmit, pov }) {
   const handleClose = () => {
     setSelectedReason('')
     setDetails('')
+    setShowError(false)
     onClose()
   }
 
   const handleSubmit = () => {
-    if (!selectedReason) return
+    if (!selectedReason) {
+      setShowError(true)
+      return
+    }
     onSubmit({ reason: selectedReason, details })
     setSelectedReason('')
     setDetails('')
+    setShowError(false)
   }
 
   return (
@@ -49,12 +55,15 @@ function DisputeForm({ isOpen, onClose, onSubmit, pov }) {
                 name="dispute-reason"
                 value={r}
                 checked={selectedReason === r}
-                onChange={() => setSelectedReason(r)}
+                onChange={() => { setSelectedReason(r); setShowError(false) }}
               />
               {r}
             </label>
           ))}
         </div>
+        {showError && (
+          <p className="dispute-form-error">Please select a reason before submitting.</p>
+        )}
         <textarea
           className="dispute-form-textarea"
           placeholder="Additional details (optional)"
@@ -65,7 +74,6 @@ function DisputeForm({ isOpen, onClose, onSubmit, pov }) {
         <div className="dispute-form-actions">
           <button
             className="dispute-form-btn dispute-form-btn--submit"
-            disabled={!selectedReason}
             onClick={handleSubmit}
           >
             Submit
