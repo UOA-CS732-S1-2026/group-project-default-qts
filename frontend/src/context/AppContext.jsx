@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react';
+import axios from 'axios';
 
 const AppContext = createContext(null);
 
@@ -72,25 +73,23 @@ export function AppProvider({ children }) {
 
 
     // --- Auth Actions ---
-    function login(emailOrUsername, password) {
-        const users = getUsers();
-        const user = users.find(
-            (u) =>
-                (u.email.toLowerCase() === emailOrUsername.toLowerCase() ||
-                    u.username.toLowerCase() === emailOrUsername.toLowerCase()) &&
-                u.password === password
-        );
-        if (!user) {
-            return { success: false, error: 'Incorrect email/username or password.' };
+    async function login(email, password) {
+        try {
+            const res = await axios.post('/api/auth/login', { email, password });
+            const { token, user } = res.data.data;
+            setCurrentUser(user);
+            localStorage.setItem('gf_current_user', JSON.stringify(user));
+            localStorage.setItem('token', token);
+            return { success: true, user };
+        } catch (err) {
+            return { success: false, error: err?.response?.data?.message || 'Login failed' };
         }
-        setCurrentUser(user);
-        localStorage.setItem('gf_current_user', JSON.stringify(user));
-        return { success: true, user };
     }
 
     function logout() {
         setCurrentUser(null);
         localStorage.removeItem('gf_current_user');
+        localStorage.removeItem('token');
     }
 
     function signup(formData) {
