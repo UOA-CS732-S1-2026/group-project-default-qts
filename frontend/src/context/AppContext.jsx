@@ -1,6 +1,13 @@
 import { createContext, useContext, useState } from 'react';
 import axios from 'axios';
 import { login, logout, register } from '../utils/authApi';
+import {
+    SECURITY_QUESTIONS,
+    ALLOWED_DOMAINS,
+    isValidUniEmail,
+    isValidPassword,
+    isValidDob,
+} from './appConstants';
 
 const AppContext = createContext(null);
 
@@ -48,11 +55,6 @@ function saveUsers(users) {
     localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
 }
 
-export const SECURITY_QUESTIONS = [
-    "What's my mother's first name?",
-    "Where is my favourite spot in campus?",
-    "What is the name of my first pet?",
-];
 
 // ============================================================
 // 1. Context providers and hooks: included in the context and can be accessed via useApp()
@@ -114,6 +116,18 @@ export function AppProvider({ children }) {
         }
     }
 
+    // --- Coin Actions ---
+    async function refreshCoins() {
+        try {
+            const res = await axios.get('/api/coins/balance');
+            const coins = res?.data?.data?.coins;
+            if (typeof coins === 'number') {
+                setCurrentUser((prev) => (prev ? { ...prev, coins } : prev));
+            }
+        } catch (err) {
+            return { success: false, error: err.message || 'Failed to refresh coins' };
+        }
+    }
 
     // --- Password Reset ---
     function findUserForReset(emailOrUsername) {
@@ -210,7 +224,8 @@ export function AppProvider({ children }) {
         updatePetName,
         updatePassword,
         updateAvatar,
-        SECURITY_QUESTIONS,
+        coins: currentUser?.coins ?? 0,
+        refreshCoins,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -221,31 +236,4 @@ export function useApp() {
     const ctx = useContext(AppContext);
     if (!ctx) throw new Error('useApp must be used within AppProvider');
     return ctx;
-}
-
-// ============================================================
-// 2. Utility: not included in the context and pure utility functions or constants
-// ============================================================
-// --- Validation Helpers ---
-export const ALLOWED_DOMAINS = ['@auckland.ac.nz', '@aucklanduni.ac.nz'];
-export function isValidUniEmail(email) {
-    return ALLOWED_DOMAINS.some((d) => email.toLowerCase().endsWith(d));
-}
-
-export function isValidPassword(password) {
-    return (
-        password.length >= 8 &&
-        /[A-Z]/.test(password) &&
-        /[a-z]/.test(password) &&
-        /[0-9]/.test(password)
-    );
-}
-
-export function isValidDob(dob) {
-    // MM-DD-YYYY
-    const re = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])-\d{4}$/;
-    if (!re.test(dob)) return false;
-    const [month, day, year] = dob.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }

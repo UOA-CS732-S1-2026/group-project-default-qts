@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { AnimatePresence, motion } from 'framer-motion'; 
+import { AnimatePresence, motion } from 'framer-motion';
+import { useApp } from '../../context/AppContext';
 import {
-    useApp,
+    SECURITY_QUESTIONS,
+    ALLOWED_DOMAINS,
     isValidUniEmail,
     isValidPassword,
     isValidDob,
-    SECURITY_QUESTIONS,
-} from '../../context/AppContext';
+} from '../../context/appConstants';
 import avatarPlaceholder from '../../assets/avatar_placeholder.png';
 
 export default function SignupModal({ onClose }) {
@@ -52,23 +53,23 @@ export default function SignupModal({ onClose }) {
             return;
         }
         if (!isValidDob(data.dob)) {
-            setError('dob', { 
-                type: 'manual', 
-                message: 'Must be MM-DD-YYYY format and a valid date.' 
+            setError('dob', {
+                type: 'manual',
+                message: 'Must be MM-DD-YYYY format and a valid date.'
             });
             return;
         }
         if (!isValidPassword(data.password)) {
-            setError('password', { 
-                type: 'manual', 
-                message: 'At least 8 chars, 1 uppercase, 1 lowercase, 1 number.' 
+            setError('password', {
+                type: 'manual',
+                message: 'At least 8 chars, 1 uppercase, 1 lowercase, 1 number.'
             });
             return;
         }
         if (data.password !== data.confirmPassword) {
-            setError('confirmPassword', { 
-                type: 'manual', 
-                message: 'Passwords do not match.' 
+            setError('confirmPassword', {
+                type: 'manual',
+                message: 'Passwords do not match.'
             });
             return;
         }

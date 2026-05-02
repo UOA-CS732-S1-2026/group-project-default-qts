@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { startFocusSession, completeFocusSession } from '../utils/pomodoroApi';
 
 // --- usePomodoro Hook: manages pomodoro logic e.g., timer state, mode cycling, pet position ---
@@ -9,7 +9,7 @@ export const MODES = {
     long: { label: 'LONG BREAK', duration: 15 * 60, short: 15 },
 };
 
-export default function usePomodoro() {
+export default function usePomodoro( { onFocusReward } = {} ) {
     const [mode, setMode] = useState('focus');
     const [timeLeft, setTimeLeft] = useState(MODES.focus.duration);
     const [isRunning, setIsRunning] = useState(false);
@@ -46,8 +46,9 @@ export default function usePomodoro() {
                     // focus mode ended, call completeFocusSession
                     if (mode === 'focus' && focusSessionId) {
                         completeFocusSession(focusSessionId)
-                            .then((res) => {
+                            .then(() => {
                                 setFocusMessage({ type: 'success', text: 'Focus completed! Reward issued.' });
+                                onFocusReward && onFocusReward();
                             })
                             .catch(() => {
                                 setFocusMessage({ type: 'error', text: 'Failed to report focus completion.' });
@@ -57,7 +58,7 @@ export default function usePomodoro() {
                             });
                     }
                     // Determine next mode and show bubble
-                    const { nextMode, newFocusCount } = getNextMode(mode, mode === 'focus' ? focusCount : focusCount);
+                    const { nextMode } = getNextMode(mode, mode === 'focus' ? focusCount : focusCount);
                     if (mode === 'focus') setFocusCount((c) => c + 1);
                     setNextModeQueued({ nextMode, newFocusCount: mode === 'focus' ? focusCount + 1 : focusCount });
                     setShowBubble(true);
@@ -67,14 +68,18 @@ export default function usePomodoro() {
             });
         }, 1000);
         return () => clearInterval(id);
-    }, [isRunning, mode, focusCount, focusSessionId]);
+    }, [isRunning, mode, focusCount, focusSessionId, onFocusReward]);
 
     // start focus session
     async function start() {
         if (mode === 'focus' && !focusSessionId) {
             try {
-                const res = await startFocusSession();
-                setFocusSessionId(res.id);
+                const res = await startFocusSession(MODES.focus.duration);
+                const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
+                if (!sessionId) {
+                    throw new Error('Missing session id');
+                }
+                setFocusSessionId(sessionId);
             } catch {
                 setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
                 return;

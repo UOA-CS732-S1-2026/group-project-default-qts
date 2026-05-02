@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useApp, isValidPassword } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext';
+import { isValidPassword } from '../../context/appConstants';
 import ChangePasswordModal from './settingspanel/ChangePasswordModal';
 import ChangeUsernameModal from './settingspanel/ChangeUsernameModal';
 import ChangePetNameModal from './settingspanel/ChangePetNameModal';

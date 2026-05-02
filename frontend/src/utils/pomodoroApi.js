@@ -1,13 +1,29 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // Start a new focus session
-export async function startFocusSession() {
-  const res = await axios.post('/api/focus/start');
+export async function startFocusSession(plannedDurationSec) {
+  const res = await axios.post(
+    `${API_BASE_URL}/api/focus/start`,
+    plannedDurationSec ? { plannedDurationSec } : {},
+    { headers: getAuthHeaders() }
+  );
   return res.data; // should contain session info, e.g. { id, ... }
 }
 
 // Complete a focus session (normal or cancelled)
 export async function completeFocusSession(sessionId, { cancelled = false } = {}) {
-  const res = await axios.post(`/api/focus/${sessionId}/complete`, { cancelled });
+  const endpoint = cancelled ? 'cancel' : 'complete';
+  const res = await axios.post(
+    `${API_BASE_URL}/api/focus/${sessionId}/${endpoint}`,
+    {},
+    { headers: getAuthHeaders() }
+  );
   return res.data; // should contain reward info or status
 }

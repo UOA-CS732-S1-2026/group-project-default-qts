@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useApp, isValidPassword } from '../../../context/AppContext';
+import { useApp } from '../../../context/AppContext';
+import { isValidPassword } from '../../../context/appConstants';
 import MiniModal from './MiniModal';
 
 export default function ChangePasswordModal({ onClose }) {

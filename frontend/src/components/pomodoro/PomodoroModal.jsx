@@ -3,17 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import usePomodoro from '../../hooks/usePomodoro';
 import petImg from '../../assets/pet_placeholder.png';
 import '../../styles/pomodoro.css';
+import { useApp } from '../../context/AppContext';
 
 const MotionDiv = motion.div;
 
 export default function PomodoroModal({ onRequestClose } = {}) {
+	const { refreshCoins } = useApp();
 	const {
 		mode, timeLeft, isRunning, petProgress,
 		showBubble, bubbleMessage, start, pause, dismissBubble,
-		switchMode, formatTime, MODES: modes,
-	} = usePomodoro();
+		switchMode, formatTime, MODES: modes, focusMessage,
+	} = usePomodoro({ onFocusReward: refreshCoins });
 
-	const handleClose = () => {
+	const handleClose = async () => {
+		await pause();
 		if (typeof onRequestClose === 'function') onRequestClose();
 	};
 
@@ -24,7 +27,6 @@ export default function PomodoroModal({ onRequestClose } = {}) {
 	}, []);
 
 	const modeKeys = ['focus', 'short', 'long'];
-	const modeLabels = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };
 	const tabLabels = {
 		focus: 'FOCUS',
 		short: <>SHORT<br />BREAK</>,
@@ -91,6 +93,11 @@ export default function PomodoroModal({ onRequestClose } = {}) {
 						{mode === 'short' && `Short break · ${modes.short.short} minutes`}
 						{mode === 'long' && `Long break · ${modes.long.short} minutes`}
 					</div>
+					{focusMessage && (
+						<div className={`pomo-status-message ${focusMessage.type || 'info'}`}>
+							{focusMessage.text}
+						</div>
+					)}
 				</div>
 
 				{/* Progress Track + Pet */}

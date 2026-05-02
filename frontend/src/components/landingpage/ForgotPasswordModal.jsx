@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useApp, isValidPassword, SECURITY_QUESTIONS } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext';
+import { isValidPassword, SECURITY_QUESTIONS } from '../../context/appConstants';
 
 // ============================================================
 //   Step 1: Verify username or email
