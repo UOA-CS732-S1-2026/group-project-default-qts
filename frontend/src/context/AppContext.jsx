@@ -1,37 +1,9 @@
 import { createContext, useContext, useState } from 'react';
 import axios from 'axios';
+import { login, logout, register } from '../utils/authApi';
 
 const AppContext = createContext(null);
 
-// --- Mock User Data ---
-const MOCK_USERS_KEY = 'gf_mock_users';
-const DEFAULT_USERS = [
-    {
-        id: 1,
-        email: 'test@auckland.ac.nz',
-        username: 'testuser',
-        password: 'Test1234',
-        dob: '01-01-2000',
-        petName: 'Kiwi',
-        avatar: null,
-        securityQuestion: 0,
-        securityAnswer: 'mum',
-        stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
-    },
-];
-
-function getUsers() {
-    try {
-        const stored = localStorage.getItem(MOCK_USERS_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_USERS;
-    } catch {
-        return DEFAULT_USERS;
-    }
-}
-
-function saveUsers(users) {
-    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
-}
 
 export const SECURITY_QUESTIONS = [
     "What's my mother's first name?",
@@ -73,50 +45,30 @@ export function AppProvider({ children }) {
 
 
     // --- Auth Actions ---
-    async function login(email, password) {
+    async function handleLogin(email, password) {
         try {
-            const res = await axios.post('/api/auth/login', { email, password });
-            const { token, user } = res.data.data;
-            setCurrentUser(user);
-            localStorage.setItem('gf_current_user', JSON.stringify(user));
-            localStorage.setItem('token', token);
-            return { success: true, user };
+            await login(email, password, setCurrentUser);
+            return { success: true };
         } catch (err) {
             return { success: false, error: err?.response?.data?.message || 'Login failed' };
         }
     }
 
-    function logout() {
-        setCurrentUser(null);
+    async function handleLogout() {
+        await logout(setCurrentUser);
         localStorage.removeItem('gf_current_user');
-        localStorage.removeItem('token');
     }
 
-    function signup(formData) {
-        const users = getUsers();
+    async function handleRegister(formData) {
         if (!isValidUniEmail(formData.email)) {
             return { success: false, error: 'Email must be a valid University of Auckland address.' };
         }
-        if (users.find((u) => u.email.toLowerCase() === formData.email.toLowerCase())) {
-            return { success: false, error: 'This email is already registered.' };
+        try {
+            await register(formData);
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: err.message || 'Register failed' };
         }
-        if (users.find((u) => u.username.toLowerCase() === formData.username.toLowerCase())) {
-            return { success: false, error: 'This username is already taken.' };
-        }
-        const newUser = {
-            id: Date.now(),
-            email: formData.email,
-            username: formData.username,
-            password: formData.password,
-            dob: formData.dob,
-            petName: 'Buddy',
-            avatar: formData.avatar || null,
-            securityQuestion: formData.securityQuestion,
-            securityAnswer: formData.securityAnswer.toLowerCase().trim(),
-            stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
-        };
-        saveUsers([...users, newUser]);
-        return { success: true };
     }
 
 
@@ -206,9 +158,9 @@ export function AppProvider({ children }) {
         currentUser,
         darkMode,
         toggleDarkMode,
-        login,
-        logout,
-        signup,
+        login: handleLogin,
+        logout: handleLogout,
+        register: handleRegister,
         findUserForReset,
         resetPassword,
         updateUsername,
@@ -224,7 +176,7 @@ export function AppProvider({ children }) {
 // Custom hook to use the AppContext
 export function useApp() {
     const ctx = useContext(AppContext);
-    if (!ctx) throw new Error('useApp must be used within AppProvider'); 
+    if (!ctx) throw new Error('useApp must be used within AppProvider');
     return ctx;
 }
 
