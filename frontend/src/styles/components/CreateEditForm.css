@@ -23,7 +23,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 26px;
-  border-bottom: 2px solid #1a1a1a;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .form-title {
@@ -108,7 +108,7 @@
   font-family: var(--font-display);
   font-size: 12px;
   background: none;
-  border: 1px dashed #1a1a1a;
+  border: 1px dashed var(--border-color);
   padding: 4px 8px;
   color: var(--color-text-dark);
   align-self: flex-start;
@@ -134,19 +134,33 @@
 
 .form-footer {
   padding: 12px 20px;
-  border-top: 2px solid #1a1a1a;
+  border-top: 2px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
 }
 
 .form-btn--submit {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 14px;
   padding: 8px 16px;
   background: var(--color-btn-primary);
   border: var(--border-pixel);
   box-shadow: var(--shadow-pixel);
   color: var(--color-text-dark);
+}
+
+.form-btn--cancel {
+  font-family: var(--font-display);
+  font-size: 14px;
+  padding: 8px 16px;
+  background: transparent;
+  border: var(--border-card);
+  color: var(--color-text-dark);
+  margin-right: 10px;
+}
+
+.form-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .form-btn--submit:hover {

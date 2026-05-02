@@ -15,6 +15,20 @@ const DEFAULT_USERS = [
         avatar: null,
         securityQuestion: 0,
         securityAnswer: 'mum',
+        role: 'user',
+        stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
+    },
+    {
+        id: 2,
+        email: 'admin@auckland.ac.nz',
+        username: 'admin',
+        password: 'Admin1234',
+        dob: '01-01-1990',
+        petName: '',
+        avatar: null,
+        securityQuestion: 0,
+        securityAnswer: 'admin',
+        role: 'admin',
         stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
     },
 ];
@@ -114,6 +128,7 @@ export function AppProvider({ children }) {
             avatar: formData.avatar || null,
             securityQuestion: formData.securityQuestion,
             securityAnswer: formData.securityAnswer.toLowerCase().trim(),
+            role: 'user',
             stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
         };
         saveUsers([...users, newUser]);

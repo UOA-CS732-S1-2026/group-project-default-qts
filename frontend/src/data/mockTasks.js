@@ -271,6 +271,9 @@ export const mockTasks = [
     createdBy: { id: 'user-001', name: 'Alex' },
     createdAt: '2026-04-20T14:00:00Z',
     category: 'activity',
+    disputeRaisedBy: 'assignee',
+    disputeReason: 'Task was already fixed before I arrived',
+    disputeDetails: 'The bike chain was already back on when I got there. Creator should not have posted this.',
   },
   {
     id: 'task-020',
