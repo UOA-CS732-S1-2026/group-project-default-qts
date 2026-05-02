@@ -4,6 +4,49 @@ import { login, logout, register } from '../utils/authApi';
 
 const AppContext = createContext(null);
 
+// --- Mock User Data ---
+const MOCK_USERS_KEY = 'gf_mock_users';
+const DEFAULT_USERS = [
+    {
+        id: 1,
+        email: 'test@auckland.ac.nz',
+        username: 'testuser',
+        password: 'Test1234',
+        dob: '01-01-2000',
+        petName: 'Kiwi',
+        avatar: null,
+        securityQuestion: 0,
+        securityAnswer: 'mum',
+        role: 'user',
+        stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
+    },
+    {
+        id: 2,
+        email: 'admin@auckland.ac.nz',
+        username: 'admin',
+        password: 'Admin1234',
+        dob: '01-01-1990',
+        petName: '',
+        avatar: null,
+        securityQuestion: 0,
+        securityAnswer: 'admin',
+        role: 'admin',
+        stats: { publicTaskCompleted: 0, p2pTaskCompleted: 0, tasksCreated: 0 },
+    },
+];
+
+function getUsers() {
+    try {
+        const stored = localStorage.getItem(MOCK_USERS_KEY);
+        return stored ? JSON.parse(stored) : DEFAULT_USERS;
+    } catch {
+        return DEFAULT_USERS;
+    }
+}
+
+function saveUsers(users) {
+    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+}
 
 export const SECURITY_QUESTIONS = [
     "What's my mother's first name?",
