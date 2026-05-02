@@ -12,7 +12,8 @@ const { signAccessToken } = require('../utils/jwt');
 const router = express.Router();
 
 function isAucklandUniEmail(email) {
-  return email.endsWith('@aucklanduni.ac.nz');
+  const normalized = String(email).toLowerCase();
+  return normalized.endsWith('@auckland.ac.nz') || normalized.endsWith('@aucklanduni.ac.nz');
 }
 
 // keep full handler in try/catch so async DB errors are always returned cleanly
@@ -27,7 +28,7 @@ router.post('/register', async (req, res) => {
     const normalizedEmail = String(email).trim().toLowerCase();
 
     if (!isAucklandUniEmail(normalizedEmail)) {
-      return sendError(res, 'Only @aucklanduni.ac.nz emails are allowed', 400);
+      return sendError(res, 'Only Auckland University emails are allowed', 400);
     }
 
     if (String(password).length < 8) {
