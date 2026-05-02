@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { startFocusSession, completeFocusSession } from '../utils/pomodoroApi';
 
 // --- usePomodoro Hook: manages pomodoro logic e.g., timer state, mode cycling, pet position ---
 
@@ -15,6 +16,8 @@ export default function usePomodoro() {
     const [focusCount, setFocusCount] = useState(0); // number of completed focus sessions
     const [showBubble, setShowBubble] = useState(false);
     const [nextModeQueued, setNextModeQueued] = useState(null);
+    const [focusSessionId, setFocusSessionId] = useState(null);
+    const [focusMessage, setFocusMessage] = useState(null);
 
     const totalDuration = MODES[mode].duration;
     const elapsed = totalDuration - timeLeft;
@@ -39,6 +42,20 @@ export default function usePomodoro() {
                 if (t <= 1) {
                     clearInterval(id);
                     setIsRunning(false);
+
+                    // focus mode ended, call completeFocusSession
+                    if (mode === 'focus' && focusSessionId) {
+                        completeFocusSession(focusSessionId)
+                            .then((res) => {
+                                setFocusMessage({ type: 'success', text: 'Focus completed! Reward issued.' });
+                            })
+                            .catch(() => {
+                                setFocusMessage({ type: 'error', text: 'Failed to report focus completion.' });
+                            })
+                            .finally(() => {
+                                setFocusSessionId(null);
+                            });
+                    }
                     // Determine next mode and show bubble
                     const { nextMode, newFocusCount } = getNextMode(mode, mode === 'focus' ? focusCount : focusCount);
                     if (mode === 'focus') setFocusCount((c) => c + 1);
@@ -50,10 +67,36 @@ export default function usePomodoro() {
             });
         }, 1000);
         return () => clearInterval(id);
-    }, [isRunning, mode, focusCount]);
+    }, [isRunning, mode, focusCount, focusSessionId]);
 
-    function start() { setIsRunning(true); }
-    function pause() { setIsRunning(false); }
+    // start focus session
+    async function start() {
+        if (mode === 'focus' && !focusSessionId) {
+            try {
+                const res = await startFocusSession();
+                setFocusSessionId(res.id);
+            } catch {
+                setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
+                return;
+            }
+        }
+        setIsRunning(true);
+    }
+
+    // pause focus session
+    async function pause() {
+        setIsRunning(false);
+        if (mode === 'focus' && focusSessionId) {
+            try {
+                await completeFocusSession(focusSessionId, { cancelled: true });
+                setFocusMessage({ type: 'info', text: 'Focus paused, no reward earned.' });
+            } catch {
+                setFocusMessage({ type: 'error', text: 'Failed to report focus pause.' });
+            } finally {
+                setFocusSessionId(null);
+            }
+        }
+    }
 
     function dismissBubble() {
         setShowBubble(false);
@@ -67,11 +110,23 @@ export default function usePomodoro() {
         }
     }
 
-    function switchMode(newMode) {
-        setMode(newMode);
-        setTimeLeft(MODES[newMode].duration);
+    async function switchMode(newMode) {
         setIsRunning(false);
         setShowBubble(false);
+
+        // If switching away from focus mode, report cancellation if session is active
+        if (mode === 'focus' && focusSessionId) {
+            try {
+                await completeFocusSession(focusSessionId, { cancelled: true });
+                setFocusMessage({ type: 'info', text: 'Focus paused, no reward earned.' });
+            } catch {
+                setFocusMessage({ type: 'error', text: 'Failed to report focus pause.' });
+            } finally {
+                setFocusSessionId(null);
+            }
+        }
+        setMode(newMode);
+        setTimeLeft(MODES[newMode].duration);
     }
 
     // Format time
@@ -103,5 +158,6 @@ export default function usePomodoro() {
         formatTime,
         totalDuration,
         MODES,
+        focusMessage, // reward or error message related to focus session completion
     };
 }
