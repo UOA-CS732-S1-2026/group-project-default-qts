@@ -1,27 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import StatusBadge from '../ui/StatusBadge';
 import CoinBadge from '../ui/CoinBadge';
 import AdminCreateForm from './AdminCreateForm';
 import AdminEditForm from './AdminEditForm';
+import loadIconSmall from '../../assets/load-icon-small.png';
 
 export default function AdminTaskList() {
-    const { tasks, createTask, updateTask, deleteTask } = useTasks();
+    const { tasks, isLoading, error, refetch, createTask, updateTask, deleteTask } = useTasks();
     const [categoryFilter, setCategoryFilter] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editTask, setEditTask] = useState(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-    const acceptedCountsRef = useRef(new Map());
+    const [createError, setCreateError] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
 
     const communityTasks = tasks.filter((t) => t.type === 'community');
-
-    // Seed accepted counts for tasks not yet in the map
-    communityTasks.forEach((t) => {
-        if (!acceptedCountsRef.current.has(t.id)) {
-            acceptedCountsRef.current.set(t.id, Math.floor(Math.random() * 21));
-        }
-    });
 
     function getDisplayStatus(task) {
         return new Date(task.expiredAt) < new Date() ? 'expired' : 'open';
@@ -37,9 +32,17 @@ export default function AdminTaskList() {
         setCategoryFilter((prev) => (prev === value ? null : value));
     }
 
-    function handleCreateSubmit(taskData) {
-        createTask(taskData);
-        setShowCreateForm(false);
+    async function handleCreateSubmit(taskData) {
+        setIsCreating(true);
+        setCreateError(null);
+        try {
+            await createTask(taskData);
+            setShowCreateForm(false);
+        } catch {
+            setCreateError('Failed to create task. Please try again.');
+        } finally {
+            setIsCreating(false);
+        }
     }
 
     function handleEditSubmit(fields) {
@@ -52,11 +55,33 @@ export default function AdminTaskList() {
         setConfirmDeleteId(null);
     }
 
+    if (isLoading) {
+        return (
+            <div className="admin-loading-state">
+                <img src={loadIconSmall} alt="" className="admin-loading-icon" />
+                <p className="admin-loading-text">Loading tasks...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="admin-error-state">
+                <p className="admin-error-title">⚠️ Failed to load tasks</p>
+                <p className="admin-error-msg">{error}</p>
+                <button className="admin-error-retry" onClick={refetch}>Try Again</button>
+            </div>
+        );
+    }
+
     return (
         <div>
             <h2 className="admin-page-title">System Task Management</h2>
             <p className="admin-page-desc">
                 Manage system-wide tasks for all players. Tasks auto-expire after 5 days.
+            </p>
+            <p className="admin-gap-note">
+                Delete is temporarily disabled because the backend endpoint does not exist yet.
             </p>
 
             <div className="admin-toolbar">
@@ -123,21 +148,23 @@ export default function AdminTaskList() {
                                     <td>{task.title}</td>
                                     <td>
                                         <span className={`admin-category-badge admin-category-badge--${task.category}`}>
-                                            {task.category === 'organization' ? 'Organization' : 'Activity'}
+                                            {task.category === 'organization'
+                                                ? 'Organization'
+                                                : task.category === 'activity'
+                                                ? 'Activity'
+                                                : '—'}
                                         </span>
                                     </td>
                                     <td>
                                         <span className={`admin-difficulty-badge admin-difficulty-badge--${task.difficulty?.toLowerCase()}`}>
-                                            {task.difficulty}
+                                            {task.difficulty ?? '—'}
                                         </span>
                                     </td>
                                     <td>
                                         <CoinBadge amount={task.rewardCoins} />
                                     </td>
                                     <td>
-                                        <span className="admin-accepted-count">
-                                            {acceptedCountsRef.current.get(task.id) ?? 0} players
-                                        </span>
+                                        <span className="admin-accepted-count">—</span>
                                     </td>
                                     <td>
                                         <StatusBadge status={getDisplayStatus(task)} />
@@ -158,6 +185,8 @@ export default function AdminTaskList() {
                                             </button>
                                             <button
                                                 className="admin-delete-btn"
+                                                disabled
+                                                title="Delete endpoint not available yet"
                                                 onClick={() => setConfirmDeleteId(task.id)}
                                             >
                                                 Delete
@@ -173,8 +202,10 @@ export default function AdminTaskList() {
 
             {showCreateForm && (
                 <AdminCreateForm
-                    onClose={() => setShowCreateForm(false)}
+                    onClose={() => { setShowCreateForm(false); setCreateError(null); }}
                     onSubmit={handleCreateSubmit}
+                    submitError={createError}
+                    isSubmitting={isCreating}
                 />
             )}
 

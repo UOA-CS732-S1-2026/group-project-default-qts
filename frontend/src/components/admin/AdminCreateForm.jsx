@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../../styles/components/CreateEditForm.css';
 
-export default function AdminCreateForm({ onClose, onSubmit }) {
+export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubmitting = false }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [objectives, setObjectives] = useState(['']);
@@ -188,8 +188,9 @@ export default function AdminCreateForm({ onClose, onSubmit }) {
                 </div>
 
                 <div className="form-footer">
-                    <button className="form-btn form-btn--submit" onClick={handleSubmit}>
-                        Create
+                    {submitError && <p className="form-error">{submitError}</p>}
+                    <button className="form-btn form-btn--submit" onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating...' : 'Create'}
                     </button>
                 </div>
 
