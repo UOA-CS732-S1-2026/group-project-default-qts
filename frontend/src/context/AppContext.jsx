@@ -57,6 +57,7 @@ export function AppProvider({ children }) {
     async function handleLogout() {
         await logout(setCurrentUser);
         localStorage.removeItem('gf_current_user');
+        localStorage.removeItem('token');
     }
 
     async function handleRegister(formData) {
