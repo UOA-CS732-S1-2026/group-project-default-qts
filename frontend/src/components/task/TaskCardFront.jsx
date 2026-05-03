@@ -65,11 +65,12 @@ function TaskCardFront({
   }
 
   const handleDisputeSubmit = ({ reason, details }) => {
+    if (!reason || !disputePov) return
     onUpdateTask(task.id, {
       status: 'disputed',
       disputeRaisedBy: disputePov,
       disputeReason: reason,
-      disputeDetails: details,
+      disputeDetails: details || '',
     })
     setShowDisputeForm(false)
     setToastMsg('Dispute raised. Awaiting admin review.')

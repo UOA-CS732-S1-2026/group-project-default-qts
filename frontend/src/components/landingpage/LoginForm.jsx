@@ -33,7 +33,7 @@ export default function LoginForm() {
         }
         const result = login(data.email, data.password);
         if (result.success) {
-            navigate('/dashboard');
+            navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
         } else {
             setLoginError(result.error);
         }

@@ -80,6 +80,13 @@
   border-color: #4a8a5a;
 }
 
+.dispute-form-error {
+  font-size: 11px;
+  color: #e74c3c;
+  margin: 4px 0 8px;
+  font-family: var(--font-code);
+}
+
 .dispute-form-actions {
   display: flex;
   gap: 8px;

@@ -45,3 +45,15 @@
   --font-display: var(--font-pixel);
   --font-body: var(--font-code);
 }
+
+.dark-mode,
+[data-theme="dark"] {
+  --color-bg-form: var(--bg-modal);
+  --color-bg-modal: var(--bg-modal);
+  --color-text-dark: var(--text-main);
+  --color-text-light: var(--text-inverted);
+  --color-btn-primary: var(--accent);
+  --color-danger: var(--text-error);
+  --border-card: 2px solid var(--border-color);
+  --shadow-pixel: 4px 4px 0px var(--text-main);
+}
