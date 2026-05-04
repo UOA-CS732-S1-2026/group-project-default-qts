@@ -16,6 +16,7 @@ function formatTask(t) {
     description: t.description,
     objectives: t.objectives || [],
     timeLimit: t.timeLimit || null,
+    category: t.category ?? null,
     rewardCoins: t.rewardCoins,
     status: t.status,
     location: t.location,
@@ -68,10 +69,12 @@ const listTasks = async (req, res) => {
       filter = { $or: [{ createdBy: userId }, { _id: { $in: assignedTaskIds } }] };
       if (type) filter.type = type;
       if (status) filter.status = status;
+      if (req.query.category) filter.category = req.query.category;
     } else {
       filter = { visibility: 'PUBLIC' };
       if (type) filter.type = type;
       filter.status = status || 'OPEN';
+      if (req.query.category) filter.category = req.query.category;
     }
 
     const tasks = await Task.find(filter).sort({ createdAt: -1 }).limit(50).lean();
@@ -161,7 +164,8 @@ const createTask = async (req, res) => {
       requiresApplication = false,
       location,
       startAt,
-      endAt
+      endAt,
+      category
     } = req.body;
 
     if (!['SYSTEM', 'P2P', 'PERSONAL'].includes(type)) {
@@ -215,6 +219,7 @@ const createTask = async (req, res) => {
       description: String(description).trim(),
       objectives: Array.isArray(objectives) ? objectives.filter(o => String(o).trim().length > 0).map(o => String(o).trim()) : [],
       timeLimit: timeLimit ? Number(timeLimit) : null,
+      category: (type === 'SYSTEM' && (category === 'organization' || category === 'activity')) ? category : null,
       rewardCoins: finalRewardCoins,
       status: type === 'PERSONAL' ? 'IN_PROGRESS' : 'OPEN',
       requiresApplication: type === 'PERSONAL' ? false : Boolean(requiresApplication),
@@ -928,7 +933,7 @@ const updateTask = async (req, res) => {
       });
     }
 
-    const { title, description, objectives, timeLimit, endAt, rewardCoins } = req.body;
+    const { title, description, objectives, timeLimit, endAt, rewardCoins, category } = req.body;
 
     if (title !== undefined) task.title = String(title).trim();
     if (description !== undefined) task.description = String(description).trim();
@@ -936,6 +941,16 @@ const updateTask = async (req, res) => {
       task.objectives = Array.isArray(objectives) ? objectives.filter(o => String(o).trim().length > 0).map(o => String(o).trim()) : [];
     }
     if (timeLimit !== undefined) task.timeLimit = timeLimit ? Number(timeLimit) : null;
+    if (category !== undefined) {
+      if (task.type === 'SYSTEM') {
+        if (category === 'organization' || category === 'activity') task.category = category;
+        else {
+          return res.status(400).json({ success: false, error: { code: 'INVALID_CATEGORY', message: 'category must be organization or activity for SYSTEM tasks', details: {} } });
+        }
+      } else {
+        task.category = null;
+      }
+    }
     if (endAt !== undefined) task.endAt = endAt ? new Date(endAt) : null;
 
     if (rewardCoins !== undefined && task.type !== 'P2P') {

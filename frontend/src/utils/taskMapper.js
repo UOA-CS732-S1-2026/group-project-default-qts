@@ -59,8 +59,8 @@ export function toFrontend(task) {
     createdBy: { id: String(task.createdBy ?? ''), name: '' },
     createdAt: task.createdAt ?? new Date().toISOString(),
     expiredAt: task.endAt ?? null,
-    difficulty: null,
-    category: null,
+    difficulty: task.difficulty ?? null,
+    category: task.category ?? null,
   };
 }
 
@@ -86,6 +86,7 @@ export function adminCreateToBackend(formData) {
     description: formData.instructions ?? formData.description ?? '',
     objectives: Array.isArray(formData.objectives) ? formData.objectives.filter(o => String(o).trim()) : [],
     timeLimit: formData.timeLimit ? Number(formData.timeLimit) : null,
+    category: formData.category ?? null,
     rewardCoins: Number(formData.rewardCoins) || 0,
     requiresApplication: false,
     endAt: formData.expiredAt ?? null,
@@ -106,6 +107,7 @@ export function userCreateToBackend(formData) {
     description: formData.instructions ?? formData.description ?? '',
     objectives: Array.isArray(formData.objectives) ? formData.objectives.filter(o => String(o).trim()) : [],
     timeLimit: formData.timeLimit ? Number(formData.timeLimit) : null,
+    category: formData.category ?? null,
     rewardCoins: Number(formData.rewardCoins) || 0,
     requiresApplication: false,
     endAt: formData.expiredAt ?? null,

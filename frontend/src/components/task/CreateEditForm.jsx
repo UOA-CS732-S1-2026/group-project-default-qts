@@ -4,6 +4,7 @@ import '../../styles/components/CreateEditForm.css';
 function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const isEdit = initialData !== null;
 
+  const [taskType, setTaskType] = useState(initialData?.type ?? 'mytask');
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [instructions, setInstructions] = useState(initialData?.instructions ?? '');
   const [objectives, setObjectives] = useState(initialData?.objectives ?? ['']);
@@ -25,6 +26,8 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
     setObjectives(objectives.filter((_, i) => i !== index));
   };
 
+  const isP2P = taskType === 'p2p';
+
   const validate = () => {
     const newErrors = {};
     if (!title.trim()) newErrors.title = 'Title is required';
@@ -33,8 +36,8 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
       newErrors.objectives = 'At least one objective is required';
     if (!timeLimit || Number(timeLimit) <= 0)
       newErrors.timeLimit = 'Time limit is required';
-    if (!rewardCoins || Number(rewardCoins) <= 0)
-      newErrors.rewardCoins = 'Reward coins is required';
+    if (isP2P && (!rewardCoins || Number(rewardCoins) <= 0))
+      newErrors.rewardCoins = 'Reward coins is required for P2P tasks';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -42,16 +45,16 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const handleSubmit = () => {
     if (!validate()) return;
     const taskData = {
-      id: initialData?.id ?? `task-${Date.now()}`,
-      type: initialData?.type ?? 'p2p',
+      id: initialData?.id,
+      type: taskType,
       title,
       instructions,
       objectives: objectives.filter((obj) => obj.trim() !== ''),
       timeLimit: Number(timeLimit),
-      rewardCoins: Number(rewardCoins),
+      rewardCoins: isP2P ? Number(rewardCoins) : 0,
       status: initialData?.status ?? 'open',
       assignee: initialData?.assignee ?? null,
-      createdBy: initialData?.createdBy ?? { id: 'user-001', name: 'Me' },
+      createdBy: initialData?.createdBy ?? null,
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
       expiredAt:
         initialData?.expiredAt ??
@@ -71,6 +74,28 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
         </div>
 
         <div className="form-body">
+
+          {!isEdit && (
+            <div className="form-field">
+              <label className="form-label">Task Type</label>
+              <div className="form-type-row">
+                <button
+                  type="button"
+                  className={`form-type-btn ${taskType === 'mytask' ? 'form-type-btn--active' : ''}`}
+                  onClick={() => { setTaskType('mytask'); setErrors((p) => ({ ...p, rewardCoins: '' })); }}
+                >
+                  Personal
+                </button>
+                <button
+                  type="button"
+                  className={`form-type-btn ${taskType === 'p2p' ? 'form-type-btn--active' : ''}`}
+                  onClick={() => setTaskType('p2p')}
+                >
+                  P2P
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="form-field">
             <label className="form-label">Title</label>
@@ -136,22 +161,24 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
             {errors.timeLimit && <p className="form-error">{errors.timeLimit}</p>}
           </div>
 
-          <div className="form-field">
-            <label className="form-label">Reward Coins</label>
-            <input
-              className={`form-input form-input--short ${errors.rewardCoins ? 'form-input--error' : ''}`}
-              type="number"
-              min="1"
-              value={rewardCoins}
-              onChange={(e) => { setRewardCoins(e.target.value); setErrors((p) => ({ ...p, rewardCoins: '' })); }}
-              placeholder="e.g. 10"
-            />
-            {errors.rewardCoins && <p className="form-error">{errors.rewardCoins}</p>}
-            <p className="form-reward-note">
-              * A bond of equal coins will be locked from your wallet when you
-              create this task. Coins are returned if the task is cancelled.
-            </p>
-          </div>
+          {isP2P && (
+            <div className="form-field">
+              <label className="form-label">Reward Coins</label>
+              <input
+                className={`form-input form-input--short ${errors.rewardCoins ? 'form-input--error' : ''}`}
+                type="number"
+                min="1"
+                value={rewardCoins}
+                onChange={(e) => { setRewardCoins(e.target.value); setErrors((p) => ({ ...p, rewardCoins: '' })); }}
+                placeholder="e.g. 10"
+              />
+              {errors.rewardCoins && <p className="form-error">{errors.rewardCoins}</p>}
+              <p className="form-reward-note">
+                * A bond of equal coins will be locked from your wallet when you
+                create this task. Coins are returned if the task is cancelled.
+              </p>
+            </div>
+          )}
 
         </div>
 

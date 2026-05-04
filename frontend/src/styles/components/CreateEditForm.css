@@ -177,3 +177,27 @@
   font-size: 14px;
   color: var(--color-danger);
 }
+
+.form-type-row {
+  display: flex;
+  gap: 8px;
+}
+
+.form-type-btn {
+  font-family: var(--font-display);
+  font-size: 13px;
+  padding: 6px 16px;
+  background: transparent;
+  border: var(--border-pixel);
+  color: var(--color-text-dark);
+  cursor: pointer;
+}
+
+.form-type-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.form-type-btn--active {
+  background: var(--color-btn-primary);
+  color: var(--color-text-light, #f5eedc);
+}

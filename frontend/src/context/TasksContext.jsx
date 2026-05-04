@@ -56,6 +56,7 @@ export function TasksProvider({ children }) {
         else if (fields.description !== undefined) body.description = fields.description;
         if (fields.objectives !== undefined) body.objectives = Array.isArray(fields.objectives) ? fields.objectives.filter(o => String(o).trim()) : [];
         if (fields.timeLimit !== undefined) body.timeLimit = fields.timeLimit ? Number(fields.timeLimit) : null;
+        if (fields.category !== undefined) body.category = fields.category;
         if (fields.rewardCoins !== undefined) body.rewardCoins = Number(fields.rewardCoins);
         if (fields.expiredAt !== undefined) body.endAt = fields.expiredAt;
         const res = await taskService.patchTask(id, body);
