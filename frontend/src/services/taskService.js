@@ -71,3 +71,18 @@ export const confirmTask = (id) =>
  */
 export const cancelTask = (id) =>
   api.post(`/tasks/${id}/cancel`);
+
+/** PATCH /api/tasks/:id
+ * body: { title?, description?, endAt?, rewardCoins? }
+ * P2P: rewardCoins ignored by backend (escrow locked at create time).
+ * Only when OPEN (P2P/SYSTEM) or IN_PROGRESS (PERSONAL).
+ */
+export const patchTask = (id, body) =>
+  api.patch(`/tasks/${id}`, body);
+
+/** DELETE /api/tasks/:id
+ * SYSTEM: admin only. P2P/PERSONAL: creator only.
+ * Only when status OPEN or CANCELLED. P2P auto-refunds escrow.
+ */
+export const deleteTask = (id) =>
+  api.delete(`/tasks/${id}`);

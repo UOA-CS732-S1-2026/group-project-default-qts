@@ -4,7 +4,7 @@ import TaskCardFront from './TaskCardFront';
 import TaskCardBack from './TaskCardBack';
 import CoinBadge from '../ui/CoinBadge';
 import StatusBadge from '../ui/StatusBadge';
-import { CURRENT_USER_ID } from '../../constants/mockUser';
+import { useApp } from '../../context/AppContext';
 import userIconSmall from '../../assets/user-icon-small.png';
 import { getDisplayStatus } from '../../utils/taskUtils';
 
@@ -37,6 +37,7 @@ function TaskCard({
   const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { currentUser } = useApp();
   const cardColor = CARD_COLORS[index % CARD_COLORS.length];
 
   const handleClose = () => {
@@ -98,7 +99,7 @@ function TaskCard({
           {task.type === 'p2p' && !isCreatorView && (
             <p className="task-card-posted-by">
               <img src={userIconSmall} alt="" className="task-card-user-icon" />
-              {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
+              {task.createdBy?.id === currentUser?.id ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
             </p>
           )}
           <p className="task-card-expired">Exp: {expiredDate}</p>

@@ -1,9 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+
+const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
-import { CURRENT_USER_ID } from '../../constants/mockUser';
+import { useApp } from '../../context/AppContext';
 import { STATUS_B2F } from '../../utils/taskMapper';
 import Toolbar from '../toolbar/Toolbar';
 import loadIconSmall from '../../assets/load-icon-small.png';
@@ -11,8 +13,12 @@ import TaskGrid from '../task/TaskGrid';
 import CreateEditForm from '../task/CreateEditForm';
 
 function MyTaskModal({ onNavigate, questTargetId }) {
-  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
+  const { currentUser } = useApp();
+  const currentUserId = currentUser?.id;
+  const { tasks, isLoading, createTask, updateTask, patchTask, deleteTask } = useTasks();
 
+  // Shared loading state for manual tab switches.
+  const [isTabLoading, setIsTabLoading] = useState(false);
   // Quest tab has its own loading state for the "navigate to quest" animation only.
   const [isLoadingQuest, setIsLoadingQuest] = useState(false);
   const [error] = useState(false);
@@ -20,8 +26,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const createdTasks = useMemo(() =>
     tasks.filter((t) =>
       t.type === 'mytask' ||
-      (t.type === 'p2p' && t.createdBy?.id === CURRENT_USER_ID)
-    ), [tasks]);
+      (t.type === 'p2p' && t.createdBy?.id === currentUserId)
+    ), [tasks, currentUserId]);
 
   const {
     filteredTasks,
@@ -38,17 +44,27 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const [showHelp, setShowHelp] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
   const handledTargetRef = useRef(null);
+  const tabLoadingTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (tabLoadingTimeoutRef.current) {
+      clearTimeout(tabLoadingTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (questTargetId && questTargetId !== handledTargetRef.current) {
       handledTargetRef.current = questTargetId;
-      setActiveSubTab('quest');
-      setIsLoadingQuest(true);
-      setExpandedTaskId(questTargetId);
+      // Defer state updates to avoid synchronous setState calls inside effect
       setTimeout(() => {
-        setIsLoadingQuest(false);
-        setTimeout(() => setExpandedTaskId(null), 50);
-      }, 1000);
+        setActiveSubTab('quest');
+        setIsLoadingQuest(true);
+        setExpandedTaskId(questTargetId);
+        setTimeout(() => {
+          setIsLoadingQuest(false);
+          setTimeout(() => setExpandedTaskId(null), 50);
+        }, 1000);
+      }, 0);
     }
   }, [questTargetId]);
 
@@ -60,8 +76,17 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const [cancelledQuestIds, setCancelledQuestIds] = useState(new Set());
 
   const handleSubTabChange = (tab) => {
+    if (tab === activeSubTab) return;
+    if (tabLoadingTimeoutRef.current) {
+      clearTimeout(tabLoadingTimeoutRef.current);
+    }
+    setIsTabLoading(true);
     setActiveSubTab(tab);
     resetModes();
+    tabLoadingTimeoutRef.current = setTimeout(() => {
+      setIsTabLoading(false);
+      tabLoadingTimeoutRef.current = null;
+    }, 350);
   };
 
   // P2P: withdraw application via API (pessimistic in AcceptedTasksContext).
@@ -76,10 +101,23 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     setCancelledQuestIds((prev) => new Set([...prev, id]));
   };
 
-  const handleUpdateCard = (id, fields) => {
-    updateTask(id, fields);
-    if (fields.status === 'open' && fields.assignee === null) {
-      cancelTask(id);
+  const handleUpdateCard = async (id, fields) => {
+    // If task is being submitted, call API first to sync status from backend.
+    if (fields.status === 'pending_review' || fields.status === 'pending_confirmation') {
+      try {
+        const data = await submitTask(id);
+        if (data?.task?.status) {
+          updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+        }
+      } catch {
+        // Submit failed — task stays in current state
+      }
+    } else {
+      // For non-submit updates, just update local state.
+      updateTask(id, fields);
+      if (fields.status === 'open' && fields.assignee === null) {
+        cancelTask(id);
+      }
     }
   };
 
@@ -100,15 +138,13 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     }
   };
 
-  const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
-
   const filteredQuest = useMemo(() => {
     let result = tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
       if (cancelledQuestIds.has(t.id)) return false;
       if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
       const iExplicitlyAccepted = acceptedIds.has(t.id);
-      const isAssignedToMe = t.assignee?.id === CURRENT_USER_ID;
+      const isAssignedToMe = t.assignee?.id === currentUserId;
       return iExplicitlyAccepted || isAssignedToMe;
     });
     if (questSource) result = result.filter((t) => t.type === questSource);
@@ -130,7 +166,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (questSort === 'expiry-early') result.sort((a, b) => new Date(a.expiredAt) - new Date(b.expiredAt));
     if (questSort === 'expiry-late') result.sort((a, b) => new Date(b.expiredAt) - new Date(a.expiredAt));
     return result;
-  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, submittedIds]);
+  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, currentUserId]);
 
   const handleQuestSourceFilter = (source) => {
     const next = questSource === source ? null : source;
@@ -154,7 +190,11 @@ function MyTaskModal({ onNavigate, questTargetId }) {
 
   const handleFormSubmit = async (taskData) => {
     if (editingTask) {
-      updateTask(taskData.id, taskData);
+      try {
+        await patchTask(taskData.id, taskData);
+      } catch {
+        // Edit failed — form stays open, user can retry
+      }
     } else {
       try {
         await createTask(taskData);
@@ -199,6 +239,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
 
   const renderContent = () => {
     if (error) return errorState;
+    if (isTabLoading) return skeletonLoader;
 
     if (activeSubTab === 'created') {
       if (isLoading) return skeletonLoader;
@@ -276,7 +317,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     <>
       <div className="mytask-toolbar-row">
         {subtabButtons}
-        {!isLoading && !error && activeSubTab === 'created' && (
+        {!isTabLoading && !isLoading && !error && activeSubTab === 'created' && (
           <Toolbar
             taskType="mytask"
             filterStatus={filterStatus}
@@ -291,7 +332,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
             onHelpClick={() => setShowHelp(true)}
           />
         )}
-        {!isLoadingQuest && !error && activeSubTab === 'quest' && (
+        {!isTabLoading && !isLoadingQuest && !error && activeSubTab === 'quest' && (
           <Toolbar
             taskType="quest"
             questMode
@@ -308,7 +349,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         )}
       </div>
 
-      {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isLoading && !error && (
+      {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isTabLoading && !isLoading && !error && (
         <p className="mode-hint">
           {isEditMode
             ? '✏ Move cursor to the card to edit'

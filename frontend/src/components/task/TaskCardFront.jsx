@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import CoinBadge from '../ui/CoinBadge'
 import StatusBadge from '../ui/StatusBadge'
-import { CURRENT_USER_ID } from '../../constants/mockUser'
+import { useApp } from '../../context/AppContext'
 import { getDisplayStatus } from '../../utils/taskUtils'
 import DisputeForm from './DisputeForm'
 
@@ -32,6 +32,7 @@ function TaskCardFront({
   const [showDisputeForm, setShowDisputeForm] = useState(false)
   const [disputePov, setDisputePov] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
+  const { currentUser } = useApp()
 
   useEffect(() => {
     if (!toastMsg) return
@@ -39,7 +40,7 @@ function TaskCardFront({
     return () => clearTimeout(t)
   }, [toastMsg])
 
-  const isOwnTask = task.type === 'p2p' && task.createdBy?.id === CURRENT_USER_ID
+  const isOwnTask = task.type === 'p2p' && task.createdBy?.id === currentUser?.id
 
   const expiredDate = new Date(task.expiredAt).toLocaleDateString('en-NZ', {
     day: 'numeric',
@@ -219,7 +220,7 @@ function TaskCardFront({
 
       {task.type === 'p2p' && !isCreatorView && !hideAccept && (
         <p className="task-card-posted-by">
-          👤 Posted by: {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
+          👤 Posted by: {task.createdBy?.id === currentUser?.id ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
         </p>
       )}
 

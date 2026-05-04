@@ -6,7 +6,7 @@ import { getInventory } from '@/utils/inventoryApi'
 
 
 function PetView() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('gf_token');
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');

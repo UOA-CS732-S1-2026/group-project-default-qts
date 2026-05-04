@@ -33,9 +33,10 @@ export default function LoginForm() {
         }
         const result = await login(data.email, data.password);
         if (result.success) {
-            navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
+            // handleLogin already saved user to AppContext and localStorage
+            navigate(result.user?.role === 'admin' ? '/admin' : '/dashboard');
         } else {
-            setLoginError(result.error);
+            setLoginError(result.error || 'Login failed');
         }
     };
 

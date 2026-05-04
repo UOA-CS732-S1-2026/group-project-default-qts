@@ -46,14 +46,34 @@ export function TasksProvider({ children }) {
         setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...fields } : t)));
     }, []);
 
-    // Local-only remove — no DELETE endpoint exists in backend yet.
-    const deleteTask = useCallback((id) => {
+    // Calls PATCH /api/tasks/:id, then merges the returned task into local state.
+    // Maps frontend form fields (instructions→description, expiredAt→endAt) before sending.
+    // Preserves frontend-only fields (category, difficulty, etc.) that backend doesn't store.
+    const patchTask = useCallback(async (id, fields) => {
+        const body = {};
+        if (fields.title !== undefined) body.title = fields.title;
+        if (fields.instructions !== undefined) body.description = fields.instructions;
+        else if (fields.description !== undefined) body.description = fields.description;
+        if (fields.objectives !== undefined) body.objectives = Array.isArray(fields.objectives) ? fields.objectives.filter(o => String(o).trim()) : [];
+        if (fields.timeLimit !== undefined) body.timeLimit = fields.timeLimit ? Number(fields.timeLimit) : null;
+        if (fields.rewardCoins !== undefined) body.rewardCoins = Number(fields.rewardCoins);
+        if (fields.expiredAt !== undefined) body.endAt = fields.expiredAt;
+        const res = await taskService.patchTask(id, body);
+        const updated = toFrontend(res.data.data.task);
+        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+        return updated;
+    }, []);
+
+    // Calls DELETE /api/tasks/:id, then removes from local state.
+    // Throws on API failure so callers can show an error.
+    const deleteTask = useCallback(async (id) => {
+        await taskService.deleteTask(id);
         setTasks((prev) => prev.filter((t) => t.id !== id));
     }, []);
 
     return (
         <TasksContext.Provider
-            value={{ tasks, isLoading, error, createTask, updateTask, deleteTask, refetch: fetchTasks }}
+            value={{ tasks, isLoading, error, createTask, updateTask, patchTask, deleteTask, refetch: fetchTasks }}
         >
             {children}
         </TasksContext.Provider>

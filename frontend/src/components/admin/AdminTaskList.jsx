@@ -7,7 +7,7 @@ import AdminEditForm from './AdminEditForm';
 import loadIconSmall from '../../assets/load-icon-small.png';
 
 export default function AdminTaskList() {
-    const { tasks, isLoading, error, refetch, createTask, updateTask, deleteTask } = useTasks();
+    const { tasks, isLoading, error, refetch, createTask, patchTask, deleteTask } = useTasks();
     const [categoryFilter, setCategoryFilter] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -15,6 +15,9 @@ export default function AdminTaskList() {
     const [confirmDeleteId, setConfirmDeleteId] = useState(null);
     const [createError, setCreateError] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [editError, setEditError] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
 
     const communityTasks = tasks.filter((t) => t.type === 'community');
 
@@ -45,14 +48,28 @@ export default function AdminTaskList() {
         }
     }
 
-    function handleEditSubmit(fields) {
-        updateTask(editTask.id, fields);
-        setEditTask(null);
+    async function handleEditSubmit(fields) {
+        setIsEditing(true);
+        setEditError(null);
+        try {
+            await patchTask(editTask.id, fields);
+            setEditTask(null);
+        } catch {
+            setEditError('Failed to update task. Please try again.');
+        } finally {
+            setIsEditing(false);
+        }
     }
 
-    function handleDeleteConfirm() {
-        deleteTask(confirmDeleteId);
-        setConfirmDeleteId(null);
+    async function handleDeleteConfirm() {
+        setDeleteError(null);
+        try {
+            await deleteTask(confirmDeleteId);
+            setConfirmDeleteId(null);
+        } catch {
+            setDeleteError('Failed to delete task. Please try again.');
+            setConfirmDeleteId(null);
+        }
     }
 
     if (isLoading) {
@@ -80,9 +97,13 @@ export default function AdminTaskList() {
             <p className="admin-page-desc">
                 Manage system-wide tasks for all players. Tasks auto-expire after 5 days.
             </p>
-            <p className="admin-gap-note">
-                Delete is temporarily disabled because the backend endpoint does not exist yet.
-            </p>
+
+            {deleteError && (
+                <div className="admin-error-banner">
+                    <span>{deleteError}</span>
+                    <button className="admin-error-banner-close" onClick={() => setDeleteError(null)}>✕</button>
+                </div>
+            )}
 
             <div className="admin-toolbar">
                 <div className="admin-toolbar-filters">
@@ -185,8 +206,6 @@ export default function AdminTaskList() {
                                             </button>
                                             <button
                                                 className="admin-delete-btn"
-                                                disabled
-                                                title="Delete endpoint not available yet"
                                                 onClick={() => setConfirmDeleteId(task.id)}
                                             >
                                                 Delete
@@ -212,8 +231,10 @@ export default function AdminTaskList() {
             {editTask && (
                 <AdminEditForm
                     task={editTask}
-                    onClose={() => setEditTask(null)}
+                    onClose={() => { setEditTask(null); setEditError(null); }}
                     onSubmit={handleEditSubmit}
+                    submitError={editError}
+                    isSubmitting={isEditing}
                 />
             )}
 

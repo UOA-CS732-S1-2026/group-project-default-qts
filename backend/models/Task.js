@@ -7,6 +7,8 @@ const TaskSchema = new mongoose.Schema(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
+    objectives: { type: [String], default: [] },
+    timeLimit: { type: Number, default: null },
     rewardCoins: { type: Number, default: 0, min: 0 },
     status: {
       type: String,

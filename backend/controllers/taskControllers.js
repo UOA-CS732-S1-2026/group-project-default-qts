@@ -14,6 +14,8 @@ function formatTask(t) {
     createdBy: t.createdBy,
     title: t.title,
     description: t.description,
+    objectives: t.objectives || [],
+    timeLimit: t.timeLimit || null,
     rewardCoins: t.rewardCoins,
     status: t.status,
     location: t.location,
@@ -153,6 +155,8 @@ const createTask = async (req, res) => {
       type,
       title,
       description = '',
+      objectives = [],
+      timeLimit = null,
       rewardCoins = 0,
       requiresApplication = false,
       location,
@@ -209,6 +213,8 @@ const createTask = async (req, res) => {
       createdBy: userId,
       title: String(title).trim(),
       description: String(description).trim(),
+      objectives: Array.isArray(objectives) ? objectives.filter(o => String(o).trim().length > 0).map(o => String(o).trim()) : [],
+      timeLimit: timeLimit ? Number(timeLimit) : null,
       rewardCoins: finalRewardCoins,
       status: type === 'PERSONAL' ? 'IN_PROGRESS' : 'OPEN',
       requiresApplication: type === 'PERSONAL' ? false : Boolean(requiresApplication),
@@ -872,10 +878,187 @@ const cancelTask = async (req, res) => {
   }
 };
 
+// PATCH /api/tasks/:id
+// body: { title?, description?, endAt?, rewardCoins? }
+// Auth: creator or admin. SYSTEM tasks: admin only.
+// Only editable when OPEN (P2P/SYSTEM) or IN_PROGRESS (PERSONAL).
+// P2P rewardCoins cannot be changed (escrow already held at create time).
+const updateTask = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const roles = req.auth?.roles || [];
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'TASK_NOT_FOUND', message: 'Task not found', details: {} }
+      });
+    }
+
+    const isCreator = String(task.createdBy) === String(userId);
+    const isAdmin = roles.includes('ADMIN');
+
+    if (!isCreator && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only the task creator or admin can edit this task', details: {} }
+      });
+    }
+    if (task.type === 'SYSTEM' && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only admins can edit SYSTEM tasks', details: {} }
+      });
+    }
+
+    const editableStatuses = task.type === 'PERSONAL' ? ['IN_PROGRESS'] : ['OPEN'];
+    if (!editableStatuses.includes(task.status)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'TASK_NOT_EDITABLE', message: `Task can only be edited when ${editableStatuses.join(' or ')}`, details: {} }
+      });
+    }
+
+    const { title, description, objectives, timeLimit, endAt, rewardCoins } = req.body;
+
+    if (title !== undefined) task.title = String(title).trim();
+    if (description !== undefined) task.description = String(description).trim();
+    if (objectives !== undefined) {
+      task.objectives = Array.isArray(objectives) ? objectives.filter(o => String(o).trim().length > 0).map(o => String(o).trim()) : [];
+    }
+    if (timeLimit !== undefined) task.timeLimit = timeLimit ? Number(timeLimit) : null;
+    if (endAt !== undefined) task.endAt = endAt ? new Date(endAt) : null;
+
+    if (rewardCoins !== undefined && task.type !== 'P2P') {
+      const coins = Number(rewardCoins);
+      if (!Number.isFinite(coins) || coins < 0 || !Number.isInteger(coins)) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_REWARD_COINS', message: 'rewardCoins must be a non-negative integer', details: {} }
+        });
+      }
+      task.rewardCoins = task.type === 'PERSONAL' ? 0 : coins;
+    }
+
+    await task.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task updated',
+      data: { task: formatTask(task) }
+    });
+  } catch (error) {
+    console.error('updateTask error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'TASK_UPDATE_FAILED', message: 'Failed to update task', details: {} }
+    });
+  }
+};
+
+// DELETE /api/tasks/:id
+// Auth: admin for SYSTEM; creator or admin for P2P/PERSONAL.
+// Only deletable when status is OPEN or CANCELLED.
+// P2P: auto-refunds escrow if still HELD.
+// Cascades: removes TaskApplications, TaskAssignments, TaskEscrow for this task.
+const deleteTask = async (req, res) => {
+  const dbSession = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const roles = req.auth?.roles || [];
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    dbSession.startTransaction();
+
+    const task = await Task.findById(id).session(dbSession);
+    if (!task) {
+      throw { status: 404, code: 'TASK_NOT_FOUND', message: 'Task not found' };
+    }
+
+    const isCreator = String(task.createdBy) === String(userId);
+    const isAdmin = roles.includes('ADMIN');
+
+    if (task.type === 'SYSTEM' && !isAdmin) {
+      throw { status: 403, code: 'FORBIDDEN', message: 'Only admins can delete SYSTEM tasks' };
+    }
+    if (task.type !== 'SYSTEM' && !isCreator && !isAdmin) {
+      throw { status: 403, code: 'FORBIDDEN', message: 'Only the task creator can delete this task' };
+    }
+    if (!['OPEN', 'CANCELLED'].includes(task.status)) {
+      throw { status: 400, code: 'TASK_NOT_DELETABLE', message: 'Only open or cancelled tasks can be deleted' };
+    }
+
+    if (task.type === 'P2P') {
+      const escrow = await TaskEscrow.findOne({ taskId: id, status: 'HELD' }).session(dbSession);
+      if (escrow) {
+        escrow.status = 'REFUNDED';
+        escrow.refundedAt = new Date();
+        await escrow.save({ session: dbSession });
+
+        const payer = await User.findByIdAndUpdate(
+          escrow.payerUserId,
+          { $inc: { coins: escrow.amount } },
+          { new: true, session: dbSession }
+        );
+
+        await CoinTransaction.create([{
+          userId: escrow.payerUserId,
+          amount: escrow.amount,
+          balanceAfter: payer.coins,
+          type: 'ESCROW_REFUND',
+          relatedModel: 'Task',
+          relatedId: task._id,
+          note: `Escrow refunded for deleted P2P task: ${task.title}`
+        }], { session: dbSession });
+      }
+    }
+
+    await TaskApplication.deleteMany({ taskId: id }, { session: dbSession });
+    await TaskAssignment.deleteMany({ taskId: id }, { session: dbSession });
+    await TaskEscrow.deleteMany({ taskId: id }, { session: dbSession });
+    await task.deleteOne({ session: dbSession });
+
+    await dbSession.commitTransaction();
+    dbSession.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task deleted',
+      data: {}
+    });
+  } catch (error) {
+    await dbSession.abortTransaction();
+    dbSession.endSession();
+    console.error('deleteTask error:', error);
+    return res.status(error.status || 500).json({
+      success: false,
+      error: { code: error.code || 'TASK_DELETE_FAILED', message: error.message || 'Failed to delete task', details: {} }
+    });
+  }
+};
+
 module.exports = {
   listTasks,
   getTask,
   createTask,
+  updateTask,
+  deleteTask,
   applyForTask,
   withdrawApplication,
   getApplications,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../../styles/components/CreateEditForm.css';
 
-export default function AdminEditForm({ task, onClose, onSubmit }) {
+export default function AdminEditForm({ task, onClose, onSubmit, submitError, isSubmitting = false }) {
     const [title, setTitle] = useState(task.title);
     const [description, setDescription] = useState(task.instructions);
     const [objectives, setObjectives] = useState(
@@ -183,11 +183,12 @@ export default function AdminEditForm({ task, onClose, onSubmit }) {
                 </div>
 
                 <div className="form-footer">
-                    <button className="form-btn form-btn--cancel" onClick={onClose}>
+                    {submitError && <p className="form-error">{submitError}</p>}
+                    <button className="form-btn form-btn--cancel" onClick={onClose} disabled={isSubmitting}>
                         Cancel
                     </button>
-                    <button className="form-btn form-btn--submit" onClick={handleSubmit}>
-                        Save Changes
+                    <button className="form-btn form-btn--submit" onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
 
