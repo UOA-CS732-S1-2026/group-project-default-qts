@@ -1,5 +1,17 @@
 import './InventoryModal.css';
 import { useState, useEffect } from 'react';
+import Item from '../ui/Item';
+import eggItem from '../../assets/items/egg_thoseicons.png';
+import sandwichItem from '../../assets/items/sandwich_freepik.png';
+import snackItem from '../../assets/items/snack_freepik.png';
+import roastChickenItem from '../../assets/items/roast-chicken_freepik.png';
+
+const inventoryItems = [
+  { id: 1, name: 'Egg', quantity: 2, image: eggItem },
+  { id: 2, name: 'Snack', quantity: 5, image: snackItem },
+  { id: 3, name: 'Sandwich', quantity: 1, image: sandwichItem },
+  { id: 4, name: 'Roast Chicken', quantity: 1, image: roastChickenItem },
+];
 
 function InventoryModal({ onClose }) {
   const CLOSE_ANIM_MS = 320;
@@ -39,11 +51,14 @@ function InventoryModal({ onClose }) {
             <section className="inventory-section">
               <h4 className="section-title">Items</h4>
               <div className="inventory-grid">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={i} className="inventory-slot">
-                    <div className="inventory-slot-img" />
-                    <div className="inventory-slot-badge">x1</div>
-                  </div>
+                {inventoryItems.map((item) => (
+                  <Item
+                    key={item.id}
+                    image={item.image}
+                    name={item.name}
+                    quantity={item.quantity}
+                    mode="inventory"
+                  />
                 ))}
               </div>
             </section>
