@@ -4,9 +4,14 @@
     border: none;
 }
 
-img{
+.shortcut-icon{
     width: 4rem;
     height: 4rem;
+}
+
+.dark-mode .shortcut-icon,
+[data-theme="dark"] .shortcut-icon {
+    filter: brightness(0) invert(1);
 }
 
 .dashboard-shortcuts {
