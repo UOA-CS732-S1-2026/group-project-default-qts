@@ -1,17 +1,24 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-
-export async function register(formData) {
-	try {
-		const res = await axios.post(`${API_BASE_URL}/api/auth/register`, formData);
-		return res.data;
-	} catch (error) {
-		throw new Error(error.response?.data?.message || 'failed to register');
-	}
+export async function register(payload) {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/auth/register`, payload);
+    return res.data; // { success, data: { token, user } }
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'failed to register');
+  }
 }
 
+export async function login(email, password) {
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
+    return res.data; // { success, data: { token, user } }
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'failed to login');
+  }
+}
 
 export async function getCurrentUser() {
   const token = localStorage.getItem('token');
@@ -21,23 +28,12 @@ export async function getCurrentUser() {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
-export async function login(email, password, setCurrentUser) {
-	try {
-		const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
-		setCurrentUser(res.data.user);
-		localStorage.setItem('token', res.data.token);
-	} catch (error) {
-        throw new Error(error.response?.data?.message || 'failed to login');
-	}
-}
-
 export function logout(setCurrentUser) {
-	setCurrentUser(null);
-	localStorage.removeItem('token');
+  setCurrentUser(null);
+  localStorage.removeItem('token');
 }
-

@@ -21,7 +21,7 @@ export default function LoginForm() {
         clearErrors,
     } = useForm();
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         setLoginError('');
         // Validate email format before sending login request
         if (!isValidUniEmail(data.email)) {
@@ -31,7 +31,7 @@ export default function LoginForm() {
             });
             return;
         }
-        const result = login(data.email, data.password);
+        const result = await login(data.email, data.password);
         if (result.success) {
             navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
         } else {
