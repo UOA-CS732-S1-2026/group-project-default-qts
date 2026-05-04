@@ -6,7 +6,7 @@ import '../../styles/pomodoro.css';
 
 const MotionDiv = motion.div;
 
-export default function PomodoroModal({ onRequestClose } = {}) {
+export default function PomodoroModal({ onRequestClose, onRunningChange } = {}) {
 	const {
 		mode, timeLeft, isRunning, petProgress,
 		showBubble, bubbleMessage, start, pause, dismissBubble,
@@ -22,6 +22,13 @@ export default function PomodoroModal({ onRequestClose } = {}) {
 		document.body.style.overflow = 'hidden';
 		return () => { document.body.style.overflow = prevOverflow; };
 	}, []);
+
+	useEffect(() => {
+		if (typeof onRunningChange === 'function') {
+			onRunningChange(isRunning);
+		}
+	}, [isRunning, onRunningChange]);
+
 
 	const modeKeys = ['focus', 'short', 'long'];
 	const modeLabels = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };

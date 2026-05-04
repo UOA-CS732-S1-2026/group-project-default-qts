@@ -6,11 +6,12 @@ import './DashboardMain.css'
 
 function DashboardMain({ onQuestDetails }) {
     const [showPomo, setShowPomo] = useState(false);
+    const [pomoIsRunning, setPomoIsRunning] = useState(false);
 
-    return(
+    return (
         <main>
             <div className="main-content">
-                <PetView/>
+                <PetView pomoIsRunning={pomoIsRunning} />
                 <button onClick={() => setShowPomo(true)}>POMODORO</button>
             </div>
             <aside className="task-slider-section">
@@ -18,8 +19,10 @@ function DashboardMain({ onQuestDetails }) {
             </aside>
 
             {showPomo && (
-                <PomodoroModal onRequestClose={() => setShowPomo(false)} />
-            )}
+                <PomodoroModal
+                    onRequestClose={() => setShowPomo(false)}
+                    onRunningChange={setPomoIsRunning}
+                />)}
         </main>
     )
 }
