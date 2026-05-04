@@ -5,6 +5,8 @@ const {
   listTasks,
   getTask,
   createTask,
+  updateTask,
+  deleteTask,
   applyForTask,
   withdrawApplication,
   getApplications,
@@ -17,6 +19,8 @@ const {
 router.get('/', requireAuth, listTasks);
 router.post('/', requireAuth, createTask);
 router.get('/:id', requireAuth, getTask);
+router.patch('/:id', requireAuth, updateTask);
+router.delete('/:id', requireAuth, deleteTask);
 router.post('/:id/apply', requireAuth, applyForTask);
 router.delete('/:id/apply', requireAuth, withdrawApplication);
 router.get('/:id/applications', requireAuth, getApplications);
