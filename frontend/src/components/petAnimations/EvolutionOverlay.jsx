@@ -1,8 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SparkleParticles from './particles/SparkleParticles';
-import { SPECIES } from '../../context/PetContext';
 import './EvolutionOverlay.css';
+
+// Default species list matching the actual asset filenames in src/assets/pets/
+const DEFAULT_SPECIES = [
+  { id: 'apteryx', name: 'Apteryx' },
+  { id: 'lemuera', name: 'Lemuera' },
+  { id: 'pateke', name: 'Pateke' },
+  { id: 'penguin', name: 'Penguin' },
+  { id: 'pukeko', name: 'Pukeko' },
+  { id: 'pyro', name: 'Pyro' },
+];
 
 const MotionDiv = motion.div;
 
@@ -12,6 +21,7 @@ export default function EvolutionOverlay({
   targetStage,
   onEvolve,
   onSkip,
+  speciesList = DEFAULT_SPECIES,
 }) {
   const [phase, setPhase] = useState('choose'); // 'choose' | 'animating' | 'done'
   const [chosenSpecies, setChosenSpecies] = useState(null);
@@ -29,7 +39,7 @@ export default function EvolutionOverlay({
     setChosenSpecies(speciesId);
     setPhase('animating');
     setShowSparkles(true);
-    
+
     // After animation, mark done
     setTimeout(() => {
       setPhase('done');
@@ -69,7 +79,7 @@ export default function EvolutionOverlay({
             {/* Species selection (only when hatching from egg) */}
             {currentStage === 'egg' && (
               <div className="evolution-species-grid">
-                {SPECIES.map((s) => (
+                {speciesList.map((s) => (
                   <button
                     key={s.id}
                     className="evolution-species-btn"

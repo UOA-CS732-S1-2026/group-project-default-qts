@@ -6,7 +6,7 @@ import '../../styles/pomodoro.css';
 
 const MotionDiv = motion.div;
 
-export default function PomodoroModal({ onRequestClose, onRunningChange } = {}) {
+export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete } = {}) {
 	const {
 		mode, timeLeft, isRunning, petProgress,
 		showBubble, bubbleMessage, start, pause, dismissBubble,
@@ -28,6 +28,13 @@ export default function PomodoroModal({ onRequestClose, onRunningChange } = {}) 
 			onRunningChange(isRunning);
 		}
 	}, [isRunning, onRunningChange]);
+
+	// Notify parent when a focus session completes so pet can celebrate
+	useEffect(() => {
+		if (showBubble && mode === 'focus' && typeof onSessionComplete === 'function') {
+			onSessionComplete();
+		}
+	}, [showBubble, mode, onSessionComplete]);
 
 
 	const modeKeys = ['focus', 'short', 'long'];
