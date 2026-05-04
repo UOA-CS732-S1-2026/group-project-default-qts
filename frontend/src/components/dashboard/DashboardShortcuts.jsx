@@ -1,4 +1,4 @@
-import './DashboardShortcuts.css';
+import '@/styles/dashboard/DashboardShortcuts.css';
 
 function DashboardShortcuts({ openModal, modalType, closeModal }) {
     return (
