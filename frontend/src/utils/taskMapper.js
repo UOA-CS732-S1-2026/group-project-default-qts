@@ -55,8 +55,18 @@ export function toFrontend(task) {
     timeLimit: task.timeLimit ?? null,
     rewardCoins: task.rewardCoins ?? 0,
     status,
-    assignee: null,
-    createdBy: { id: String(task.createdBy ?? ''), name: '' },
+    assignee: task.assignee
+      ? {
+          id: String(task.assignee.id ?? task.assignee._id ?? ''),
+          name: task.assignee.name ?? '',
+        }
+      : null,
+    createdBy: task.createdBy && typeof task.createdBy === 'object'
+      ? {
+          id: String(task.createdBy.id ?? task.createdBy._id ?? ''),
+          name: task.createdBy.name ?? '',
+        }
+      : { id: String(task.createdBy ?? ''), name: '' },
     createdAt: task.createdAt ?? new Date().toISOString(),
     expiredAt: task.endAt ?? null,
     difficulty: task.difficulty ?? null,

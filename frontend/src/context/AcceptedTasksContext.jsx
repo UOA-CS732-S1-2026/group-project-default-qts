@@ -41,13 +41,18 @@ export function AcceptedTasksProvider({ children }) {
     }
   };
 
-  // Pessimistic for p2p (withdraw application via API before updating local state).
-  // Community tasks have direct assignments — no application to withdraw — so we
-  // only clean up local state without calling the backend.
-  const cancelTask = async (id, taskType) => {
-    if (taskType !== 'community') {
+  // API call only — does NOT touch acceptedIds/submittedIds.
+  // Caller is responsible for calling cleanupCancelledTask after showing success UI.
+  const withdrawTask = async (id, taskType) => {
+    if (taskType === 'community') {
+      await taskService.withdrawAssignment(id);
+    } else {
       await taskService.withdrawApplication(id);
     }
+  };
+
+  // State cleanup only — call this after success overlay finishes.
+  const cleanupCancelledTask = (id) => {
     setAcceptedIds((prev) => {
       const next = new Set(prev);
       next.delete(id);
@@ -60,8 +65,14 @@ export function AcceptedTasksProvider({ children }) {
     });
   };
 
+  // Legacy combined helper kept for any callers that don't need the success overlay.
+  const cancelTask = async (id, taskType) => {
+    await withdrawTask(id, taskType);
+    cleanupCancelledTask(id);
+  };
+
   return (
-    <AcceptedTasksContext.Provider value={{ acceptedIds, acceptTask, cancelTask, submittedIds, submitTask }}>
+    <AcceptedTasksContext.Provider value={{ acceptedIds, acceptTask, cancelTask, withdrawTask, cleanupCancelledTask, submittedIds, submitTask }}>
       {children}
     </AcceptedTasksContext.Provider>
   );

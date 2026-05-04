@@ -45,6 +45,10 @@ export const applyForTask = (id) =>
 export const withdrawApplication = (id) =>
   api.delete(`/tasks/${id}/apply`);
 
+/** DELETE /api/tasks/:id/assignment  — player withdraws from a SYSTEM task assignment */
+export const withdrawAssignment = (id) =>
+  api.delete(`/tasks/${id}/assignment`);
+
 /** PATCH /api/tasks/:id/applications/:appId/decide
  * @param {string} action - 'ACCEPT' | 'REJECT'
  */
@@ -66,11 +70,25 @@ export const submitTask = (id) =>
 export const confirmTask = (id) =>
   api.post(`/tasks/${id}/confirm`);
 
+/** POST /api/tasks/:id/reject
+ * - SYSTEM: admin only
+ * - P2P: task creator only (or admin)
+ * Returns task to IN_PROGRESS so the assignee can redo it.
+ */
+export const rejectTaskSubmission = (id) =>
+  api.post(`/tasks/${id}/reject`);
+
 /** POST /api/tasks/:id/cancel
  * Creator or admin. Refunds P2P escrow if still HELD.
  */
 export const cancelTask = (id) =>
   api.post(`/tasks/${id}/cancel`);
+
+/** POST /api/tasks/:id/reopen
+ * Creator or admin. Re-opens a CANCELLED task back to OPEN, clears assignments.
+ */
+export const reopenTask = (id) =>
+  api.post(`/tasks/${id}/reopen`);
 
 /** PATCH /api/tasks/:id
  * body: { title?, description?, endAt?, rewardCoins? }

@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as taskService from '../services/taskService';
 import { toFrontend, toFrontendList, userCreateToBackend } from '../utils/taskMapper';
+import { useApp } from './AppContext';
 
 const TasksContext = createContext();
 
 export function TasksProvider({ children }) {
+    const { currentUser } = useApp();
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -13,12 +15,32 @@ export function TasksProvider({ children }) {
         setIsLoading(true);
         setError(null);
         try {
-            // If user has a token, request "mine=true" so frontend shows
-            // personal tasks (created/assigned) rather than only public tasks.
             const token = localStorage.getItem('gf_token');
-            const params = token ? { mine: true } : {};
-            const res = await taskService.getTasks(params);
-            setTasks(toFrontendList(res.data.data.tasks));
+            if (token) {
+                // Fetch in parallel:
+                // 1. mine=true → personal tasks, p2p (created/assigned), system tasks already accepted
+                // 2. type=SYSTEM → all public SYSTEM tasks visible to every player
+                // 3. type=P2P, status=OPEN → all open P2P tasks visible to every player (public marketplace)
+                const [mineRes, systemRes, p2pRes] = await Promise.all([
+                    taskService.getTasks({ mine: true }),
+                    taskService.getTasks({ type: 'community' }),
+                    taskService.getTasks({ type: 'p2p', status: 'open' }),
+                ]);
+                const mineTasks = toFrontendList(mineRes.data.data.tasks);
+                const systemTasks = toFrontendList(systemRes.data.data.tasks);
+                const p2pTasks = toFrontendList(p2pRes.data.data.tasks);
+                // Merge: deduplicate by id, mine tasks take precedence (carry assignee info)
+                const mineIds = new Set(mineTasks.map((t) => t.id));
+                const merged = [
+                    ...mineTasks,
+                    ...systemTasks.filter((t) => !mineIds.has(t.id)),
+                    ...p2pTasks.filter((t) => !mineIds.has(t.id)),
+                ];
+                setTasks(merged);
+            } else {
+                const res = await taskService.getTasks({});
+                setTasks(toFrontendList(res.data.data.tasks));
+            }
         } catch (err) {
             setError(err.response?.data?.error?.message ?? 'Failed to load tasks');
         } finally {
@@ -26,9 +48,10 @@ export function TasksProvider({ children }) {
         }
     }, []);
 
+    // Re-fetch whenever the logged-in user changes (login / logout).
     useEffect(() => {
         fetchTasks();
-    }, [fetchTasks]);
+    }, [currentUser?.id]);
 
     // Creates a task via API, maps response back to frontend shape, prepends to list.
     // Returns the created task or throws on failure.

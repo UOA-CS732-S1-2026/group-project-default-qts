@@ -11,6 +11,7 @@ function TaskGrid({
   onDeleteCard,
   onUpdateCard,
   onCancelCard,
+  onCancelDone,
   acceptedIds,
   submittedIds,
   onAcceptCard,
@@ -34,6 +35,7 @@ function TaskGrid({
           showSourceBadge={taskType === 'quest'}
           hideAccept={taskType === 'quest'}
           onCancel={taskType === 'quest' ? onCancelCard : undefined}
+          onCancelDone={taskType === 'quest' ? onCancelDone : undefined}
           isAccepted={acceptedIds ? acceptedIds.has(task.id) : false}
           isSubmitted={submittedIds ? submittedIds.has(task.id) : false}
           onAccept={onAcceptCard}

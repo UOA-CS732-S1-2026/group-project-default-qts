@@ -50,8 +50,8 @@ function QuestSlider({ onDetails }) {
   };
 
   const handleCancel = (id) => {
-    cancelTask(id);
     const task = tasks.find((t) => t.id === id);
+    cancelTask(id, task?.type);
     if (task?.type === 'p2p') {
       updateTask(id, { status: 'cancelled', assignee: null });
     }

@@ -6,6 +6,8 @@ import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 import { useApp } from '../../context/AppContext';
+import * as taskService from '../../services/taskService';
+import { toFrontend } from '../../utils/taskMapper';
 import { STATUS_B2F } from '../../utils/taskMapper';
 import Toolbar from '../toolbar/Toolbar';
 import loadIconSmall from '../../assets/load-icon-small.png';
@@ -68,7 +70,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     }
   }, [questTargetId]);
 
-  const { acceptedIds, cancelTask, submittedIds, submitTask } = useAcceptedTasks();
+  const { acceptedIds, withdrawTask, cleanupCancelledTask, submittedIds, submitTask } = useAcceptedTasks();
   const [questSource, setQuestSource] = useState(null);
   const [questStatus, setQuestStatus] = useState(null);
   const [questCategory, setQuestCategory] = useState(null);
@@ -89,19 +91,62 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     }, 350);
   };
 
-  // P2P: withdraw application via API (pessimistic in AcceptedTasksContext).
-  // Community: direct assignment — no application to withdraw, clean up local state only.
-  const handleCancelQuest = async (id) => {
+  // Phase 1: API call only — no state changes so card stays mounted for success overlay.
+  const handleCancelQuestApi = async (id) => {
     const task = tasks.find((t) => t.id === id);
     try {
-      await cancelTask(id, task?.type);
+      await withdrawTask(id, task?.type);
     } catch {
-      // Withdrawal failed (e.g. application already accepted) — still hide from quest view
+      // Withdrawal failed — still proceed to show success and hide from quest view
     }
+  };
+
+  // Phase 2: state cleanup — called after success overlay finishes (1500ms delay).
+  const handleCancelQuestDone = (id) => {
+    cleanupCancelledTask(id);
     setCancelledQuestIds((prev) => new Set([...prev, id]));
   };
 
   const handleUpdateCard = async (id, fields) => {
+    const task = tasks.find((t) => t.id === id);
+
+    if (task?.type === 'p2p' && fields.status === 'completed') {
+      const response = await taskService.confirmTask(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask?.status) {
+        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      }
+      return;
+    }
+
+    if (task?.type === 'p2p' && fields.status === 'active' && fields.rejectedAt) {
+      const response = await taskService.rejectTaskSubmission(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask?.status) {
+        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      }
+      return;
+    }
+
+    if (fields.status === 'cancelled') {
+      const response = await taskService.cancelTask(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask?.status) {
+        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      }
+      return;
+    }
+
+    // Re-assign: re-open a cancelled task via API, clear assignee in local state.
+    if (fields.status === 'open' && fields.assignee === null) {
+      const response = await taskService.reopenTask(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask) {
+        updateTask(id, { ...toFrontend(backendTask), assignee: null });
+      }
+      return;
+    }
+
     // If task is being submitted, call API first to sync status from backend.
     if (fields.status === 'pending_review' || fields.status === 'pending_confirmation') {
       try {
@@ -115,9 +160,6 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     } else {
       // For non-submit updates, just update local state.
       updateTask(id, fields);
-      if (fields.status === 'open' && fields.assignee === null) {
-        cancelTask(id);
-      }
     }
   };
 
@@ -306,7 +348,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         taskType="quest"
         acceptedIds={acceptedIds}
         submittedIds={submittedIds}
-        onCancelCard={handleCancelQuest}
+        onCancelCard={handleCancelQuestApi}
+        onCancelDone={handleCancelQuestDone}
         onUpdateCard={handleQuestUpdate}
         expandedTaskId={expandedTaskId}
       />
