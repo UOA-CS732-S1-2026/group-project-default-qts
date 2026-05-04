@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = '/api/pets';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/pets`;
 
 // get active pet info
 export async function getActivePet(token) {
@@ -13,6 +13,7 @@ export async function getActivePet(token) {
 		throw new Error('failed to fetch active pet');
 	}
 }
+
 
 // Activate pet
 export async function activatePet(petId, token) {
