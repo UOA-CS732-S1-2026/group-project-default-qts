@@ -798,6 +798,185 @@ const confirmTask = async (req, res) => {
   }
 };
 
+// PATCH /api/tasks/:id
+// Creator (or admin for SYSTEM) can edit title/description/location/startAt/endAt/requiresApplication.
+// Only allowed while task is OPEN (or IN_PROGRESS for PERSONAL tasks).
+const updateTask = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const roles = req.auth?.roles || [];
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'TASK_NOT_FOUND', message: 'Task not found', details: {} }
+      });
+    }
+
+    const isCreator = String(task.createdBy) === String(userId);
+    const isAdmin = roles.includes('ADMIN');
+
+    if (task.type === 'SYSTEM' && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only admins can edit SYSTEM tasks', details: {} }
+      });
+    }
+    if (task.type !== 'SYSTEM' && !isCreator && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: 'Only the task creator can edit this task', details: {} }
+      });
+    }
+
+    const editableStatuses = task.type === 'PERSONAL' ? ['OPEN', 'IN_PROGRESS'] : ['OPEN'];
+    if (!editableStatuses.includes(task.status)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'TASK_NOT_EDITABLE', message: `Task cannot be edited in status: ${task.status}`, details: {} }
+      });
+    }
+
+    const { title, description, location, startAt, endAt, requiresApplication } = req.body;
+
+    if (title !== undefined) {
+      if (String(title).trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'TITLE_REQUIRED', message: 'title cannot be empty', details: {} }
+        });
+      }
+      task.title = String(title).trim();
+    }
+    if (description !== undefined) task.description = String(description).trim();
+    if (location !== undefined) task.location = location || null;
+    if (startAt !== undefined) task.startAt = startAt ? new Date(startAt) : null;
+    if (endAt !== undefined) task.endAt = endAt ? new Date(endAt) : null;
+
+    if (requiresApplication !== undefined && task.type !== 'PERSONAL') {
+      const hasPendingApps = await TaskApplication.exists({ taskId: id, status: 'PENDING' });
+      if (hasPendingApps) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'HAS_PENDING_APPLICATIONS', message: 'Cannot change requiresApplication while pending applications exist', details: {} }
+        });
+      }
+      task.requiresApplication = Boolean(requiresApplication);
+    }
+
+    await task.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task updated',
+      data: { task: formatTask(task) }
+    });
+  } catch (error) {
+    console.error('updateTask error:', error);
+    return res.status(500).json({
+      success: false,
+      error: { code: 'TASK_UPDATE_FAILED', message: 'Failed to update task', details: {} }
+    });
+  }
+};
+
+// DELETE /api/tasks/:id
+// Creator (or admin for SYSTEM) can delete a task only when OPEN or CANCELLED.
+// Cascades: removes applications, assignments, escrows; refunds held P2P escrow.
+const deleteTask = async (req, res) => {
+  const dbSession = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const roles = req.auth?.roles || [];
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    dbSession.startTransaction();
+
+    const task = await Task.findById(id).session(dbSession);
+    if (!task) {
+      throw { status: 404, code: 'TASK_NOT_FOUND', message: 'Task not found' };
+    }
+
+    const isCreator = String(task.createdBy) === String(userId);
+    const isAdmin = roles.includes('ADMIN');
+
+    if (task.type === 'SYSTEM' && !isAdmin) {
+      throw { status: 403, code: 'FORBIDDEN', message: 'Only admins can delete SYSTEM tasks' };
+    }
+    if (task.type !== 'SYSTEM' && !isCreator && !isAdmin) {
+      throw { status: 403, code: 'FORBIDDEN', message: 'Only the task creator can delete this task' };
+    }
+
+    if (!['OPEN', 'CANCELLED'].includes(task.status)) {
+      throw { status: 400, code: 'TASK_NOT_DELETABLE', message: `Task cannot be deleted in status: ${task.status}` };
+    }
+
+    // Refund held P2P escrow if present
+    if (task.type === 'P2P') {
+      const escrow = await TaskEscrow.findOne({ taskId: id, status: 'HELD' }).session(dbSession);
+      if (escrow) {
+        escrow.status = 'REFUNDED';
+        escrow.refundedAt = new Date();
+        await escrow.save({ session: dbSession });
+
+        const payer = await User.findByIdAndUpdate(
+          escrow.payerUserId,
+          { $inc: { coins: escrow.amount } },
+          { new: true, session: dbSession }
+        );
+
+        await CoinTransaction.create([{
+          userId: escrow.payerUserId,
+          amount: escrow.amount,
+          balanceAfter: payer.coins,
+          type: 'ESCROW_REFUND',
+          relatedModel: 'Task',
+          relatedId: task._id,
+          note: `Escrow refunded for deleted P2P task: ${task.title}`
+        }], { session: dbSession });
+      }
+    }
+
+    await TaskApplication.deleteMany({ taskId: id }, { session: dbSession });
+    await TaskAssignment.deleteMany({ taskId: id }, { session: dbSession });
+    await TaskEscrow.deleteMany({ taskId: id }, { session: dbSession });
+    await Task.deleteOne({ _id: id }, { session: dbSession });
+
+    await dbSession.commitTransaction();
+    dbSession.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task deleted',
+      data: {}
+    });
+  } catch (error) {
+    await dbSession.abortTransaction();
+    dbSession.endSession();
+    console.error('deleteTask error:', error);
+    return res.status(error.status || 500).json({
+      success: false,
+      error: { code: error.code || 'TASK_DELETE_FAILED', message: error.message || 'Failed to delete task', details: {} }
+    });
+  }
+};
+
 // POST /api/tasks/:id/cancel
 // Creator or admin. Refunds P2P escrow if still HELD.
 const cancelTask = async (req, res) => {
