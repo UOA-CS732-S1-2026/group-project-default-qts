@@ -16,11 +16,6 @@ nav{
     font-size: 1rem;
 }
 
-.coin-display {
-    padding: 0.75rem 0.875rem;
-    border-radius: 8px;
-    background-color: var(--color-bg-accent);
-}
 
 .profile-button {
     background-color: transparent;
