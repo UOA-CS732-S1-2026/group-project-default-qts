@@ -241,7 +241,7 @@ export default function usePomodoro({ onFocusReward } = {}) {
     }
 
     function requestSwitchMode(newMode) {
-        if (isRunning && !wasInterrupted && mode === 'focus' && newMode === 'focus') {
+        if (isRunning && !wasInterrupted) {
             setPendingMode(newMode);
             setShowModeResetConfirm(true);
             return;
@@ -339,5 +339,6 @@ export default function usePomodoro({ onFocusReward } = {}) {
         showModeResetConfirm,
         confirmModeReset,
         cancelModeReset,
+        pendingMode,
     };
 }

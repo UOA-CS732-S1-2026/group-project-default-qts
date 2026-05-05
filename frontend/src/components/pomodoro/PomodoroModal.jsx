@@ -14,7 +14,7 @@ export default function PomodoroModal({ onRequestClose } = {}) {
         showBubble, bubbleMessage, start, pause, resume, reset, dismissBubble,
         switchMode, formatTime, MODES: modes, focusMessage,
         showPauseWarning, requestPause, confirmPause, cancelPauseWarning,
-        requestSwitchMode, showModeResetConfirm, confirmModeReset, cancelModeReset,
+        requestSwitchMode, showModeResetConfirm, confirmModeReset, cancelModeReset, pendingMode,
     } = usePomodoro({ onFocusReward: refreshCoins });
 
     const handleClose = async () => {
@@ -33,6 +33,11 @@ export default function PomodoroModal({ onRequestClose } = {}) {
         focus: 'FOCUS',
         short: <>SHORT<br />BREAK</>,
         long: <>LONG<br />BREAK</>,
+    };
+    const modeText = {
+        focus: 'Focus',
+        short: 'Short Break',
+        long: 'Long Break',
     };
     const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
 
@@ -210,7 +215,7 @@ export default function PomodoroModal({ onRequestClose } = {}) {
                         >
                             <div className="pomo-bubble-title">Reset Timer?</div>
                             <div className="pomo-bubble-text">
-                                You clicked Focus again. Do you want to reset the current timer?
+                                You clicked {modeText[pendingMode || mode]}. Do you want to reset the current timer?
                             </div>
                             <div className="pomo-confirm-buttons">
                                 <button className="pomo-pause-btn" onClick={confirmModeReset}>Yes, Reset</button>
