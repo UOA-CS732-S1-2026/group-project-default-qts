@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import useModal from '../../hooks/useModal';
 import { AcceptedTasksProvider } from '../../context/AcceptedTasksContext';
+import { useApp } from '../../context/AppContext';
 import ModalBase from '../taskSystemModals/ModalBase';
 import MyTaskModal from '../taskSystemModals/MyTaskModal';
 import P2PModal from '../taskSystemModals/P2PModal';
@@ -20,6 +21,7 @@ const MODAL_CONTENTS = {
 };
 
 function Dashboard() {
+  const { currentUser, refreshCoins } = useApp();
   const { isOpen, modalType, openModal, closeModal } = useModal();
   const [questTargetId, setQuestTargetId] = useState(null);
   const [coins, setCoins] = useState(0);
@@ -31,7 +33,8 @@ function Dashboard() {
 
     try {
       const response = await getDashboard(token);
-      const currentCoins = response?.data?.user?.coins;
+      console.log(response.data);
+      const currentCoins = response?.data?.userSummary?.coins;
 
       if (typeof currentCoins === 'number') {
         setCoins(currentCoins);
@@ -49,6 +52,12 @@ function Dashboard() {
       img.src = src;
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof currentUser?.coins === 'number') {
+      setCoins(currentUser.coins);
+    }
+  }, [currentUser?.coins]);
 
   const openQuestDetail = (taskId) => {
     setQuestTargetId(taskId);
@@ -82,9 +91,9 @@ function Dashboard() {
 
             if (typeof updatedCoins === 'number') {
               setCoins(updatedCoins);
-            } else {
-              await loadDashboardCoins();
             }
+            await refreshCoins();
+            if (typeof updatedCoins !== 'number') await loadDashboardCoins();
           }}
         />
         )
