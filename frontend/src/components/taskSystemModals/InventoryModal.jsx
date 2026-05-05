@@ -1,16 +1,13 @@
 import './InventoryModal.css';
 import { useState, useEffect } from 'react';
 import Item from '../ui/Item';
-import eggItem from '../../assets/items/egg_thoseicons.png';
-import sandwichItem from '../../assets/items/sandwich_freepik.png';
-import snackItem from '../../assets/items/snack_freepik.png';
-import roastChickenItem from '../../assets/items/roast-chicken_freepik.png';
+import { ITEM_IMAGES } from '../../data/itemAssets';
 
 const inventoryItems = [
-  { id: 1, name: 'Egg', quantity: 2, image: eggItem },
-  { id: 2, name: 'Snack', quantity: 5, image: snackItem },
-  { id: 3, name: 'Sandwich', quantity: 1, image: sandwichItem },
-  { id: 4, name: 'Roast Chicken', quantity: 1, image: roastChickenItem },
+  { id: 1, name: 'Egg', quantity: 2, image: ITEM_IMAGES.egg },
+  { id: 2, name: 'Snack', quantity: 5, image: ITEM_IMAGES.snack },
+  { id: 3, name: 'Sandwich', quantity: 1, image: ITEM_IMAGES.sandwich },
+  { id: 4, name: 'Roast Chicken', quantity: 1, image: ITEM_IMAGES.roastChicken },
 ];
 
 function InventoryModal({ onClose }) {

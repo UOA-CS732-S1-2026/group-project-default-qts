@@ -1,16 +1,13 @@
 import './StoreModal.css';
 import { useState, useEffect, useRef } from 'react';
 import Item from '../ui/Item';
-import eggItem from '../../assets/items/egg_thoseicons.png';
-import sandwichItem from '../../assets/items/sandwich_freepik.png';
-import snackItem from '../../assets/items/snack_freepik.png';
-import roastChickenItem from '../../assets/items/roast-chicken_freepik.png';
+import { ITEM_IMAGES } from '../../data/itemAssets';
 
 const storeItems = [
-    { id: 1, name: 'Egg', cost: 10, image: eggItem },
-    { id: 2, name: 'Snack', cost: 15, image: snackItem },
-    { id: 3, name: 'Sandwich', cost: 20, image: sandwichItem },
-    { id: 4, name: 'Roast Chicken', cost: 30, image: roastChickenItem },
+    { id: 1, name: 'Egg', cost: 10, image: ITEM_IMAGES.egg },
+    { id: 2, name: 'Snack', cost: 15, image: ITEM_IMAGES.snack },
+    { id: 3, name: 'Sandwich', cost: 20, image: ITEM_IMAGES.sandwich },
+    { id: 4, name: 'Roast Chicken', cost: 30, image: ITEM_IMAGES.roastChicken },
 ];
 
 function StoreModal({ onClose }) {
