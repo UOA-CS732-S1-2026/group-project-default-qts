@@ -28,6 +28,19 @@ export default function usePomodoro({ onFocusReward } = {}) {
     const elapsed = totalDuration - timeLeft;
     const petProgress = elapsed / totalDuration;
 
+    function extractSessionId(payload) {
+        return (
+            payload?.data?.session?.id ||
+            payload?.data?.session?._id ||
+            payload?.session?.id ||
+            payload?.session?._id ||
+            payload?.data?.id ||
+            payload?.data?._id ||
+            payload?.id ||
+            payload?._id
+        );
+    }
+
     function getNextMode(currentMode, currentFocusCount) {
         if (currentMode === 'focus') {
             const newCount = currentFocusCount + 1;
@@ -84,26 +97,44 @@ export default function usePomodoro({ onFocusReward } = {}) {
     async function start() {
         if (mode === 'focus' && !focusSessionId) {
             try {
+                try {
+                    const active = await getActiveFocusSession();
+                    const activeId = extractSessionId(active?.data || active);
+                    if (activeId) {
+                        setFocusSessionId(activeId);
+                        setFocusMessage(null);
+                        setWasInterrupted(false);
+                        setIsPaused(false);
+                        setIsRunning(true);
+                        return;
+                    }
+                } catch (activeErr) {
+                    const activeStatus = activeErr?.response?.status;
+                    if (activeStatus && activeStatus !== 404) {
+                        throw activeErr;
+                    }
+                }
+
                 const res = await startFocusSession(MODES.focus.duration);
-                const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
+                const sessionId = extractSessionId(res);
                 if (!sessionId) throw new Error('Missing session id');
                 setFocusSessionId(sessionId);
+                setFocusMessage(null);
             } catch (err) {
                 const status = err?.response?.status;
-                const activeId =
-                    err?.response?.data?.data?.activeSession?._id ||
-                    err?.response?.data?.activeSession?._id ||
-                    err?.response?.data?.data?.activeSession?.id ||
-                    err?.response?.data?.activeSession?.id;
+                const activeId = extractSessionId(err?.response?.data?.errors?.activeSession);
 
                 if (status === 409 && activeId) {
                     setFocusSessionId(activeId);
+                    setFocusMessage(null);
                 } else if (status === 409) {
                     try {
                         const active = await getActiveFocusSession();
-                        const sessionId = active?.data?._id || active?._id || active?.data?.id || active?.id;
-                        if (sessionId) setFocusSessionId(sessionId);
-                        else {
+                        const sessionId = extractSessionId(active?.data || active);
+                        if (sessionId) {
+                            setFocusSessionId(sessionId);
+                            setFocusMessage(null);
+                        } else {
                             setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
                             return;
                         }
@@ -152,9 +183,10 @@ export default function usePomodoro({ onFocusReward } = {}) {
         if (mode === 'focus' && !focusSessionId) {
             try {
                 const res = await startFocusSession(MODES.focus.duration);
-                const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
+                const sessionId = extractSessionId(res);
                 if (!sessionId) throw new Error('Missing session id');
                 setFocusSessionId(sessionId);
+                setFocusMessage(null);
             } catch {
                 setFocusMessage({ type: 'error', text: 'Failed to resume focus session.' });
                 return;

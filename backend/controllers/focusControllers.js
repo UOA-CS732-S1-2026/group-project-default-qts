@@ -78,7 +78,7 @@ exports.getActiveFocusSession = async (req, res) => {
     }).lean();
 
     if (!session) {
-      return sendError(res, 'No active focus session', 404);
+      return sendSuccess(res, null, 'No active focus session');
     }
 
     return sendSuccess(res, session, 'Active focus session found');
