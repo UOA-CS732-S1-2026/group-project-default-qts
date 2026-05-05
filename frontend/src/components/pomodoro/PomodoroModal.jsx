@@ -7,7 +7,7 @@ import { useApp } from '../../context/AppContext';
 
 const MotionDiv = motion.div;
 
-export default function PomodoroModal({ onRequestClose } = {}) {
+export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete } = {}) {
     const { refreshCoins } = useApp();
     const {
         mode, timeLeft, isRunning, isPaused, petProgress,
@@ -28,18 +28,33 @@ export default function PomodoroModal({ onRequestClose } = {}) {
         return () => { document.body.style.overflow = prevOverflow; };
     }, []);
 
-    const modeKeys = ['focus', 'short', 'long'];
-    const tabLabels = {
-        focus: 'FOCUS',
-        short: <>SHORT<br />BREAK</>,
-        long: <>LONG<br />BREAK</>,
-    };
-    const modeText = {
+	useEffect(() => {
+		if (typeof onRunningChange === 'function') {
+			onRunningChange(isRunning);
+		}
+	}, [isRunning, onRunningChange]);
+
+	// Notify parent when a focus session completes so pet can celebrate
+	useEffect(() => {
+		if (showBubble && mode === 'focus' && typeof onSessionComplete === 'function') {
+			onSessionComplete();
+		}
+	}, [showBubble, mode, onSessionComplete]);
+
+
+	const modeKeys = ['focus', 'short', 'long'];
+	const modeLabels = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };
+	const tabLabels = {
+		focus: 'FOCUS',
+		short: <>SHORT<br />BREAK</>,
+		long: <>LONG<br />BREAK</>,
+	};
+   const modeText = {
         focus: 'Focus',
         short: 'Short Break',
         long: 'Long Break',
     };
-    const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
+	const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
 
     return (
         <MotionDiv

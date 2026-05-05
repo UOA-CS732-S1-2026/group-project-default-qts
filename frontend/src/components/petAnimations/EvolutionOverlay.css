@@ -1,0 +1,200 @@
+/* ═══════════════════════════════════════════════════
+   EvolutionOverlay.css
+   ═══════════════════════════════════════════════════ */
+
+.evolution-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+/* ── Choose panel ──────────────────────────────────── */
+.evolution-panel {
+  background: linear-gradient(145deg, #fff9e6, #fff5d4);
+  border-radius: 24px;
+  padding: 36px 40px;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.15);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.evolution-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #2D6A4F;
+  margin: 0 0 8px;
+}
+
+.evolution-subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin: 0 0 24px;
+}
+
+/* Current pet display */
+.evolution-current {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.evolution-current-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+}
+
+.evolution-arrow {
+  font-size: 2rem;
+  color: #b8860b;
+  font-weight: 700;
+}
+
+.evolution-question {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+  animation: question-pulse 2s ease-in-out infinite;
+}
+
+@keyframes question-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(255,215,0,0.4); }
+  50%      { transform: scale(1.08); box-shadow: 0 4px 30px rgba(255,215,0,0.6); }
+}
+
+/* Species grid */
+.evolution-species-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.evolution-species-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.evolution-species-btn:hover {
+  border-color: #ffd700;
+  background: rgba(255, 245, 200, 0.9);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.2);
+}
+
+.evolution-species-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.12));
+}
+
+.evolution-species-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2D6A4F;
+}
+
+/* Direct evolve */
+.evolution-direct {
+  margin-bottom: 20px;
+}
+
+.evolution-evolve-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 32px;
+  border: 2px solid #ffd700;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,179,71,0.15));
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2D6A4F;
+}
+
+.evolution-evolve-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3);
+  background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,179,71,0.25));
+}
+
+.evolution-preview-img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.15));
+}
+
+/* Skip button */
+.evolution-skip-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #999;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.evolution-skip-btn:hover {
+  color: #666;
+  text-decoration: underline;
+}
+
+/* ── Animation phase ───────────────────────────────── */
+.evolution-animation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 400px;
+  height: 400px;
+}
+
+.evolution-glow-circle {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,215,0,0.6), rgba(255,215,0,0.1), transparent);
+  pointer-events: none;
+}
+
+.evolution-morph-img {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+}
