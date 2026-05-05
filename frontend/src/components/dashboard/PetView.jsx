@@ -1,4 +1,4 @@
-import './PetView.css'
+import '../../styles/dashboard/PetView.css'
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'
