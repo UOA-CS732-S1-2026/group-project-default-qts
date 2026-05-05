@@ -1,4 +1,4 @@
-import './InventoryModal.css';
+import '@/styles/components/InventoryModal.css';
 import { useEffect, useRef, useState } from 'react';
 import Item from '../ui/Item';
 import { ITEM_IMAGES } from '../../data/itemAssets';

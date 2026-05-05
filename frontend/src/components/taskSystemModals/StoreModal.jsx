@@ -1,4 +1,4 @@
-import './StoreModal.css';
+import '@/styles/components/StoreModal.css';
 import { useState, useEffect, useRef } from 'react';
 import Item from '../ui/Item';
 import { ITEM_IMAGES } from '../../data/itemAssets';
