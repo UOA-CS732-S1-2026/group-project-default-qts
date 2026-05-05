@@ -13,7 +13,8 @@ const UserSchema = new mongoose.Schema(
 
     coins: { type: Number, default: 30, min: 0 },
     roles: { type: [String], default: ['USER'] },
-    activePetId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserPet', default: null }
+    activePetId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserPet', default: null },
+    avatar: { type: String, default: '' }
   },
   { timestamps: true }
 );

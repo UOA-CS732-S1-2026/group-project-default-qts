@@ -157,3 +157,25 @@
   .inventory-grid{ grid-template-columns: repeat(4, 1fr); }
   .pets-grid{ grid-template-columns: repeat(3, 1fr); }
 }
+
+.feed-confirm-bubble {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface-color, #fff);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  text-align: center;
+}
+.feed-confirm-content p {
+  margin: 0 0 16px 0;
+  color: var(--text-color, #333);
+}
+.feed-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}

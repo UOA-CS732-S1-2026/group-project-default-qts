@@ -13,7 +13,7 @@ function getErrorMessage(error, fallback) {
 
 export async function getDashboard(token) {
   try {
-    const res = await axios.get(`${API_BASE}/dashboard`, {
+    const res = await axios.get(`${API_BASE}/api/dashboard`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
