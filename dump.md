@@ -136,3 +136,17 @@ Success (200):
   }
 }
 ```
+
+
+
+
+
+forget password -> user security answer wrong case -
+
+userApi.js:64 
+ POST http://localhost:5000/api/auth/forgot/reset 401 (Unauthorized)
+resetPasswordWithSecurityAnswer	@	userApi.js:64
+resetPassword	@	AppContext.jsx:125
+onStep2	@	ForgotPasswordModal.jsx:80
+
+

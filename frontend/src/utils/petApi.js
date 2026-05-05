@@ -1,56 +1,53 @@
 import axios from 'axios';
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/pets`;
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/pets`;
 
 // get active pet info
 export async function getActivePet(token) {
-	try {
-		const res = await axios.get(`${API_BASE}/active`, {
-			headers: { 'Authorization': `Bearer ${token}` }
-		});
-		return res.data;
-	} catch (error) {
-		throw new Error('failed to fetch active pet');
-	}
+    try {
+        const res = await axios.get(`${API_BASE}/active`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.data;
+    } catch (error) {
+        throw new Error('failed to fetch active pet');
+    }
 }
-
 
 // Activate pet
 export async function activatePet(petId, token) {
-	try {
-		const res = await axios.patch(`${API_BASE}/${petId}/activate`, {}, {
-			headers: { 'Authorization': `Bearer ${token}` }
-		});
-		return res.data;
-	} catch (error) {
-		throw new Error('failed to activate pet');
-	}
+    try {
+        const res = await axios.patch(`${API_BASE}/${petId}/activate`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.data;
+    } catch (error) {
+        throw new Error('failed to activate pet');
+    }
 }
-
 
 // Feed pet
 export async function feedPet(petId, itemCode, token) {
-	try {
-		const res = await axios.post(
-			`${API_BASE}/${petId}/feed`,
-			{ itemCode },
-			{ headers: { 'Authorization': `Bearer ${token}` } }
-		);
-		return res.data;
-	} catch (error) {
-		throw new Error('failed to feed pet');
-	}
+    try {
+        const res = await axios.post(
+            `${API_BASE}/${petId}/feed`,
+            { itemCode },
+            { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        return res.data;
+    } catch (error) {
+        throw new Error('failed to feed pet');
+    }
 }
 
 // Evolve pet
 export async function evolvePet(petId, token) {
-	try {
-		const res = await axios.post(`${API_BASE}/${petId}/evolve`, {}, {
-			headers: { 'Authorization': `Bearer ${token}` }
-		});
-		return res.data;
-	} catch (error) {
-		throw new Error('failed to evolve pet');
-	}
+    try {
+        const res = await axios.post(`${API_BASE}/${petId}/evolve`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.data;
+    } catch (error) {
+        throw new Error('failed to evolve pet');
+    }
 }
-
