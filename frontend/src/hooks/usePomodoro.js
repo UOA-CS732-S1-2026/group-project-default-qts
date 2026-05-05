@@ -9,22 +9,25 @@ export const MODES = {
     long: { label: 'LONG BREAK', duration: 15 * 60, short: 15 },
 };
 
-export default function usePomodoro( { onFocusReward } = {} ) {
+export default function usePomodoro({ onFocusReward } = {}) {
     const [mode, setMode] = useState('focus');
     const [timeLeft, setTimeLeft] = useState(MODES.focus.duration);
     const [isRunning, setIsRunning] = useState(false);
-    const [focusCount, setFocusCount] = useState(0); // number of completed focus sessions
+    const [isPaused, setIsPaused] = useState(false);
+    const [wasInterrupted, setWasInterrupted] = useState(false);
+    const [focusCount, setFocusCount] = useState(0);
     const [showBubble, setShowBubble] = useState(false);
     const [nextModeQueued, setNextModeQueued] = useState(null);
     const [focusSessionId, setFocusSessionId] = useState(null);
     const [focusMessage, setFocusMessage] = useState(null);
+    const [showPauseWarning, setShowPauseWarning] = useState(false);
+    const [showModeResetConfirm, setShowModeResetConfirm] = useState(false);
+    const [pendingMode, setPendingMode] = useState(null);
 
     const totalDuration = MODES[mode].duration;
     const elapsed = totalDuration - timeLeft;
-    // petPosition: 0 (left) → 1 (right)
     const petProgress = elapsed / totalDuration;
 
-    // Determine next mode
     function getNextMode(currentMode, currentFocusCount) {
         if (currentMode === 'focus') {
             const newCount = currentFocusCount + 1;
@@ -34,7 +37,6 @@ export default function usePomodoro( { onFocusReward } = {} ) {
         return { nextMode: 'focus', newFocusCount: currentFocusCount };
     }
 
-    // Timer tick
     useEffect(() => {
         if (!isRunning) return;
         const id = setInterval(() => {
@@ -43,21 +45,30 @@ export default function usePomodoro( { onFocusReward } = {} ) {
                     clearInterval(id);
                     setIsRunning(false);
 
-                    // focus mode ended, call completeFocusSession
                     if (mode === 'focus' && focusSessionId) {
-                        completeFocusSession(focusSessionId)
+                        const completeCall = wasInterrupted
+                            ? completeFocusSession(focusSessionId, { cancelled: true })
+                            : completeFocusSession(focusSessionId);
+
+                        completeCall
                             .then(() => {
-                                setFocusMessage({ type: 'success', text: 'Focus completed! Reward issued.' });
-                                onFocusReward && onFocusReward();
+                                if (wasInterrupted) {
+                                    setFocusMessage({ type: 'info', text: 'Session was interrupted. No reward issued.' });
+                                } else {
+                                    setFocusMessage({ type: 'success', text: 'Focus completed! Reward issued.' });
+                                    onFocusReward && onFocusReward();
+                                }
                             })
                             .catch(() => {
                                 setFocusMessage({ type: 'error', text: 'Failed to report focus completion.' });
                             })
                             .finally(() => {
                                 setFocusSessionId(null);
+                                setWasInterrupted(false);
+                                setIsPaused(false);
                             });
                     }
-                    // Determine next mode and show bubble
+
                     const { nextMode } = getNextMode(mode, mode === 'focus' ? focusCount : focusCount);
                     if (mode === 'focus') setFocusCount((c) => c + 1);
                     setNextModeQueued({ nextMode, newFocusCount: mode === 'focus' ? focusCount + 1 : focusCount });
@@ -68,46 +79,143 @@ export default function usePomodoro( { onFocusReward } = {} ) {
             });
         }, 1000);
         return () => clearInterval(id);
-    }, [isRunning, mode, focusCount, focusSessionId, onFocusReward]);
+    }, [isRunning, mode, focusCount, focusSessionId, onFocusReward, wasInterrupted]);
 
-    // start focus session
     async function start() {
         if (mode === 'focus' && !focusSessionId) {
             try {
                 const res = await startFocusSession(MODES.focus.duration);
                 const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
-                if (!sessionId) {
-                    throw new Error('Missing session id');
-                }
+                if (!sessionId) throw new Error('Missing session id');
                 setFocusSessionId(sessionId);
             } catch {
                 setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
                 return;
             }
         }
+        setWasInterrupted(false);
+        setIsPaused(false);
         setIsRunning(true);
     }
 
-    // pause focus session
+    function requestPause() {
+        if (mode !== 'focus') {
+            pause();
+            return;
+        }
+        setShowPauseWarning(true);
+    }
+
+    function cancelPauseWarning() {
+        setShowPauseWarning(false);
+    }
+
+    function confirmPause() {
+        setShowPauseWarning(false);
+        pause();
+    }
+
     async function pause() {
         setIsRunning(false);
+        setIsPaused(true);
+        if (mode === 'focus') {
+            setWasInterrupted(true);
+            setFocusMessage({ type: 'info', text: 'Focus mode interrupted and you will not be rewarded.' });
+        }
+    }
+
+    async function resume() {
+        if (mode === 'focus' && !focusSessionId) {
+            try {
+                const res = await startFocusSession(MODES.focus.duration);
+                const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
+                if (!sessionId) throw new Error('Missing session id');
+                setFocusSessionId(sessionId);
+            } catch {
+                setFocusMessage({ type: 'error', text: 'Failed to resume focus session.' });
+                return;
+            }
+        }
+        setIsPaused(false);
+        setIsRunning(true);
+    }
+
+    async function resetToMode(newMode) {
+        setIsRunning(false);
+        setIsPaused(false);
+        setShowBubble(false);
+        setNextModeQueued(null);
+
         if (mode === 'focus' && focusSessionId) {
             try {
                 await completeFocusSession(focusSessionId, { cancelled: true });
-                setFocusMessage({ type: 'info', text: 'Focus paused, no reward earned.' });
             } catch {
-                setFocusMessage({ type: 'error', text: 'Failed to report focus pause.' });
+                // ignore
             } finally {
                 setFocusSessionId(null);
             }
         }
+
+        setWasInterrupted(false);
+        setFocusMessage(null);
+        setMode(newMode);
+        setTimeLeft(MODES[newMode].duration);
+    }
+
+    async function reset() {
+        setIsRunning(false);
+        setIsPaused(false);
+        setShowBubble(false);
+        setNextModeQueued(null);
+        setTimeLeft(MODES[mode].duration);
+
+        if (mode === 'focus' && focusSessionId) {
+            try {
+                await completeFocusSession(focusSessionId, { cancelled: true });
+            } catch {
+                // ignore
+            } finally {
+                setFocusSessionId(null);
+                setWasInterrupted(false);
+            }
+        } else {
+            setWasInterrupted(false);
+        }
+        setFocusMessage(null);
+    }
+
+    function requestSwitchMode(newMode) {
+        if (isRunning && !wasInterrupted && mode === 'focus' && newMode === 'focus') {
+            setPendingMode(newMode);
+            setShowModeResetConfirm(true);
+            return;
+        }
+        if (isPaused || wasInterrupted) {
+            resetToMode(newMode);
+            return;
+        }
+        switchMode(newMode);
+    }
+
+    function cancelModeReset() {
+        setShowModeResetConfirm(false);
+        setPendingMode(null);
+    }
+
+    function confirmModeReset() {
+        const target = pendingMode || mode;
+        setShowModeResetConfirm(false);
+        setPendingMode(null);
+        resetToMode(target);
     }
 
     function dismissBubble() {
         setShowBubble(false);
         if (nextModeQueued) {
             const { nextMode, newFocusCount } = nextModeQueued;
-            const adjustedFocusCount = nextMode === 'long' ? 0 : (nextMode === 'focus' ? (newFocusCount >= 4 ? 0 : newFocusCount) : newFocusCount);
+            const adjustedFocusCount = nextMode === 'long'
+                ? 0
+                : (nextMode === 'focus' ? (newFocusCount >= 4 ? 0 : newFocusCount) : newFocusCount);
             setMode(nextMode);
             setTimeLeft(MODES[nextMode].duration);
             setFocusCount(nextMode === 'long' ? 0 : adjustedFocusCount);
@@ -117,31 +225,31 @@ export default function usePomodoro( { onFocusReward } = {} ) {
 
     async function switchMode(newMode) {
         setIsRunning(false);
+        setIsPaused(false);
         setShowBubble(false);
 
-        // If switching away from focus mode, report cancellation if session is active
         if (mode === 'focus' && focusSessionId) {
             try {
                 await completeFocusSession(focusSessionId, { cancelled: true });
-                setFocusMessage({ type: 'info', text: 'Focus paused, no reward earned.' });
             } catch {
-                setFocusMessage({ type: 'error', text: 'Failed to report focus pause.' });
+                // ignore
             } finally {
                 setFocusSessionId(null);
+                setWasInterrupted(false);
             }
         }
+
+        setFocusMessage(null);
         setMode(newMode);
         setTimeLeft(MODES[newMode].duration);
     }
 
-    // Format time
     function formatTime(seconds) {
         const m = Math.floor(seconds / 60).toString().padStart(2, '0');
         const s = (seconds % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
     }
 
-    // Bubble messages per mode
     const bubbleMessages = {
         focus: { title: "Focus Complete! 🎉", text: "Great work! Time for a break. Your buddy is proud of you!" },
         short: { title: "Break's Over! ⏰", text: "Ready to get back to it? Let's keep the momentum going!" },
@@ -152,17 +260,28 @@ export default function usePomodoro( { onFocusReward } = {} ) {
         mode,
         timeLeft,
         isRunning,
+        isPaused,
         focusCount: mode === 'focus' ? focusCount : focusCount,
         petProgress,
         showBubble,
         bubbleMessage: bubbleMessages[mode],
         start,
         pause,
+        resume,
+        reset,
         dismissBubble,
         switchMode,
         formatTime,
         totalDuration,
         MODES,
-        focusMessage, // reward or error message related to focus session completion
+        focusMessage,
+        showPauseWarning,
+        requestPause,
+        confirmPause,
+        cancelPauseWarning,
+        requestSwitchMode,
+        showModeResetConfirm,
+        confirmModeReset,
+        cancelModeReset,
     };
 }

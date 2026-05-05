@@ -82,6 +82,21 @@ const completeFocusSession = async (req, res) => {
     if (!focusSession) {
       throw { status: 404, code: 'SESSION_NOT_FOUND', message: 'Focus session not found' };
     }
+
+    // Prevent duplicate rewards using rewardedAt (idempotent behavior)
+    if (focusSession.rewardedAt) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
+      return res.status(200).json({
+        success: true,
+        message: 'Focus session already rewarded',
+        data: {
+          session: formatSession(focusSession),
+          coinsEarned: 0
+        }
+      });
+    }
+
     if (focusSession.status !== 'RUNNING') {
       throw { status: 400, code: 'SESSION_NOT_RUNNING', message: 'Focus session is not running' };
     }
@@ -155,6 +170,15 @@ const cancelFocusSession = async (req, res) => {
         error: { code: 'SESSION_NOT_FOUND', message: 'Focus session not found', details: {} }
       });
     }
+
+    if (focusSession.status === 'CANCELLED') {
+      return res.status(200).json({
+        success: true,
+        message: 'Focus session already cancelled',
+        data: { session: formatSession(focusSession) }
+      });
+    }
+
     if (focusSession.status !== 'RUNNING') {
       return res.status(400).json({
         success: false,
@@ -164,6 +188,9 @@ const cancelFocusSession = async (req, res) => {
 
     focusSession.status = 'CANCELLED';
     focusSession.endedAt = new Date();
+    focusSession.actualDurationSec = Math.floor((focusSession.endedAt - focusSession.startedAt) / 1000);
+    focusSession.rewardCoins = 0;
+    focusSession.rewardedAt = null;
     await focusSession.save();
 
     return res.status(200).json({

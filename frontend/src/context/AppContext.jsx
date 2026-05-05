@@ -6,14 +6,12 @@ import {
   identifyUserForReset,
   resetPasswordWithSecurityAnswer
 } from '../utils/userApi';
+import {
+  SECURITY_QUESTIONS,
+  isValidUniEmail,
+} from './appConstants';
 
 const AppContext = createContext(null);
-
-export const SECURITY_QUESTIONS = [
-  "What's my mother's first name?",
-  "Where is my favourite spot in campus?",
-  "What is the name of my first pet?",
-];
 
 const SECURITY_QUESTION_CODES = ['MOTHER_NAME', 'FAV_SPOT', 'PET_NAME'];
 
@@ -177,6 +175,18 @@ export function AppProvider({ children }) {
     }
   }
 
+  async function refreshCoins() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const res = await axios.get(`${API_BASE_URL}/api/coins/balance`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res?.data?.success) {
+      // keep coins in currentUser if you store it there
+      setCurrentUser((prev) => prev ? { ...prev, coins: res.data.data.coins } : prev);
+    }
+  }
+
   function updateAvatar(avatarDataUrl) {
     const updatedUser = { ...(currentUser || {}), avatar: avatarDataUrl };
     setCurrentUser(updatedUser);
@@ -197,6 +207,7 @@ export function AppProvider({ children }) {
     updatePetName,
     updatePassword,
     updateAvatar,
+    refreshCoins,
     SECURITY_QUESTIONS,
   };
 
@@ -207,26 +218,4 @@ export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used within AppProvider');
   return ctx;
-}
-
-export const ALLOWED_DOMAINS = ['@auckland.ac.nz', '@aucklanduni.ac.nz'];
-export function isValidUniEmail(email) {
-  return ALLOWED_DOMAINS.some((d) => email.toLowerCase().endsWith(d));
-}
-
-export function isValidPassword(password) {
-  return (
-    password.length >= 8 &&
-    /[A-Z]/.test(password) &&
-    /[a-z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
-}
-
-export function isValidDob(dob) {
-  const re = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])-\d{4}$/;
-  if (!re.test(dob)) return false;
-  const [month, day, year] = dob.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
 }
