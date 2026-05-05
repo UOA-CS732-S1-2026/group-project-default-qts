@@ -1,6 +1,15 @@
 import './Item.css';
 
-function Item({ image, name, cost, quantity = 0, mode = 'store', onBuy }) {
+function Item({
+    image,
+    name,
+    cost,
+    quantity = 0,
+    mode = 'store',
+    onBuy,
+    disabled = false,
+    buyLabel = 'Buy'
+}) {
     if (mode === 'inventory') {
         return (
             <div className="item-card item-card--inventory" title={name}>
@@ -19,7 +28,13 @@ function Item({ image, name, cost, quantity = 0, mode = 'store', onBuy }) {
             </div>
             <h4 className="item-name">{name}</h4>
             <div className="item-cost">{cost} coins</div>
-            <button className="item-buy" onClick={onBuy}>Buy</button>
+            <button
+                className="item-buy"
+                onClick={onBuy}
+                disabled={disabled}
+            >
+                {buyLabel}
+            </button>
         </div>
     );
 }

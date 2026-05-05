@@ -7,17 +7,64 @@ const CoinTransaction = require('../models/CoinTransaction');
 const UserPet = require('../models/UserPet');
 const PetSpecies = require('../models/PetSpecies');
 
-const getStoreItems = async (_req, res) => {
+const getStoreItems = async (req, res) => {
   try {
+    const userId = req.userId;
+
     const items = await StoreItem.find({})
       .select('code name type price growthValue meta createdAt updatedAt')
-      .sort({ price: 1 });
+      .sort({ price: 1 })
+      .lean();
+
+    let eggUnlocked = false;
+    let eggLockedReason = 'ACTIVE_PET_NOT_MAX';
+
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      const user = await User.findById(userId);
+
+      let activePet = null;
+
+      if (user?.activePetId) {
+        activePet = await UserPet.findById(user.activePetId);
+      }
+
+      if (!activePet) {
+        activePet = await UserPet.findOne({
+          userId,
+          status: 'ACTIVE'
+        });
+      }
+
+      eggUnlocked =
+        activePet?.stage === 'ADULT' &&
+        activePet?.level === 10;
+
+      eggLockedReason = eggUnlocked ? null : 'ACTIVE_PET_NOT_MAX';
+    }
+
+    const itemsWithLock = items.map((item) => {
+      if (item.code !== 'RANDOM_EGG') {
+        return {
+          ...item,
+          locked: false,
+          lockedReason: null
+        };
+      }
+
+      return {
+        ...item,
+        locked: !eggUnlocked,
+        lockedReason: eggUnlocked ? null : eggLockedReason
+      };
+    });
 
     return res.status(200).json({
       success: true,
       message: 'Store items loaded successfully',
       data: {
-        items
+        items: itemsWithLock,
+        eggUnlocked,
+        eggLockedReason
       }
     });
   } catch (error) {
