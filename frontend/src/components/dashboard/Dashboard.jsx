@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useModal from '../../hooks/useModal';
 import { AcceptedTasksProvider } from '../../context/AcceptedTasksContext';
 import ModalBase from '../taskSystemModals/ModalBase';
@@ -10,6 +10,7 @@ import InventoryModal from '../taskSystemModals/InventoryModal';
 import DashboardHeader from './DashboardHeader';
 import DashboardFooter from './DashboardFooter';
 import DasboardMain from './DashboardMain';
+import { ITEM_IMAGE_LIST } from '../../data/itemAssets';
 
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
@@ -20,6 +21,14 @@ const MODAL_CONTENTS = {
 function Dashboard() {
   const { isOpen, modalType, openModal, closeModal } = useModal();
   const [questTargetId, setQuestTargetId] = useState(null);
+
+  useEffect(() => {
+    // Warm browser cache for store/inventory item images while user is on dashboard.
+    ITEM_IMAGE_LIST.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   const openQuestDetail = (taskId) => {
     setQuestTargetId(taskId);

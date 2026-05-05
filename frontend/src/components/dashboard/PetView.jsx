@@ -1,4 +1,4 @@
-import './PetView.css'
+import '@/styles/dashboard/PetView.css'
 import petImg from '@/assets/pets/apteryx_1.png'
 import { useState, useEffect } from 'react'
 import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'

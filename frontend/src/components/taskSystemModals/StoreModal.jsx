@@ -1,5 +1,14 @@
 import './StoreModal.css';
 import { useState, useEffect, useRef } from 'react';
+import Item from '../ui/Item';
+import { ITEM_IMAGES } from '../../data/itemAssets';
+
+const storeItems = [
+    { id: 1, name: 'Egg', cost: 10, image: ITEM_IMAGES.egg },
+    { id: 2, name: 'Snack', cost: 15, image: ITEM_IMAGES.snack },
+    { id: 3, name: 'Sandwich', cost: 20, image: ITEM_IMAGES.sandwich },
+    { id: 4, name: 'Roast Chicken', cost: 30, image: ITEM_IMAGES.roastChicken },
+];
 
 function StoreModal({ onClose }) {
     const CLOSE_ANIM_MS = 320;
@@ -47,13 +56,15 @@ function StoreModal({ onClose }) {
                     <p className="store-desc">Spend coins to buy items for your pet (mock data).</p>
 
                     <div className="store-grid">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} className="store-item">
-                                <div className="store-item-img" />
-                                <div className="store-item-title">Item {i + 1}</div>
-                                <div className="store-item-cost">10 coins</div>
-                                <button className="store-item-buy">Buy</button>
-                            </div>
+                        {storeItems.map((item) => (
+                            <Item
+                                key={item.id}
+                                image={item.image}
+                                name={item.name}
+                                cost={item.cost}
+                                mode="store"
+                                onBuy={() => { }}
+                            />
                         ))}
                     </div>
                 </div>

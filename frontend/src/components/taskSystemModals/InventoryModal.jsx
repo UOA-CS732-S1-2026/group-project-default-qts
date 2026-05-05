@@ -1,5 +1,14 @@
 import './InventoryModal.css';
 import { useState, useEffect } from 'react';
+import Item from '../ui/Item';
+import { ITEM_IMAGES } from '../../data/itemAssets';
+
+const inventoryItems = [
+  { id: 1, name: 'Egg', quantity: 2, image: ITEM_IMAGES.egg },
+  { id: 2, name: 'Snack', quantity: 5, image: ITEM_IMAGES.snack },
+  { id: 3, name: 'Sandwich', quantity: 1, image: ITEM_IMAGES.sandwich },
+  { id: 4, name: 'Roast Chicken', quantity: 1, image: ITEM_IMAGES.roastChicken },
+];
 
 function InventoryModal({ onClose }) {
   const CLOSE_ANIM_MS = 320;
@@ -39,11 +48,14 @@ function InventoryModal({ onClose }) {
             <section className="inventory-section">
               <h4 className="section-title">Items</h4>
               <div className="inventory-grid">
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={i} className="inventory-slot">
-                    <div className="inventory-slot-img" />
-                    <div className="inventory-slot-badge">x1</div>
-                  </div>
+                {inventoryItems.map((item) => (
+                  <Item
+                    key={item.id}
+                    image={item.image}
+                    name={item.name}
+                    quantity={item.quantity}
+                    mode="inventory"
+                  />
                 ))}
               </div>
             </section>

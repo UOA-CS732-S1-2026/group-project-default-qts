@@ -57,6 +57,44 @@
   --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
   --transition-slow: 0.4s ease;
+
+  /* --- Semantic App Tokens (legacy names) --- */
+  --color-bg-app: #fefae0;
+  --color-bg-modal: #fefae0;
+  --color-bg-form: #ffffff;
+  --color-bg-accent: lightgray;
+
+  --color-card-1: #2d6a4f;
+  --color-card-2: #7a2e2e;
+  --color-card-3: #c4873a;
+  --color-card-4: #1b4d5c;
+
+  --color-badge-open-bg: #16a34a;
+  --color-badge-active-bg: var(--text-error);
+  --color-badge-cancelled-bg: #666666;
+  --color-badge-expired-bg: #92400e;
+  --color-badge-text: var(--text-inverted);
+
+  --color-text-light: var(--text-inverted);
+  --color-text-dark: var(--text-main);
+
+  --dsh-btn-color-bg: #283618ff;
+  --dsh-btn-text-color: #fefae0;
+
+  --color-btn-primary: #dda15e;
+  --color-coin: #d4a017;
+  --color-danger: var(--text-error);
+
+  --border-pixel: 3px solid var(--text-main);
+  --border-card: 2px solid var(--text-main);
+  --shadow-pixel: 4px 4px 0px var(--text-main);
+
+  --card-width: 160px;
+  --card-height: 220px;
+  --card-radius: 8px;
+
+  --font-display: var(--font-pixel);
+  --font-body: var(--font-code);
 }
 
 /* --- Dark Mode Palette --- */
@@ -101,4 +139,14 @@
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  /* --- Semantic App Tokens (legacy names) --- */
+  --color-bg-form: var(--bg-modal);
+  --color-bg-modal: var(--bg-modal);
+  --color-text-dark: var(--text-main);
+  --color-text-light: var(--text-inverted);
+  --color-btn-primary: var(--accent);
+  --color-danger: var(--text-error);
+  --border-card: 2px solid var(--border-color);
+  --shadow-pixel: 4px 4px 0px var(--text-main);
 }

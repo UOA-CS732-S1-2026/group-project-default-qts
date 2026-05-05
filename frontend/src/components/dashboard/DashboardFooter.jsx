@@ -1,5 +1,5 @@
 import DashboardShortcuts from './DashboardShortcuts';
-import './DashboardFooter.css';
+import '@/styles/dashboard/DashboardFooter.css';
 
 function DashboardFooter({ openModal, modalType, closeModal }){
     return(

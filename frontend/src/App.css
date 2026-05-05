@@ -1,6 +1,6 @@
 .app-container {
   min-height: 100vh;
-  background-color: var(--color-bg-app);
+  background-color: var(--bg-main);
   display: flex;
   flex-direction: column;
 }
@@ -9,11 +9,11 @@
 .app-title {
   font-family: var(--font-display);
   font-size: 20px;
-  color: var(--color-text-dark);
+  color: var(--text-main);
   letter-spacing: 2px;
 }
 
-.btn-open-board {
+/* .btn-open-board {
   font-family: var(--font-display);
   font-size: 10px;
   padding: 14px 24px;
@@ -47,4 +47,4 @@
   font-family: var(--font-display);
   color: white;
   font-size: 12px;
-}
+} */

@@ -1,4 +1,4 @@
-import './DashboardHeader.css';
+import '@/styles/dashboard/DashboardHeader.css';
 import CoinBadge from "../ui/CoinBadge";
 import UserMenu from "../userconfig/UserMenu";
 

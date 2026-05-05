@@ -1,15 +1,15 @@
-.coin-badge{
+.coin-badge {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 4px;   
 }
 
-.coin-badge-icon{
+.coin-badge-icon {
     width: 1rem;
     height: 1rem;
 }
 
-.coin-badge-amount{
+.coin-badge-amount {
     font-family: var(--font-code);
     font-size: 14px;
     color: var(--color-text-light);
