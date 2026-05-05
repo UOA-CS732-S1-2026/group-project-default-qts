@@ -5,7 +5,8 @@ import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'
 import { getInventory } from '@/utils/inventoryApi'
 import PetSprite from '../petAnimations/PetSprite'
 import EvolutionOverlay from '../petAnimations/EvolutionOverlay'
-
+import { useApp } from '../../context/AppContext'
+//import petImg from '@/assets/pets/apteryx_1.png'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']
 
 function PetView({ pomoIsRunning = false, externalAnim = null }) {
     const token = localStorage.getItem('token');
+    const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -86,8 +88,10 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
                 const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
                 if (!activePet) setMessage('No active pet found.');
-                setInventory(inventoryRes?.data?.items || []);
-            } catch (error) {
+
+                const items = inventoryRes?.data?.items || [];
+                setInventory(items);
+            } catch {
                 setMessage('Failed to fetch pet data.');
             } finally {
                 setLoading(false);
@@ -95,6 +99,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
         }
         fetchPet();
     }, [token]);
+
+    useEffect(() => {
+        if (!currentUser?.petName) return;
+        setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
+    }, [currentUser?.petName]);
 
     if (loading) return <div className="pet-container">Loading...</div>;
 
@@ -113,7 +122,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
             setAnimState('feeding');
             setTimeout(() => setAnimState(pomoIsRunning ? 'idle' : 'sleeping'), 1500);
             setMessage('Fed pet successfully!');
-        } catch (error) {
+        } catch {
             setMessage('Failed to feed pet.');
         } finally {
             setLoading(false);
@@ -183,7 +192,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
 
     return (
         <div className="pet-container">
-            <h1 className="pet-name">{pet ? pet.nickname : 'Please select a pet'}</h1>
+            <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
 
             <div style={{ opacity: loading ? 0.6 : 1 }}>
                 <PetSprite

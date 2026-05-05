@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PetView from './PetView';
 import PomodoroModal from '../pomodoro/PomodoroModal';
 import QuestSlider from './QuestSlider';
-import './DashboardMain.css'
+import '@/styles/dashboard/DashboardMain.css'
 
 function DashboardMain({ onQuestDetails }) {
     const [showPomo, setShowPomo] = useState(false);

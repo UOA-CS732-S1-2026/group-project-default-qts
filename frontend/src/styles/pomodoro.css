@@ -325,3 +325,18 @@
     color: var(--pomo-primary);
     margin-top: 8px;
 }
+
+.pomo-status-message {
+    margin-top: 6px;
+    font-family: var(--font-code);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.pomo-status-message.success {
+    color: var(--text-success);
+}
+
+.pomo-status-message.error {
+    color: var(--border-error);
+}

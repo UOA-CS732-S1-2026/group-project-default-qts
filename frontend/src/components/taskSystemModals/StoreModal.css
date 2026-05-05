@@ -55,6 +55,18 @@
   background: var(--color-btn-primary);
 }
 
+.store-success {
+    color: #2e7d32;
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.store-error {
+    color: #c62828;
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
 /* overlay + sliding behaviour for Store (kept in store css) */
 .store-overlay {
   position: fixed;
