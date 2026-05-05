@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const InventoryItem = require('../models/InventoryItem');
-const StoreItem = require('../models/StoreItem');
 
 const getInventory = async (req, res) => {
   try {
@@ -23,6 +22,7 @@ const getInventory = async (req, res) => {
 
     const items = inventoryItems.map((entry) => ({
       id: entry._id,
+      storeItemId: entry.storeItemId?._id || null,
       itemCode: entry.storeItemId?.code || null,
       itemName: entry.storeItemId?.name || null,
       type: entry.storeItemId?.type || null,
