@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { startFocusSession, completeFocusSession } from '../utils/pomodoroApi';
+import { startFocusSession, completeFocusSession, getActiveFocusSession } from '../utils/pomodoroApi';
 
 // --- usePomodoro Hook: manages pomodoro logic e.g., timer state, mode cycling, pet position ---
 
@@ -88,9 +88,33 @@ export default function usePomodoro({ onFocusReward } = {}) {
                 const sessionId = res?.data?.session?.id || res?.session?.id || res?.id;
                 if (!sessionId) throw new Error('Missing session id');
                 setFocusSessionId(sessionId);
-            } catch {
-                setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
-                return;
+            } catch (err) {
+                const status = err?.response?.status;
+                const activeId =
+                    err?.response?.data?.data?.activeSession?._id ||
+                    err?.response?.data?.activeSession?._id ||
+                    err?.response?.data?.data?.activeSession?.id ||
+                    err?.response?.data?.activeSession?.id;
+
+                if (status === 409 && activeId) {
+                    setFocusSessionId(activeId);
+                } else if (status === 409) {
+                    try {
+                        const active = await getActiveFocusSession();
+                        const sessionId = active?.data?._id || active?._id || active?.data?.id || active?.id;
+                        if (sessionId) setFocusSessionId(sessionId);
+                        else {
+                            setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
+                            return;
+                        }
+                    } catch {
+                        setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
+                        return;
+                    }
+                } else {
+                    setFocusMessage({ type: 'error', text: 'Failed to start focus session.' });
+                    return;
+                }
             }
         }
         setWasInterrupted(false);

@@ -3,17 +3,17 @@ import petImg from '@/assets/pets/apteryx_1.png'
 import { useState, useEffect } from 'react'
 import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'
 import { getInventory } from '@/utils/inventoryApi'
-
+import { useApp } from '../../context/AppContext'
 
 function PetView() {
     const token = localStorage.getItem('token');
+    const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [inventory, setInventory] = useState([]);
     const [selectedItemCode, setSelectedItemCode] = useState('');
 
-    // get active pet and inventory on mount
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
@@ -27,14 +27,14 @@ function PetView() {
                 const [petRes, inventoryRes] = await Promise.all([
                     getActivePet(token),
                     getInventory(token)
-                ]); // get active pet and inventory in parallel
+                ]);
                 const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
                 if (!activePet) setMessage('No active pet found.');
 
                 const items = inventoryRes?.data?.items || [];
                 setInventory(items);
-            } catch (error) {
+            } catch {
                 setMessage('Failed to fetch pet data.');
             } finally {
                 setLoading(false);
@@ -42,6 +42,11 @@ function PetView() {
         }
         fetchPet();
     }, [token]);
+
+    useEffect(() => {
+        if (!currentUser?.petName) return;
+        setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
+    }, [currentUser?.petName]);
 
     if (loading) return <div className="pet-container">Loading...</div>;
 
@@ -60,7 +65,7 @@ function PetView() {
             const inventoryRes = await getInventory(token);
             setInventory(inventoryRes?.data?.items || []);
             setMessage('Fed pet successfully!');
-        } catch (error) {
+        } catch {
             setMessage('Failed to feed pet.');
         } finally {
             setLoading(false);
@@ -75,7 +80,7 @@ function PetView() {
             const data = await evolvePet(pet.id, token);
             setPet(data?.data?.pet || data?.data?.activePet || null);
             setMessage('Evolved pet successfully!');
-        } catch (error) {
+        } catch {
             setMessage('Failed to evolve pet.');
         } finally {
             setLoading(false);
@@ -87,7 +92,7 @@ function PetView() {
 
     return (
         <div className="pet-container">
-            <h1 className="pet-name">{pet ? pet.nickname : 'Please select a pet'}</h1>
+            <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
 
             <img
                 src={petImg}

@@ -14,7 +14,7 @@ export async function startFocusSession(plannedDurationSec) {
     plannedDurationSec ? { plannedDurationSec } : {},
     { headers: getAuthHeaders() }
   );
-  return res.data; // should contain session info, e.g. { id, ... }
+  return res.data;
 }
 
 // Complete a focus session (normal or cancelled)
@@ -25,5 +25,14 @@ export async function completeFocusSession(sessionId, { cancelled = false } = {}
     {},
     { headers: getAuthHeaders() }
   );
-  return res.data; // should contain reward info or status
+  return res.data;
+}
+
+// Get active focus session
+export async function getActiveFocusSession() {
+  const res = await axios.get(
+    `${API_BASE_URL}/api/focus/active`,
+    { headers: getAuthHeaders() }
+  );
+  return res.data;
 }

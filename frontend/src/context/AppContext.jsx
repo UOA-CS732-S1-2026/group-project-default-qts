@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from 'react';
-import { login, logout, register } from '../utils/authApi';
+import axios from 'axios';
+import { login, logout, register, getCurrentUser } from '../utils/authApi';
 import {
   updateProfile,
   updatePassword as updatePasswordApi,
@@ -13,16 +14,30 @@ import {
 
 const AppContext = createContext(null);
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 const SECURITY_QUESTION_CODES = ['MOTHER_NAME', 'FAV_SPOT', 'PET_NAME'];
+const AVATAR_KEY_PREFIX = 'gf_avatar_';
 
-// ============================================================
-// 1. Context providers and hooks: included in the context and can be accessed via useApp()
-// ============================================================
+function getStoredAvatar(email) {
+  if (!email) return null;
+  return localStorage.getItem(`${AVATAR_KEY_PREFIX}${String(email).toLowerCase()}`);
+}
+
+function setStoredAvatar(email, dataUrl) {
+  if (!email || !dataUrl) return null;
+  const key = `${AVATAR_KEY_PREFIX}${String(email).toLowerCase()}`;
+  localStorage.setItem(key, dataUrl);
+  return dataUrl;
+}
+
 export function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('gf_current_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const user = JSON.parse(saved);
+      const avatar = getStoredAvatar(user?.email);
+      return avatar ? { ...user, avatar } : user;
     } catch {
       return null;
     }
@@ -43,7 +58,6 @@ export function AppProvider({ children }) {
     else document.documentElement.classList.remove('dark-mode');
   }
 
-  // --- Auth Actions ---
   async function handleLogin(email, password) {
     try {
       const res = await login(email, password);
@@ -51,8 +65,24 @@ export function AppProvider({ children }) {
       const user = res.data?.user || res.user;
 
       if (token) localStorage.setItem('token', token);
+
+      let profileData = null;
+      try {
+        const profileRes = await getCurrentUser();
+        profileData = profileRes?.data || null;
+      } catch {
+        profileData = null;
+      }
+
       if (user) {
-        const mappedUser = { ...user, username: user.name };
+        const storedAvatar = getStoredAvatar(user.email);
+        const mappedUser = {
+          ...user,
+          username: user.name,
+          petName: profileData?.petName ?? user.petName,
+          coins: profileData?.coins ?? user.coins,
+          avatar: storedAvatar || user.avatar
+        };
         setCurrentUser(mappedUser);
         localStorage.setItem('gf_current_user', JSON.stringify(mappedUser));
       }
@@ -91,8 +121,15 @@ export function AppProvider({ children }) {
       const user = res.data?.user || res.user;
 
       if (token) localStorage.setItem('token', token);
+
       if (user) {
-        const mappedUser = { ...user, username: user.name };
+        let avatar = null;
+        if (formData.avatar) {
+          avatar = setStoredAvatar(user.email, formData.avatar);
+        } else {
+          avatar = getStoredAvatar(user.email);
+        }
+        const mappedUser = { ...user, username: user.name, avatar };
         setCurrentUser(mappedUser);
         localStorage.setItem('gf_current_user', JSON.stringify(mappedUser));
       }
@@ -103,7 +140,6 @@ export function AppProvider({ children }) {
     }
   }
 
-  // --- Forgot Password ---
   async function findUserForReset(identifier) {
     try {
       const res = await identifyUserForReset(identifier);
@@ -129,7 +165,6 @@ export function AppProvider({ children }) {
     }
   }
 
-  // --- Settings: Username / PetName / Password ---
   async function updateUsername(newUsername) {
     try {
       const res = await updateProfile({ username: newUsername });
@@ -178,16 +213,27 @@ export function AppProvider({ children }) {
   async function refreshCoins() {
     const token = localStorage.getItem('token');
     if (!token) return;
-    const res = await axios.get(`${API_BASE_URL}/api/coins/balance`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (res?.data?.success) {
-      // keep coins in currentUser if you store it there
-      setCurrentUser((prev) => prev ? { ...prev, coins: res.data.data.coins } : prev);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/coins/balance`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res?.data?.success) {
+        setCurrentUser((prev) => {
+          const updated = prev ? { ...prev, coins: res.data.data.coins } : prev;
+          if (updated) localStorage.setItem('gf_current_user', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    } catch {
+      // ignore refresh errors
     }
   }
 
   function updateAvatar(avatarDataUrl) {
+    const email = currentUser?.email;
+    if (email && avatarDataUrl) {
+      setStoredAvatar(email, avatarDataUrl);
+    }
     const updatedUser = { ...(currentUser || {}), avatar: avatarDataUrl };
     setCurrentUser(updatedUser);
     localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
