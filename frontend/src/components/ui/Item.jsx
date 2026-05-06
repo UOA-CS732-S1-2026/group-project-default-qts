@@ -36,14 +36,14 @@ function Item({
 
     if (mode === 'inventory') {
         return (
-            <div className="item-card item-card--inventory" title={name}>
+            <div className="item-card item-card--inventory">
                 <div className="item-image-wrap">
                     <img src={image} alt={name} className="item-image" />
                     {isFoodItem && (
                         <div className="item-tooltip" role="tooltip">
                             <div className="item-tooltip-name">{name}</div>
                             <div className="item-tooltip-line">{foodMeta.type}: {foodMeta.shortDescription}</div>
-                            <div className="item-tooltip-line">Growth Value: +{foodMeta.growthValue}</div>
+                            <div className="item-tooltip-line attribute">Growth Value: +{foodMeta.growthValue}</div>
                             <div className="item-tooltip-line">Quantity: x{displayQuantity}</div>
                         </div>
                     )}
@@ -61,7 +61,7 @@ function Item({
                     <div className="item-tooltip" role="tooltip">
                         <div className="item-tooltip-name">{name}</div>
                         <div className="item-tooltip-line">{foodMeta.type}: {foodMeta.shortDescription}</div>
-                        <div className="item-tooltip-line">Growth Value: +{foodMeta.growthValue}</div>
+                        <div className="item-tooltip-line attribute">Growth Value: +{foodMeta.growthValue}</div>
                         <div className="item-tooltip-line">Quantity: x{displayQuantity}</div>
                     </div>
                 )}

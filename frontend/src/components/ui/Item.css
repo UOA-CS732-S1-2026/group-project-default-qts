@@ -120,11 +120,16 @@
   font-size: 11px;
 }
 
-.item-card:hover .item-tooltip,
-.item-card:focus-within .item-tooltip {
+.item-image-wrap:hover .item-tooltip,
+.item-image-wrap:focus-within .item-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+
+.attribute {
+  color: var(--text-attribute);
+  font-weight: 700;
 }
 
 @media (max-width: 480px) {

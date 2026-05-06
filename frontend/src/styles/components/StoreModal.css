@@ -136,7 +136,7 @@
 /* Keep food tooltip inside the store panel on right-column cards */
 .store-grid > .item-card:nth-child(2n) .item-tooltip {
   left: auto;
-  right: 100%;
+  right: 70%;
 }
 
 .store-grid > .item-card:nth-child(2n) .item-tooltip::after {
