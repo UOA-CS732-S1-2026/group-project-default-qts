@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import useModal from '../../hooks/useModal';
-import { AcceptedTasksProvider } from '../../context/AcceptedTasksContext';
 import ModalBase from '../taskSystemModals/ModalBase';
 import MyTaskModal from '../taskSystemModals/MyTaskModal';
 import P2PModal from '../taskSystemModals/P2PModal';
@@ -32,7 +31,6 @@ function Dashboard() {
   };
 
   return (
-    <AcceptedTasksProvider>
     <div className="app-container">
       <DashboardHeader></DashboardHeader>
 
@@ -63,7 +61,6 @@ function Dashboard() {
 
       <DashboardFooter openModal={openModal} modalType={modalType} closeModal={handleCloseModal} />
     </div>
-    </AcceptedTasksProvider>
   );
 }
 

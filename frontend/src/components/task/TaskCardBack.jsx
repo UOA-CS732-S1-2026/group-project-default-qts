@@ -42,14 +42,6 @@ function TaskCardBack({ task, cardColor, onFlip, onClose, isQuest = false, isAcc
         </div>
       )}
 
-      {task.type === 'community' && task.difficulty && (
-        <div className="task-card-detail">
-          <span className="task-card-detail-label">Difficulty</span>
-          <span className={`task-card-difficulty task-card-difficulty--${task.difficulty.toLowerCase()}`}>
-            {task.difficulty}
-          </span>
-        </div>
-      )}
 
       <div className="task-card-footer">
         <CoinBadge amount={task.rewardCoins} />

@@ -6,7 +6,7 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
     const [description, setDescription] = useState('');
     const [objectives, setObjectives] = useState(['']);
     const [category, setCategory] = useState('');
-    const [difficulty, setDifficulty] = useState('');
+
     const [timeLimit, setTimeLimit] = useState('');
     const [rewardCoins, setRewardCoins] = useState('');
     const [errors, setErrors] = useState({});
@@ -33,7 +33,7 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
         if (objectives.filter((o) => o.trim() !== '').length === 0)
             next.objectives = 'At least one objective is required';
         if (!category) next.category = 'Category is required';
-        if (!difficulty) next.difficulty = 'Difficulty is required';
+
         if (!timeLimit || Number(timeLimit) <= 0) next.timeLimit = 'Time limit is required';
         if (!rewardCoins || Number(rewardCoins) <= 0) {
             next.rewardCoins = 'Reward coins is required';
@@ -59,7 +59,7 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
             assignee: null,
             createdBy: { id: 'admin-001', name: 'Admin' },
             createdAt: new Date().toISOString(),
-            difficulty,
+
             category,
         });
     }
@@ -143,20 +143,6 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
                         {errors.category && <p className="form-error">{errors.category}</p>}
                     </div>
 
-                    <div className="form-field">
-                        <label className="form-label">Difficulty</label>
-                        <select
-                            className={'form-input' + (errors.difficulty ? ' form-input--error' : '')}
-                            value={difficulty}
-                            onChange={(e) => { setDifficulty(e.target.value); clearError('difficulty'); }}
-                        >
-                            <option value="" disabled>Select difficulty...</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                        </select>
-                        {errors.difficulty && <p className="form-error">{errors.difficulty}</p>}
-                    </div>
 
                     <div className="form-field">
                         <label className="form-label">Time Limit (hours)</label>

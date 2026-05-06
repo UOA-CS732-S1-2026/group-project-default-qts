@@ -88,8 +88,7 @@ function CommunityModal() {
             <ul className="task-modal-help-list">
               <li>Browse tasks created by GrowFriend admins</li>
               <li>Click Details then Accept to take a task</li>
-              <li>System tasks have a difficulty rating</li>
-              <li>Higher difficulty means higher reward</li>
+
             </ul>
             <button className="task-modal-help-close" onClick={() => setShowHelp(false)}>
               Close

@@ -2,11 +2,13 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import * as taskService from '../services/taskService';
 import { toFrontend, toFrontendList, userCreateToBackend } from '../utils/taskMapper';
 import { useApp } from './AppContext';
+import { useAcceptedTasks } from './AcceptedTasksContext';
 
 const TasksContext = createContext();
 
 export function TasksProvider({ children }) {
     const { currentUser } = useApp();
+    const { initAcceptedIds } = useAcceptedTasks();
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -37,6 +39,7 @@ export function TasksProvider({ children }) {
                     ...p2pTasks.filter((t) => !mineIds.has(t.id)),
                 ];
                 setTasks(merged);
+                initAcceptedIds(merged);
             } else {
                 const res = await taskService.getTasks({});
                 setTasks(toFrontendList(res.data.data.tasks));
@@ -60,7 +63,8 @@ export function TasksProvider({ children }) {
         const res = await taskService.createTask(body);
         const created = toFrontend(res.data.data.task);
         setTasks((prev) => [created, ...prev]);
-        return created;
+        // Pass coins balance back so caller can sync AppContext (P2P escrow deduction)
+        return { ...created, _coins: res.data.data.coins };
     }, []);
 
     // Local-only updater — called by modals after their own API calls to sync UI.

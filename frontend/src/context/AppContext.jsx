@@ -178,6 +178,12 @@ export function AppProvider({ children }) {
     return { success: true };
   }
 
+  function updateCoins(newBalance) {
+    const updatedUser = { ...(currentUser || {}), coins: newBalance };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
+  }
+
   const value = {
     currentUser,
     darkMode,
@@ -191,6 +197,7 @@ export function AppProvider({ children }) {
     updatePetName,
     updatePassword,
     updateAvatar,
+    updateCoins,
     SECURITY_QUESTIONS,
   };
 

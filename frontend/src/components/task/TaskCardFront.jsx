@@ -20,6 +20,7 @@ function TaskCardFront({
   onUpdateTask,
   onEditTask,
   onDeleteTask,
+  onDismissQuest,
 }) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -224,8 +225,8 @@ function TaskCardFront({
         {hideAccept && (
           <StatusBadge
             status={
-              isSubmitted && task.type === 'community' ? 'completed' :
-              isSubmitted ? 'pending_review' :
+              task.type === 'community' && task.status === 'completed' ? 'completed' :
+              isSubmitted && task.type !== 'community' ? 'pending_review' :
               getDisplayStatus(task, isAccepted)
             }
           />
@@ -305,10 +306,23 @@ function TaskCardFront({
                   Waiting for creator confirmation...
                 </p>
               )}
-              {hideAccept && isSubmitted && task.type === 'community' && (
-                <p className="task-card-waiting-text">
-                  Task completed! Coins will be rewarded.
-                </p>
+              {hideAccept && task.status === 'completed' && (
+                <>
+                  <p className="task-card-waiting-text">
+                    Task completed! Coins rewarded.
+                  </p>
+                  {onDismissQuest && (
+                    <button
+                      className="task-card-btn task-card-btn--delete"
+                      onClick={() => {
+                        onDismissQuest(task.id)
+                        onClose()
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
               )}
               {hideAccept && task.status === 'disputed' && (
                 <p className="task-card-waiting-text">
@@ -481,7 +495,7 @@ function TaskCardFront({
                 setShowSubmitConfirm(false)
                 if (task.type === 'community') {
                   setShowSubmitSuccess(true)
-                  setTimeout(() => onClose(), 2000)
+                  setTimeout(() => setShowSubmitSuccess(false), 2000)
                 }
               }}
             >

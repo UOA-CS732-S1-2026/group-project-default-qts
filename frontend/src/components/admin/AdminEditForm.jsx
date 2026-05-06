@@ -8,7 +8,7 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
         task.objectives?.length ? task.objectives : ['']
     );
     const [category, setCategory] = useState(task.category);
-    const [difficulty, setDifficulty] = useState(task.difficulty);
+
     const [timeLimit, setTimeLimit] = useState(String(task.timeLimit));
     const [rewardCoins, setRewardCoins] = useState(String(task.rewardCoins));
     const [errors, setErrors] = useState({});
@@ -35,7 +35,7 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
         if (objectives.filter((o) => o.trim() !== '').length === 0)
             next.objectives = 'At least one objective is required';
         if (!category) next.category = 'Category is required';
-        if (!difficulty) next.difficulty = 'Difficulty is required';
+
         if (!timeLimit || Number(timeLimit) <= 0) next.timeLimit = 'Time limit is required';
         if (!rewardCoins || Number(rewardCoins) <= 0) {
             next.rewardCoins = 'Reward coins is required';
@@ -53,7 +53,7 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
             instructions: description.trim(),
             objectives: objectives.filter((o) => o.trim() !== ''),
             category,
-            difficulty,
+
             timeLimit: Number(timeLimit),
             rewardCoins: Number(rewardCoins),
         });
@@ -138,20 +138,6 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
                         {errors.category && <p className="form-error">{errors.category}</p>}
                     </div>
 
-                    <div className="form-field">
-                        <label className="form-label">Difficulty</label>
-                        <select
-                            className={'form-input' + (errors.difficulty ? ' form-input--error' : '')}
-                            value={difficulty}
-                            onChange={(e) => { setDifficulty(e.target.value); clearError('difficulty'); }}
-                        >
-                            <option value="" disabled>Select difficulty...</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                        </select>
-                        {errors.difficulty && <p className="form-error">{errors.difficulty}</p>}
-                    </div>
 
                     <div className="form-field">
                         <label className="form-label">Time Limit (hours)</label>

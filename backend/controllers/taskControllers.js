@@ -95,14 +95,20 @@ const listTasks = async (req, res) => {
 
     const tasks = await Task.find(filter).populate('createdBy', 'name email').sort({ createdAt: -1 }).limit(50).lean();
     const mineMode = mine === 'true';
-    const taskAssignments = mineMode
-      ? await TaskAssignment.find({ taskId: { $in: tasks.map((task) => task._id) } })
-        .populate('assignedTo', 'name email')
-        .lean()
-      : [];
+    const taskIds = tasks.map((task) => task._id);
+
+    // Always fetch user's own assignments so we can set isAcceptedByMe on every response
+    const [taskAssignments, myAssignments] = await Promise.all([
+      mineMode
+        ? TaskAssignment.find({ taskId: { $in: taskIds } }).populate('assignedTo', 'name email').lean()
+        : [],
+      TaskAssignment.find({ taskId: { $in: taskIds }, assignedTo: userId, status: { $in: ['ASSIGNED', 'DONE_PENDING_CONFIRMATION'] } }).lean(),
+    ]);
+
     const assignmentByTaskId = new Map(
       taskAssignments.map((assignment) => [String(assignment.taskId), assignment])
     );
+    const myAssignedTaskIds = new Set(myAssignments.map((a) => String(a.taskId)));
 
     return res.status(200).json({
       success: true,
@@ -117,6 +123,7 @@ const listTasks = async (req, res) => {
               id: String(assignment.assignedTo._id ?? assignment.assignedTo),
               name: assignment.assignedTo.name || '',
             } : null,
+            isAcceptedByMe: myAssignedTaskIds.has(String(task._id)),
           };
         })
       }
@@ -248,6 +255,9 @@ const createTask = async (req, res) => {
       throw { status: 400, code: 'INSUFFICIENT_COINS', message: 'Not enough coins to fund this task' };
     }
 
+    const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+    const computedEndAt = new Date(Date.now() + FIVE_DAYS_MS);
+
     const [task] = await Task.create([{
       type,
       visibility: type === 'PERSONAL' ? 'PRIVATE' : 'PUBLIC',
@@ -262,7 +272,7 @@ const createTask = async (req, res) => {
       requiresApplication: type === 'PERSONAL' ? false : Boolean(requiresApplication),
       location: location || null,
       startAt: startAt ? new Date(startAt) : null,
-      endAt: endAt ? new Date(endAt) : null
+      endAt: computedEndAt
     }], { session: dbSession });
 
     if (type === 'P2P' && finalRewardCoins > 0) {
@@ -887,7 +897,8 @@ const confirmTask = async (req, res) => {
       message: 'Task confirmed and completed',
       data: {
         task: formatTask(task),
-        assignment: formatAssignment(assignment)
+        assignment: formatAssignment(assignment),
+        ...(rewardCoins > 0 && { coinsAwarded: rewardCoins }),
       }
     });
   } catch (error) {
@@ -1084,8 +1095,9 @@ const reopenTask = async (req, res) => {
     if (!task) {
       throw { status: 404, code: 'TASK_NOT_FOUND', message: 'Task not found' };
     }
-    if (!['CANCELLED'].includes(task.status)) {
-      throw { status: 400, code: 'TASK_NOT_REOPENABLE', message: 'Only cancelled tasks can be re-opened' };
+    const isExpired = task.endAt && new Date(task.endAt) < new Date();
+    if (!['CANCELLED'].includes(task.status) && !(task.status === 'OPEN' && isExpired)) {
+      throw { status: 400, code: 'TASK_NOT_REOPENABLE', message: 'Only cancelled or expired tasks can be re-opened' };
     }
 
     const isCreator = String(task.createdBy._id) === String(userId);
@@ -1095,6 +1107,7 @@ const reopenTask = async (req, res) => {
     }
 
     task.status = 'OPEN';
+    task.endAt = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
     await task.save({ session: dbSession });
 
     await TaskAssignment.updateMany(
@@ -1176,10 +1189,11 @@ const withdrawAssignment = async (req, res) => {
 };
 
 // PATCH /api/tasks/:id
-// body: { title?, description?, endAt?, rewardCoins? }
+// body: { title?, description?, rewardCoins? }
 // Auth: creator or admin. SYSTEM tasks: admin only.
 // Only editable when OPEN (P2P/SYSTEM) or IN_PROGRESS (PERSONAL).
 // P2P rewardCoins cannot be changed (escrow already held at create time).
+// endAt is fixed at creation (createdAt + 5 days) and cannot be changed.
 const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
@@ -1225,7 +1239,7 @@ const updateTask = async (req, res) => {
       });
     }
 
-    const { title, description, objectives, timeLimit, endAt, rewardCoins, category } = req.body;
+    const { title, description, objectives, timeLimit, rewardCoins, category } = req.body;
 
     if (title !== undefined) task.title = String(title).trim();
     if (description !== undefined) task.description = String(description).trim();
@@ -1243,7 +1257,6 @@ const updateTask = async (req, res) => {
         task.category = null;
       }
     }
-    if (endAt !== undefined) task.endAt = endAt ? new Date(endAt) : null;
 
     if (rewardCoins !== undefined && task.type !== 'P2P') {
       const coins = Number(rewardCoins);

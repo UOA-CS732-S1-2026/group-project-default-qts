@@ -10,7 +10,7 @@
 // 'pending_review' is a frontend alias for 'pending_confirmation' (same backend value).
 // 'disputed' has no backend equivalent — scoped out of current integration.
 //
-// Fields the backend does NOT store (category, difficulty, objectives, timeLimit)
+// Fields the backend does NOT store (category, objectives, timeLimit)
 // are defaulted to null / [] so existing frontend components don't crash.
 
 const TYPE_B2F = { SYSTEM: 'community', P2P: 'p2p', PERSONAL: 'mytask' };
@@ -69,8 +69,9 @@ export function toFrontend(task) {
       : { id: String(task.createdBy ?? ''), name: '' },
     createdAt: task.createdAt ?? new Date().toISOString(),
     expiredAt: task.endAt ?? null,
-    difficulty: task.difficulty ?? null,
+
     category: task.category ?? null,
+    isAcceptedByMe: task.isAcceptedByMe ?? false,
   };
 }
 
@@ -83,7 +84,7 @@ export function toFrontendList(tasks) {
 
 /**
  * Build a backend createTask request body from AdminCreateForm output.
- * Frontend-only fields (category, difficulty, objectives, timeLimit) are dropped
+ * Frontend-only fields (category, objectives, timeLimit) are dropped
  * since the backend schema does not have them.
  *
  * @param {object} formData - object emitted by AdminCreateForm.handleSubmit
@@ -99,7 +100,6 @@ export function adminCreateToBackend(formData) {
     category: formData.category ?? null,
     rewardCoins: Number(formData.rewardCoins) || 0,
     requiresApplication: false,
-    endAt: formData.expiredAt ?? null,
   };
 }
 
@@ -120,7 +120,6 @@ export function userCreateToBackend(formData) {
     category: formData.category ?? null,
     rewardCoins: Number(formData.rewardCoins) || 0,
     requiresApplication: false,
-    endAt: formData.expiredAt ?? null,
   };
 }
 

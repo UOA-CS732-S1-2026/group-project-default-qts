@@ -4,7 +4,7 @@ import '../../styles/components/CreateEditForm.css';
 function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const isEdit = initialData !== null;
 
-  const [taskType, setTaskType] = useState(initialData?.type ?? 'mytask');
+  const [taskType, setTaskType] = useState(initialData?.type ?? 'p2p');
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [instructions, setInstructions] = useState(initialData?.instructions ?? '');
   const [objectives, setObjectives] = useState(initialData?.objectives ?? ['']);
@@ -75,27 +75,6 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
 
         <div className="form-body">
 
-          {!isEdit && (
-            <div className="form-field">
-              <label className="form-label">Task Type</label>
-              <div className="form-type-row">
-                <button
-                  type="button"
-                  className={`form-type-btn ${taskType === 'mytask' ? 'form-type-btn--active' : ''}`}
-                  onClick={() => { setTaskType('mytask'); setErrors((p) => ({ ...p, rewardCoins: '' })); }}
-                >
-                  Personal
-                </button>
-                <button
-                  type="button"
-                  className={`form-type-btn ${taskType === 'p2p' ? 'form-type-btn--active' : ''}`}
-                  onClick={() => setTaskType('p2p')}
-                >
-                  P2P
-                </button>
-              </div>
-            </div>
-          )}
 
           <div className="form-field">
             <label className="form-label">Title</label>

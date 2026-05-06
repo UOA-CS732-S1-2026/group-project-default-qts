@@ -155,7 +155,7 @@ export default function AdminTaskList() {
                             <tr>
                                 <th>Title</th>
                                 <th>Category</th>
-                                <th>Difficulty</th>
+
                                 <th>Reward</th>
                                 <th>Accepted</th>
                                 <th>Status</th>
@@ -176,11 +176,7 @@ export default function AdminTaskList() {
                                                 : '—'}
                                         </span>
                                     </td>
-                                    <td>
-                                        <span className={`admin-difficulty-badge admin-difficulty-badge--${task.difficulty?.toLowerCase()}`}>
-                                            {task.difficulty ?? '—'}
-                                        </span>
-                                    </td>
+
                                     <td>
                                         <CoinBadge amount={task.rewardCoins} />
                                     </td>

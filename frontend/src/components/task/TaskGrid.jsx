@@ -17,6 +17,7 @@ function TaskGrid({
   onAcceptCard,
   isCreatorView = false,
   expandedTaskId,
+  onDismissQuest,
 }) {
   const showCreateSlot = isCreatorView && onCreateClick;
 
@@ -41,6 +42,7 @@ function TaskGrid({
           onAccept={onAcceptCard}
           isCreatorView={isCreatorView}
           initialExpanded={expandedTaskId === task.id}
+          onDismissQuest={taskType === 'quest' ? onDismissQuest : undefined}
         />
       ))}
 

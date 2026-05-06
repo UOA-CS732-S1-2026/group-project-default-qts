@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 
-const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
+const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed', 'completed'];
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
@@ -15,7 +15,7 @@ import TaskGrid from '../task/TaskGrid';
 import CreateEditForm from '../task/CreateEditForm';
 
 function MyTaskModal({ onNavigate, questTargetId }) {
-  const { currentUser } = useApp();
+  const { currentUser, updateCoins } = useApp();
   const currentUserId = currentUser?.id;
   const { tasks, isLoading, createTask, updateTask, patchTask, deleteTask } = useTasks();
 
@@ -26,10 +26,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const [error] = useState(false);
 
   const createdTasks = useMemo(() =>
-    tasks.filter((t) =>
-      t.type === 'mytask' ||
-      (t.type === 'p2p' && t.createdBy?.id === currentUserId)
-    ), [tasks, currentUserId]);
+    tasks.filter((t) => (t.type === 'p2p' || t.type === 'mytask') && t.createdBy?.id === currentUserId),
+    [tasks, currentUserId]);
 
   const {
     filteredTasks,
@@ -107,15 +105,22 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     setCancelledQuestIds((prev) => new Set([...prev, id]));
   };
 
+  // Dismiss a completed SystemTask from quest list — local cleanup only, no backend delete.
+  const handleDismissQuest = (id) => {
+    cleanupCancelledTask(id);
+    setCancelledQuestIds((prev) => new Set([...prev, id]));
+  };
+
   const handleUpdateCard = async (id, fields) => {
     const task = tasks.find((t) => t.id === id);
 
     if (task?.type === 'p2p' && fields.status === 'completed') {
       const response = await taskService.confirmTask(id);
-      const backendTask = response?.data?.data?.task;
-      if (backendTask?.status) {
-        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      const data = response?.data?.data;
+      if (data?.task?.status) {
+        updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
       }
+      // Creator's escrow was already deducted at create time — no coin change needed here.
       return;
     }
 
@@ -130,10 +135,12 @@ function MyTaskModal({ onNavigate, questTargetId }) {
 
     if (fields.status === 'cancelled') {
       const response = await taskService.cancelTask(id);
-      const backendTask = response?.data?.data?.task;
-      if (backendTask?.status) {
-        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      const data = response?.data?.data;
+      if (data?.task?.status) {
+        updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
       }
+      // Escrow refunded to creator — sync creator coins if returned.
+      if (data?.coins !== undefined) updateCoins(data.coins);
       return;
     }
 
@@ -169,7 +176,15 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (fields.status === 'pending_review') {
       try {
         const data = await submitTask(id);
-        if (data?.task?.status) {
+        const task = tasks.find((t) => t.id === id);
+        if (task?.type === 'community') {
+          // SYSTEM task stays OPEN on backend — set completed locally so Delete button appears
+          updateTask(id, { status: 'completed' });
+          // Community submit gives coins immediately — sync balance if returned
+          if (data?.coinsAwarded !== undefined && currentUser?.coins !== undefined) {
+            updateCoins(currentUser.coins + data.coinsAwarded);
+          }
+        } else if (data?.task?.status) {
           updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
         }
       } catch {
@@ -239,7 +254,11 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       }
     } else {
       try {
-        await createTask(taskData);
+        const created = await createTask(taskData);
+        // P2P task creation deducts coins into escrow — backend returns updated balance
+        if (created?._coins !== undefined) {
+          updateCoins(created._coins);
+        }
       } catch {
         // Creation failed — form stays open, user can retry
       }
@@ -351,6 +370,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         onCancelCard={handleCancelQuestApi}
         onCancelDone={handleCancelQuestDone}
         onUpdateCard={handleQuestUpdate}
+        onDismissQuest={handleDismissQuest}
         expandedTaskId={expandedTaskId}
       />
     );

@@ -33,6 +33,7 @@ function TaskCard({
   isCreatorView = false,
   onDetails,
   initialExpanded = false,
+  onDismissQuest,
 }) {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -84,8 +85,8 @@ function TaskCard({
                   {task.type === 'p2p' ? 'P2P' : 'System'}
                 </span>
                 <StatusBadge status={
-                  isSubmitted && task.type === 'community' ? 'completed' :
-                  isSubmitted ? 'pending_review' :
+                  task.type === 'community' && task.status === 'completed' ? 'completed' :
+                  isSubmitted && task.type !== 'community' ? 'pending_review' :
                   getDisplayStatus(task, isAccepted)
                 } />
               </>
@@ -212,6 +213,7 @@ function TaskCard({
                   await onDelete?.(id);
                   handleClose();
                 }}
+                onDismissQuest={onDismissQuest}
               />
               <TaskCardBack
                 task={task}
