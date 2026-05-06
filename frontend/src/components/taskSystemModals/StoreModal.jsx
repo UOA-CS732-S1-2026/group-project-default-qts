@@ -37,7 +37,6 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            setError('Please log in again.');
             setLoading(false);
             return;
         }
@@ -61,7 +60,6 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
         const token = localStorage.getItem('token');
 
         if (!token) {
-            setError('Please log in again.');
             return;
         }
 

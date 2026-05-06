@@ -75,7 +75,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
-                setMessage('No token found. Please log in first.');
+                setMessage('');
                 setPet(null);
                 return;
             }
