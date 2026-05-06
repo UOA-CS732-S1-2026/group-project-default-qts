@@ -35,7 +35,6 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
 
     async function loadStoreItems() {
         const token = localStorage.getItem('token');
-
         if (!token) {
             setLoading(false);
             return;
