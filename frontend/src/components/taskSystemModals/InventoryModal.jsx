@@ -35,7 +35,6 @@ function InventoryModal({ onClose }) {
     const token = localStorage.getItem('token');
 
     if (!token) {
-      setError('Please log in again.');
       setLoading(false);
       return;
     }

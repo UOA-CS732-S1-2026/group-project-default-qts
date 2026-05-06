@@ -8,7 +8,7 @@ export async function register(payload) {
     // Backend wraps response: { success, message, data: { token, user } }
     // Save token and return user for App to handle
     if (res.data.data?.token) {
-      localStorage.setItem('gf_token', res.data.data.token);
+      localStorage.setItem('token', res.data.data.token);
     }
     return { success: res.data.success, user: res.data.data?.user, error: res.data.message };
   } catch (error) {
@@ -22,7 +22,7 @@ export async function login(email, password) {
     // Backend wraps response: { success, message, data: { token, user } }
     // Save token and return user for App to handle
     if (res.data.data?.token) {
-      localStorage.setItem('gf_token', res.data.data.token);
+      localStorage.setItem('token', res.data.data.token);
     }
     return { success: res.data.success, user: res.data.data?.user, error: res.data.message };
   } catch (error) {
@@ -31,7 +31,7 @@ export async function login(email, password) {
 }
 
 export async function getCurrentUser() {
-  const token = localStorage.getItem('gf_token');
+  const token = localStorage.getItem('token');
   if (!token) return null;
   try {
     const res = await axios.get(`${API_BASE_URL}/api/users/me`, {
@@ -45,5 +45,5 @@ export async function getCurrentUser() {
 
 export function logout(setCurrentUser) {
   setCurrentUser(null);
-  localStorage.removeItem('gf_token');
+  localStorage.removeItem('token');
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AppProvider } from './context/AppContext';
@@ -11,14 +12,69 @@ import NotFound from './components/404page/NotFound';
 
 import './App.css';
 
+const TOKEN_KEYS = ['gf_token', 'token'];
+
+function getAuthToken() {
+  for (const key of TOKEN_KEYS) {
+    const value = localStorage.getItem(key);
+    if (value) return value;
+  }
+  return null;
+}
+
+function RequireAuth({ children }) {
+  const [token, setToken] = useState(() => getAuthToken());
+
+  useEffect(() => {
+    const syncToken = () => setToken(getAuthToken());
+
+    function handleStorage(event) {
+      if (!event || TOKEN_KEYS.includes(event.key)) {
+        syncToken();
+      }
+    }
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('focus', syncToken);
+    document.addEventListener('visibilitychange', syncToken);
+
+    // Poll to detect token removal in the same tab (e.g. manual localStorage clear).
+    const intervalId = window.setInterval(syncToken, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('focus', syncToken);
+      document.removeEventListener('visibilitychange', syncToken);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  if (!token) return <Navigate to="/landingpage" replace />;
+  return children;
+}
+
 function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
         <Route path="/" element={<Navigate to="/landingpage" replace />} />
         <Route path="/landingpage" element={<LandingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route
+          path="/dashboard"
+          element={(
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          )}
+        />
+        <Route
+          path="/admin"
+          element={(
+            <RequireAuth>
+              <AdminPage />
+            </RequireAuth>
+          )}
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
