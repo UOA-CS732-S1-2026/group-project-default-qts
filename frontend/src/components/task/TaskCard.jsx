@@ -4,7 +4,7 @@ import TaskCardFront from './TaskCardFront';
 import TaskCardBack from './TaskCardBack';
 import CoinBadge from '../ui/CoinBadge';
 import StatusBadge from '../ui/StatusBadge';
-import { CURRENT_USER_ID } from '../../constants/mockUser';
+import { useApp } from '../../context/AppContext';
 import userIconSmall from '../../assets/user-icon-small.png';
 import { getDisplayStatus } from '../../utils/taskUtils';
 
@@ -26,22 +26,36 @@ function TaskCard({
   showSourceBadge = false,
   hideAccept = false,
   onCancel,
+  onCancelDone,
   isAccepted = false,
   isSubmitted = false,
   onAccept,
   isCreatorView = false,
   onDetails,
   initialExpanded = false,
+  onDismissQuest,
 }) {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const { currentUser } = useApp();
   const cardColor = CARD_COLORS[index % CARD_COLORS.length];
 
   const handleClose = () => {
     setIsExpanded(false);
     setIsFlipped(false);
+  };
+
+  const handleDeleteConfirmed = async () => {
+    try {
+      setDeleteError('');
+      await onDelete?.(task.id);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      setDeleteError(error?.response?.data?.error?.message ?? error?.message ?? 'Failed to delete task');
+    }
   };
 
   const expiredDate = new Date(task.expiredAt).toLocaleDateString('en-NZ', {
@@ -71,8 +85,8 @@ function TaskCard({
                   {task.type === 'p2p' ? 'P2P' : 'System'}
                 </span>
                 <StatusBadge status={
-                  isSubmitted && task.type === 'community' ? 'completed' :
-                  isSubmitted ? 'pending_review' :
+                  task.type === 'community' && task.status === 'completed' ? 'completed' :
+                  isSubmitted && task.type !== 'community' ? 'pending_review' :
                   getDisplayStatus(task, isAccepted)
                 } />
               </>
@@ -98,7 +112,7 @@ function TaskCard({
           {task.type === 'p2p' && !isCreatorView && (
             <p className="task-card-posted-by">
               <img src={userIconSmall} alt="" className="task-card-user-icon" />
-              {task.createdBy?.id === CURRENT_USER_ID ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
+              {task.createdBy?.id === currentUser?.id ? 'Me' : (task.createdBy?.name ?? 'Unknown')}
             </p>
           )}
           <p className="task-card-expired">Exp: {expiredDate}</p>
@@ -158,10 +172,11 @@ function TaskCard({
         <div className="task-card-delete-modal-backdrop" onClick={() => setShowDeleteConfirm(false)}>
           <div className="task-card-delete-modal" onClick={(e) => e.stopPropagation()}>
             <p className="task-card-delete-modal-text">Delete this task?</p>
+            {deleteError && <p className="task-card-delete-modal-text" style={{ color: 'var(--text-error)', marginTop: '-4px' }}>{deleteError}</p>}
             <div className="task-card-confirm-actions">
               <button
                 className="task-card-confirm-btn task-card-confirm-btn--yes"
-                onClick={() => onDelete(task.id)}
+                onClick={handleDeleteConfirmed}
               >
                 Yes
               </button>
@@ -187,13 +202,18 @@ function TaskCard({
                 onClose={handleClose}
                 hideAccept={hideAccept}
                 onCancel={onCancel}
+                onCancelDone={onCancelDone}
                 isAccepted={isAccepted}
                 isSubmitted={isSubmitted}
                 onAccept={onAccept}
                 isCreatorView={isCreatorView}
                 onUpdateTask={onUpdate}
                 onEditTask={() => { handleClose(); onEdit && onEdit(task); }}
-                onDeleteTask={(id) => { onDelete && onDelete(id); handleClose(); }}
+                onDeleteTask={async (id) => {
+                  await onDelete?.(id);
+                  handleClose();
+                }}
+                onDismissQuest={onDismissQuest}
               />
               <TaskCardBack
                 task={task}

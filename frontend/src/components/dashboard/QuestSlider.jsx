@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
-import { CURRENT_USER_ID } from '../../constants/mockUser';
+import { useApp } from '../../context/AppContext';
 import TaskCard from '../task/TaskCard';
 import '../../styles/components/QuestSlider.css';
 
 const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
 
 function QuestSlider({ onDetails }) {
+  const { currentUser } = useApp();
+  const currentUserId = currentUser?.id;
   const { tasks, updateTask } = useTasks();
   const { acceptedIds, submittedIds, cancelTask, submitTask } = useAcceptedTasks();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,9 +18,9 @@ function QuestSlider({ onDetails }) {
     return tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
       if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
-      return acceptedIds.has(t.id) || t.assignee?.id === CURRENT_USER_ID;
+      return acceptedIds.has(t.id) || t.assignee?.id === currentUserId;
     });
-  }, [tasks, acceptedIds]);
+  }, [tasks, acceptedIds, currentUserId]);
 
   const safeIndex = Math.min(currentIndex, Math.max(0, questTasks.length - 1));
 
@@ -48,8 +50,8 @@ function QuestSlider({ onDetails }) {
   };
 
   const handleCancel = (id) => {
-    cancelTask(id);
     const task = tasks.find((t) => t.id === id);
+    cancelTask(id, task?.type);
     if (task?.type === 'p2p') {
       updateTask(id, { status: 'cancelled', assignee: null });
     }

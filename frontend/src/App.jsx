@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { AppProvider } from './context/AppContext';
+import { AcceptedTasksProvider } from './context/AcceptedTasksContext';
 import { TasksProvider } from './context/TasksContext';
 
 import LandingPage from './pages/LandingPage';
@@ -28,9 +29,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppProvider>
-        <TasksProvider>
-          <AppRoutes />
-        </TasksProvider>
+        <AcceptedTasksProvider>
+          <TasksProvider>
+            <AppRoutes />
+          </TasksProvider>
+        </AcceptedTasksProvider>
       </AppProvider>
     </BrowserRouter>
   );
