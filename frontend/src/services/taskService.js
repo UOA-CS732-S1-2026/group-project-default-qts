@@ -49,6 +49,10 @@ export const withdrawApplication = (id) =>
 export const withdrawAssignment = (id) =>
   api.delete(`/tasks/${id}/assignment`);
 
+/** POST /api/tasks/:id/abandon  — P2P assignee abandons an active task, reverts task to OPEN */
+export const abandonP2PTask = (id) =>
+  api.post(`/tasks/${id}/abandon`);
+
 /** PATCH /api/tasks/:id/applications/:appId/decide
  * @param {string} action - 'ACCEPT' | 'REJECT'
  */
@@ -104,3 +108,11 @@ export const patchTask = (id, body) =>
  */
 export const deleteTask = (id) =>
   api.delete(`/tasks/${id}`);
+
+/** POST /api/tasks/:id/dispute
+ * Creator or assignee raises a dispute on an active/pending P2P task.
+ * @param {string} id - task id
+ * @param {{ reason: string, details?: string }} body
+ */
+export const disputeTask = (id, body) =>
+  api.post(`/tasks/${id}/dispute`, body);

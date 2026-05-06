@@ -30,8 +30,10 @@ function TaskCardFront({
   const [showConfirmReview, setShowConfirmReview] = useState(false)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false)
+  const [showP2PSubmitSuccess, setShowP2PSubmitSuccess] = useState(false)
   const [showRejectConfirm, setShowRejectConfirm] = useState(false)
   const [showCancelSuccess, setShowCancelSuccess] = useState(false)
+  const [showRejectSuccess, setShowRejectSuccess] = useState(false)
   const [showDisputeForm, setShowDisputeForm] = useState(false)
   const [disputePov, setDisputePov] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
@@ -87,16 +89,20 @@ function TaskCardFront({
     setShowDisputeForm(true)
   }
 
-  const handleDisputeSubmit = ({ reason, details }) => {
+  const handleDisputeSubmit = async ({ reason, details }) => {
     if (!reason || !disputePov) return
-    onUpdateTask(task.id, {
-      status: 'disputed',
-      disputeRaisedBy: disputePov,
-      disputeReason: reason,
-      disputeDetails: details || '',
-    })
-    setShowDisputeForm(false)
-    setToastMsg('Dispute raised. Awaiting admin review.')
+    try {
+      await onUpdateTask(task.id, {
+        status: 'disputed',
+        disputeRaisedBy: disputePov,
+        disputeReason: reason,
+        disputeDetails: details || '',
+      })
+      setShowDisputeForm(false)
+      setToastMsg('Dispute raised. Awaiting admin review.')
+    } catch (error) {
+      setToastMsg(error?.response?.data?.error?.message ?? error?.message ?? 'Failed to raise dispute')
+    }
   }
 
   const handleCreatorConfirm = async () => {
@@ -112,6 +118,8 @@ function TaskCardFront({
     try {
       await onUpdateTask(task.id, { status: 'active', rejectedAt: new Date().toISOString() })
       setShowRejectConfirm(false)
+      setShowRejectSuccess(true)
+      setTimeout(() => setShowRejectSuccess(false), 2000)
     } catch (error) {
       setToastMsg(error?.response?.data?.error?.message ?? error?.message ?? 'Failed to reject task')
     }
@@ -211,31 +219,25 @@ function TaskCardFront({
   }
 
   const isAssigneeActive = hideAccept && isAcceptable && !isSubmitted &&
-    (task.status === 'active' || (isAccepted && task.status === 'open'))
+    (task.status === 'active' || (isAccepted && task.status === 'open') || (isAccepted && task.status === 'expired' && task.type === 'community'))
 
   return (
     <div className="task-card-face task-card-front" style={{ backgroundColor: cardColor }}>
       <div className="task-card-header">
         {!hideAccept && (task.status !== 'cancelled' || task.type !== 'community') && (
-          <StatusBadge status={task.type === 'community' ? 'open' : getDisplayStatus(task, isAccepted)} />
+          <StatusBadge status={task.type === 'community' ? (task.status === 'expired' ? 'expired' : 'open') : getDisplayStatus(task, isAccepted, isCreatorView)} />
         )}
         {hideAccept && (
           <StatusBadge
             status={
               task.type === 'community' && task.status === 'completed' ? 'completed' :
               isSubmitted && task.type !== 'community' ? 'pending_review' :
-              getDisplayStatus(task, isAccepted)
+              getDisplayStatus(task, isAccepted, isCreatorView)
             }
           />
         )}
         <button className="task-card-close" onClick={onClose}>✕</button>
       </div>
-
-      {task.type === 'community' && task.category && (
-        <span className={`task-card-category task-card-category--${task.category}`}>
-          {task.category === 'organization' ? 'Organization' : 'Activity'}
-        </span>
-      )}
 
       <h3 className="task-card-title">{task.title}</h3>
       <p className="task-card-instructions">{task.instructions}</p>
@@ -338,11 +340,15 @@ function TaskCardFront({
           <div className="task-card-confirm-actions">
             <button
               className="task-card-confirm-btn task-card-confirm-btn--yes"
-              onClick={() => {
-                onAccept(task.id)
+              onClick={async () => {
                 setShowAcceptConfirm(false)
-                setShowAcceptSuccess(true)
-                setTimeout(() => onClose(), 1500)
+                try {
+                  await onAccept(task.id)
+                  setShowAcceptSuccess(true)
+                  setTimeout(() => onClose(), 2500)
+                } catch {
+                  setToastMsg('Failed to accept task. Please try again.')
+                }
               }}
             >
               Yes
@@ -361,6 +367,7 @@ function TaskCardFront({
         <div className="task-card-mode-overlay task-card-accept-success">
           <p className="task-card-accept-success-icon">✓</p>
           <p className="task-card-accept-success-title">Quest Accepted!</p>
+          <p className="task-card-accept-success-sub">"{task.title}" has been added to your Quest list.</p>
           <p className="task-card-accept-success-sub">Good luck!</p>
         </div>
       )}
@@ -370,6 +377,14 @@ function TaskCardFront({
           <p className="task-card-accept-success-icon">🎉</p>
           <p className="task-card-accept-success-title">Task Completed!</p>
           <p className="task-card-accept-success-sub">Coins will be rewarded to your account.</p>
+        </div>
+      )}
+
+      {showP2PSubmitSuccess && (
+        <div className="task-card-mode-overlay task-card-accept-success">
+          <p className="task-card-accept-success-icon">📬</p>
+          <p className="task-card-accept-success-title">Task Submitted!</p>
+          <p className="task-card-accept-success-sub">Waiting for the creator to review your submission.</p>
         </div>
       )}
 
@@ -405,6 +420,14 @@ function TaskCardFront({
           <p className="task-card-accept-success-icon">✓</p>
           <p className="task-card-accept-success-title">Quest Cancelled</p>
           <p className="task-card-accept-success-sub">Removed from your quest list.</p>
+        </div>
+      )}
+
+      {showRejectSuccess && (
+        <div className="task-card-mode-overlay task-card-accept-success">
+          <p className="task-card-accept-success-icon">✕</p>
+          <p className="task-card-accept-success-title">Submission Rejected</p>
+          <p className="task-card-accept-success-sub">The assignee will be asked to redo the task.</p>
         </div>
       )}
 
@@ -487,12 +510,17 @@ function TaskCardFront({
             <button
               className="task-card-confirm-btn task-card-confirm-btn--yes"
               onClick={() => {
-                const newStatus = task.type === 'p2p' ? 'pending_confirmation' : 'pending_review'
-                onUpdateTask(task.id, { status: newStatus, submittedAt: new Date().toISOString() })
                 setShowSubmitConfirm(false)
                 if (task.type === 'community') {
+                  onUpdateTask(task.id, { status: 'pending_review', submittedAt: new Date().toISOString() })
                   setShowSubmitSuccess(true)
                   setTimeout(() => setShowSubmitSuccess(false), 2000)
+                } else {
+                  setShowP2PSubmitSuccess(true)
+                  setTimeout(() => {
+                    setShowP2PSubmitSuccess(false)
+                    onUpdateTask(task.id, { status: 'pending_confirmation', submittedAt: new Date().toISOString() })
+                  }, 2500)
                 }
               }}
             >

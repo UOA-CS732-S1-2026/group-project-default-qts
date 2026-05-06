@@ -87,18 +87,13 @@ function TaskCard({
                 <StatusBadge status={
                   task.type === 'community' && task.status === 'completed' ? 'completed' :
                   isSubmitted && task.type !== 'community' ? 'pending_review' :
-                  getDisplayStatus(task, isAccepted)
+                  getDisplayStatus(task, isAccepted, isCreatorView)
                 } />
               </>
             ) : (
               task.status !== 'cancelled' || task.type !== 'community' ? (
-                <StatusBadge status={task.type === 'community' ? 'open' : getDisplayStatus(task, isAccepted)} />
+                <StatusBadge status={task.type === 'community' ? (task.status === 'expired' ? 'expired' : 'open') : getDisplayStatus(task, isAccepted, isCreatorView)} />
               ) : null
-            )}
-            {task.type === 'community' && task.category && (
-              <span className={`task-card-category task-card-category--${task.category}`}>
-                {task.category === 'organization' ? 'Organization' : 'Activity'}
-              </span>
             )}
           </div>
         </div>
@@ -125,7 +120,7 @@ function TaskCard({
           </button>
         </div>
 
-        {isEditMode && isHovered && task.status !== 'active' && task.status !== 'pending_review' && task.status !== 'pending_confirmation' && task.status !== 'disputed' && task.status !== 'completed' && (
+        {isEditMode && isHovered && (task.status === 'open' || task.status === 'cancelled' || task.status === 'expired') && (
           <div className="task-card-mode-overlay">
             <button
               className="task-card-overlay-btn task-card-overlay-btn--edit"
@@ -158,7 +153,7 @@ function TaskCard({
           <div className="task-card-mode-overlay task-card-mode-overlay--locked">
             <span className="task-card-locked-icon">🔒</span>
             <span className="task-card-locked-text">
-              {task.status === 'active' && (task.rejectedAt ? 'Task is rejected' : 'Task is active')}
+              {task.status === 'active' && ((task.rejectedAt || task.lastRejectedAt) ? 'Task is rejected' : 'Task is active')}
               {task.status === 'pending_review' && 'Awaiting review'}
               {task.status === 'pending_confirmation' && 'Awaiting review'}
               {task.status === 'disputed' && 'Under dispute'}

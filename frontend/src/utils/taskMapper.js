@@ -8,7 +8,7 @@
 //                    expired (computed — endAt in the past + status OPEN, never stored in DB)
 //
 // 'pending_review' is a frontend alias for 'pending_confirmation' (same backend value).
-// 'disputed' has no backend equivalent — scoped out of current integration.
+// 'disputed' maps to backend DISPUTED status on Task and TaskAssignment.
 //
 // Fields the backend does NOT store (category, objectives, timeLimit)
 // are defaulted to null / [] so existing frontend components don't crash.
@@ -32,6 +32,7 @@ const STATUS_F2B = {
   pending_review: 'PENDING_CONFIRMATION',   // alias — same backend value
   completed: 'COMPLETED',
   cancelled: 'CANCELLED',
+  disputed: 'DISPUTED',
 };
 
 /**
@@ -72,6 +73,11 @@ export function toFrontend(task) {
 
     category: task.category ?? null,
     isAcceptedByMe: task.isAcceptedByMe ?? false,
+    rejectedAt: task.rejectedAt ?? null,
+    lastRejectedAt: task.lastRejectedAt ?? null,
+    disputeRaisedBy: task.disputeRaisedBy ?? null,
+    disputeReason: task.disputeReason ?? null,
+    disputeDetails: task.disputeDetails ?? null,
   };
 }
 
