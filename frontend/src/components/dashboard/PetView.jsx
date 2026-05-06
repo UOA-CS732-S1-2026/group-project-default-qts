@@ -44,11 +44,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const [showEvolution, setShowEvolution] = useState(false);
     const clickCountRef = useRef(0); // track double-click for playing animation
 
-    // ── Debug State ──────────────────────────────────────────────────────────
-    const [debugMode, setDebugMode] = useState(false);
-    const [debugSpecies, setDebugSpecies] = useState('');
-    const [debugStage, setDebugStage] = useState('');
-    const [debugAnim, setDebugAnim] = useState('');
 
     // ── Pomodoro sleeping / idle toggle ──────────────────────────────────────
     useEffect(() => {
@@ -210,9 +205,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const { level, growthPoints } = pet || {};
     const percent = Math.max(0, Math.min(100, Number(growthPoints || 0)));
 
-    const displaySpecies = debugSpecies || getPetSpecies(pet);
-    const displayStage = debugStage || getPetStage(pet);
-    const displayAnim = debugAnim || animState;
+    const displaySpecies = getPetSpecies(pet);
+    const displayStage = getPetStage(pet);
+    const displayAnim = animState;
 
     return (
         <div className="pet-container">
@@ -248,53 +243,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                 )}
 
                 {message && <div style={{ marginTop: 8, color: 'red' }}>{message}</div>}
-
-                {/* Debug Panel Toggle */}
-                <div style={{ marginTop: 20 }}>
-                    <button
-                        onClick={() => setDebugMode(!debugMode)}
-                        className="gf-btn gf-btn-ghost"
-                        style={{ fontSize: '0.8rem', padding: '4px 8px', color: 'var(--text-color)' }}
-                    >
-                        {debugMode ? 'Hide Debug Panel' : 'Show Debug Panel 🛠️'}
-                    </button>
-                </div>
-
-                {/* Debug Panel */}
-                {debugMode && (
-                    <div style={{ marginTop: 10, padding: 12, border: '1px dashed var(--border-color)', borderRadius: 8, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ fontWeight: 'bold' }}>Debug Animations</div>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <select className="gf-input" value={debugSpecies} onChange={e => setDebugSpecies(e.target.value)} style={{ padding: '4px' }}>
-                                <option value="">(Auto Species)</option>
-                                <option value="apteryx">apteryx</option>
-                                <option value="lemuera">lemuera</option>
-                                <option value="pateke">pateke</option>
-                                <option value="penguin">penguin</option>
-                                <option value="pukeko">pukeko</option>
-                                <option value="pyro">pyro</option>
-                                <option value="egg">egg</option>
-                            </select>
-                            <select className="gf-input" value={debugStage} onChange={e => setDebugStage(e.target.value)} style={{ padding: '4px' }}>
-                                <option value="">(Auto Stage)</option>
-                                <option value="egg">egg</option>
-                                <option value="kid">kid</option>
-                                <option value="adult">adult</option>
-                            </select>
-                            <select className="gf-input" value={debugAnim} onChange={e => setDebugAnim(e.target.value)} style={{ padding: '4px' }}>
-                                <option value="">(Auto Anim)</option>
-                                <option value="idle">idle</option>
-                                <option value="sleeping">sleeping</option>
-                                <option value="sad">sad</option>
-                                <option value="playing">playing</option>
-                                <option value="feeding">feeding</option>
-                                <option value="celebrating">celebrating</option>
-                                <option value="evolving">evolving</option>
-                                <option value="clicked">clicked</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
 
                 {/* Evolution overlay — full-screen animation */}
                 <AnimatePresence>
