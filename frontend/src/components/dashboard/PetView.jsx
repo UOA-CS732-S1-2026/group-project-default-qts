@@ -119,10 +119,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         return () => window.removeEventListener('gf-feed-pet', onFeedEvent);
     }, [pet, token, pomoIsRunning]); // Add dependencies used in handleFeed
 
-    if (loading) return <div className="pet-container">Loading...</div>;
-
     // ── Feed ─────────────────────────────────────────────────────────────────
-    const handleFeed = async (itemCode) => {
+    async function handleFeed(itemCode) {
         if (!pet) return;
         if (!itemCode) { setMessage('Please select a food item.'); return; }
         setLoading(true);
@@ -142,7 +140,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         } finally {
             setLoading(false);
         }
-    };
+    }
+
+    if (loading) return <div className="pet-container">Loading...</div>;
 
     // ── Evolve ───────────────────────────────────────────────────────────────
     const handleEvolve = async () => {
