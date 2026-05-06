@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import usePomodoro from '../../hooks/usePomodoro';
-import petImg from '../../assets/pet_placeholder.png';
 import '../../styles/pomodoro.css';
 import { useApp } from '../../context/AppContext';
+import PetSprite from '../petAnimations/PetSprite';
 
 const MotionDiv = motion.div;
 
-export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete } = {}) {
+export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete, activePet } = {}) {
     const { refreshCoins } = useApp();
     const {
         mode, timeLeft, isRunning, isPaused, petProgress,
@@ -55,6 +55,11 @@ export default function PomodoroModal({ onRequestClose, onRunningChange, onSessi
         long: 'Long Break',
     };
 	const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
+
+    const petSpecies = activePet ? (activePet.speciesCode || 'apteryx').toLowerCase() : 'apteryx';
+    const petStageRaw = activePet ? (activePet.stage || '').toUpperCase() : 'EGG';
+    const petStage = petStageRaw === 'EGG' ? 'egg' : petStageRaw === 'KID' ? 'kid' : 'adult';
+    const petAnimState = showBubble ? 'celebrating' : isRunning ? 'idle' : 'sleeping';
 
     return (
         <MotionDiv
@@ -136,12 +141,15 @@ export default function PomodoroModal({ onRequestClose, onRunningChange, onSessi
                 {/* Progress Track + Pet */}
                 <div className="pomo-progress-section">
                     <div className="pomo-track-wrapper">
-                        <img
-                            src={petImg}
-                            alt="Your pet companion"
-                            className="pomo-pet"
-                            style={{ left: petLeft }}
-                        />
+                        <div className="pomo-pet" style={{ left: petLeft, width: 80, height: 80 }}>
+                            <PetSprite
+                                species={petSpecies}
+                                stage={petStage}
+                                animState={petAnimState}
+                                size={80}
+                                showShadow={false}
+                            />
+                        </div>
                         <div className="pomo-track">
                             <div
                                 className="pomo-track-fill"
@@ -170,7 +178,15 @@ export default function PomodoroModal({ onRequestClose, onRunningChange, onSessi
                             transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <img src={petImg} alt="Pet" className="pomo-bubble-pet" />
+                            <div className="pomo-bubble-pet-wrapper" style={{ width: 60, height: 60, margin: '0 auto 10px' }}>
+                                <PetSprite
+                                    species={petSpecies}
+                                    stage={petStage}
+                                    animState="celebrating"
+                                    size={60}
+                                    showShadow={false}
+                                />
+                            </div>
                             <div className="pomo-bubble-title">{bubbleMessage.title}</div>
                             <div className="pomo-bubble-text">{bubbleMessage.text}</div>
                             <div className="pomo-bubble-hint">Click anywhere to continue</div>

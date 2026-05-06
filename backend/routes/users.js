@@ -24,6 +24,7 @@ router.get('/me', requireAuth, async (req, res) => {
       coins: user.coins,
       roles: user.roles,
       activePetId: user.activePetId,
+      avatar: user.avatar,
       petName: activePet?.nickname || '',
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
@@ -36,7 +37,7 @@ router.get('/me', requireAuth, async (req, res) => {
 // PATCH /api/users/me
 router.patch('/me', requireAuth, async (req, res) => {
   try {
-    const { name, username, petName } = req.body || {};
+    const { name, username, petName, avatar } = req.body || {};
     const updates = {};
     const newName = typeof name === 'string' ? name.trim() : (typeof username === 'string' ? username.trim() : null);
 
@@ -44,6 +45,10 @@ router.patch('/me', requireAuth, async (req, res) => {
       if (!newName) return sendError(res, 'Name cannot be empty', 400);
       if (newName.length < 3) return sendError(res, 'Name must be at least 3 characters', 400);
       updates.name = newName;
+    }
+
+    if (typeof avatar === 'string') {
+      updates.avatar = avatar;
     }
 
     let updatedPet = null;
@@ -76,7 +81,8 @@ router.patch('/me', requireAuth, async (req, res) => {
             email: updatedUser.email,
             coins: updatedUser.coins,
             roles: updatedUser.roles,
-            activePetId: updatedUser.activePetId
+            activePetId: updatedUser.activePetId,
+            avatar: updatedUser.avatar
           }
         : null,
       activePet: updatedPet

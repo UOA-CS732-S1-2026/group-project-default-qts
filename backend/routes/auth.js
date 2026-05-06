@@ -30,7 +30,7 @@ function normalizeAnswer(ans) {
 // keep full handler in try/catch so async DB errors are always returned cleanly
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, securityQuestionCode, securityAnswer } = req.body || {};
+    const { name, email, password, securityQuestionCode, securityAnswer, avatar } = req.body || {};
 
     if (!name || !email || !password || !securityQuestionCode || !securityAnswer) {
       return sendError(res, 'Missing required fields', 400);
@@ -64,6 +64,7 @@ router.post('/register', async (req, res) => {
             passwordHash: String(password),
             securityQuestionCode: String(securityQuestionCode).trim(),
             securityAnswerHash: String(securityAnswer),
+            avatar: avatar ? String(avatar) : '',
             coins: 30,
             roles: ['USER']
           }],
@@ -124,7 +125,8 @@ router.post('/register', async (req, res) => {
           email: createdUser.email,
           coins: createdUser.coins,
           roles: createdUser.roles,
-          activePetId: createdUser.activePetId
+          activePetId: createdUser.activePetId,
+          avatar: createdUser.avatar
         },
         defaultPet: {
           id: createdPet._id,
@@ -176,7 +178,8 @@ router.post('/login', async (req, res) => {
           email: user.email,
           coins: user.coins,
           roles: user.roles,
-          activePetId: user.activePetId
+          activePetId: user.activePetId,
+          avatar: user.avatar
         }
       },
       'Login successful'

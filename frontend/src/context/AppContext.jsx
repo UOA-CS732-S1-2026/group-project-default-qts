@@ -78,7 +78,7 @@ export function AppProvider({ children }) {
           username: user.name,
           petName: profileData?.petName ?? user.petName,
           coins: profileData?.coins ?? user.coins,
-          avatar: storedAvatar || user.avatar
+          avatar: user.avatar || storedAvatar
         };
         setCurrentUser(mappedUser);
         localStorage.setItem('gf_current_user', JSON.stringify(mappedUser));
@@ -121,7 +121,7 @@ export function AppProvider({ children }) {
         if (formData.avatar) {
           avatar = setStoredAvatar(user.email, formData.avatar);
         } else {
-          avatar = getStoredAvatar(user.email);
+          avatar = user.avatar || getStoredAvatar(user.email);
         }
         const mappedUser = { ...user, username: user.name, avatar };
         setCurrentUser(mappedUser);
@@ -223,15 +223,20 @@ export function AppProvider({ children }) {
     }
   }
 
-  function updateAvatar(avatarDataUrl) {
-    const email = currentUser?.email;
-    if (email && avatarDataUrl) {
-      setStoredAvatar(email, avatarDataUrl);
+  async function updateAvatar(avatarDataUrl) {
+    try {
+      await updateProfile({ avatar: avatarDataUrl });
+      const email = currentUser?.email;
+      if (email && avatarDataUrl) {
+        setStoredAvatar(email, avatarDataUrl);
+      }
+      const updatedUser = { ...(currentUser || {}), avatar: avatarDataUrl };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err?.message || 'Failed to update avatar.' };
     }
-    const updatedUser = { ...(currentUser || {}), avatar: avatarDataUrl };
-    setCurrentUser(updatedUser);
-    localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
-    return { success: true };
   }
 
   function updateCoins(newBalance) {

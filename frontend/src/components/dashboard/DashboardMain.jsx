@@ -8,6 +8,7 @@ function DashboardMain({ onQuestDetails }) {
     const [showPomo, setShowPomo] = useState(false);
     const [pomoIsRunning, setPomoIsRunning] = useState(false);
     const [petExternalAnim, setPetExternalAnim] = useState(null); // null = let PetView decide
+    const [activePet, setActivePet] = useState(null);
 
     // Called when a Pomodoro focus session completes → pet celebrates
     const handleSessionComplete = () => {
@@ -21,6 +22,7 @@ function DashboardMain({ onQuestDetails }) {
                 <PetView
                     pomoIsRunning={pomoIsRunning}
                     externalAnim={petExternalAnim}
+                    onPetLoaded={setActivePet}
                 />
                 <button onClick={() => setShowPomo(true)}>POMODORO</button>
             </div>
@@ -33,6 +35,7 @@ function DashboardMain({ onQuestDetails }) {
                     onRequestClose={() => setShowPomo(false)}
                     onRunningChange={setPomoIsRunning}
                     onSessionComplete={handleSessionComplete}
+                    activePet={activePet}
                 />
             )}
         </main>

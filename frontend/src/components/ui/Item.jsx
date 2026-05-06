@@ -7,12 +7,13 @@ function Item({
     quantity = 0,
     mode = 'store',
     onBuy,
+    onDoubleClick,
     disabled = false,
     buyLabel = 'Buy'
 }) {
     if (mode === 'inventory') {
         return (
-            <div className="item-card item-card--inventory" title={name}>
+            <div className="item-card item-card--inventory" title={name} onDoubleClick={onDoubleClick}>
                 <div className="item-image-wrap">
                     <img src={image} alt={name} className="item-image" />
                 </div>

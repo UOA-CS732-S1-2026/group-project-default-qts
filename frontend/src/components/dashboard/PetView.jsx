@@ -32,8 +32,8 @@ const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-function PetView({ pomoIsRunning = false, externalAnim = null }) {
-    const token = localStorage.getItem('gf_token');
+function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
+    const token = localStorage.getItem('gf_token') ?? localStorage.getItem("token");
     const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -43,6 +43,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
     const [animState, setAnimState] = useState('idle');
     const [showEvolution, setShowEvolution] = useState(false);
     const clickCountRef = useRef(0); // track double-click for playing animation
+
 
     // ── Pomodoro sleeping / idle toggle ──────────────────────────────────────
     useEffect(() => {
@@ -87,6 +88,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
                 ]);
                 const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
+                if (onPetLoaded) onPetLoaded(activePet);
                 if (!activePet) setMessage('No active pet found.');
 
                 const items = inventoryRes?.data?.items || [];
@@ -105,18 +107,31 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
         setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
     }, [currentUser?.petName]);
 
+    // ── Global Event Listener for Feeding from Inventory ─────────────────────
+    useEffect(() => {
+        const onFeedEvent = (e) => {
+            const itemCode = e.detail?.itemCode;
+            if (itemCode) {
+                handleFeed(itemCode);
+            }
+        };
+        window.addEventListener('gf-feed-pet', onFeedEvent);
+        return () => window.removeEventListener('gf-feed-pet', onFeedEvent);
+    }, [pet, token, pomoIsRunning]); // Add dependencies used in handleFeed
+
     if (loading) return <div className="pet-container">Loading...</div>;
 
     // ── Feed ─────────────────────────────────────────────────────────────────
-    const handleFeed = async () => {
+    const handleFeed = async (itemCode) => {
         if (!pet) return;
-        if (!selectedItemCode) { setMessage('Please select a food item.'); return; }
+        if (!itemCode) { setMessage('Please select a food item.'); return; }
         setLoading(true);
         setMessage('');
         try {
-            const data = await feedPet(pet.id, selectedItemCode, token);
+            const data = await feedPet(pet.id, itemCode, token);
             const updatedPet = data?.data?.pet || data?.data?.activePet || null;
             setPet(updatedPet);
+            if (onPetLoaded) onPetLoaded(updatedPet);
             const inventoryRes = await getInventory(token);
             setInventory(inventoryRes?.data?.items || []);
             setAnimState('feeding');
@@ -146,6 +161,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
             const data = await evolvePet(pet.id, token);
             const updatedPet = data?.data?.pet || data?.data?.activePet || null;
             setPet(updatedPet);
+            if (onPetLoaded) onPetLoaded(updatedPet);
             setMessage('Evolved pet successfully!');
             // Brief celebrating after evolve
             setTimeout(() => setAnimState('celebrating'), 200);
@@ -169,13 +185,12 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
 
         clickCountRef.current += 1;
         if (clickCountRef.current === 1) {
-            // Single click: clicked animation + feed
+            // Single click: clicked animation ONLY
             setAnimState('clicked');
             setTimeout(() => {
                 setAnimState(pomoIsRunning ? 'idle' : 'sleeping');
                 clickCountRef.current = 0;
             }, 800);
-            handleFeed();
         } else if (clickCountRef.current === 2) {
             // Double click: playing animation (no feed)
             clearTimeout(clickCountRef.timeout);
@@ -190,55 +205,59 @@ function PetView({ pomoIsRunning = false, externalAnim = null }) {
     const { level, growthPoints } = pet || {};
     const percent = Math.max(0, Math.min(100, Number(growthPoints || 0)));
 
+    const displaySpecies = getPetSpecies(pet);
+    const displayStage = getPetStage(pet);
+    const displayAnim = animState;
+
     return (
         <div className="pet-container">
             <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
 
-            <div style={{ opacity: loading ? 0.6 : 1 }}>
-                <PetSprite
-                    species={getPetSpecies(pet)}
-                    stage={getPetStage(pet)}
-                    animState={animState}
-                    onClick={handlePetClick}
-                    size={280}
-                />
-            </div>
-
-            {pet && (
-                <div className="pet-exp">
-                    <div className="exp-row">
-                        <div className="exp-label">Exp.</div>
-                        <div className="pet-level">Lv.{level}</div>
-                    </div>
-                    <div className="exp-bar" aria-hidden>
-                        <div className="exp-fill" style={{ width: `${percent}%` }} />
-                    </div>
-                </div>
-            )}
-
-            {/* Evolve button — shown when pet.evolutionReady */}
-            {pet?.evolutionReady && !showEvolution && (
-                <div style={{ marginTop: 16 }}>
-                    <button onClick={handleEvolve} disabled={loading}>Evolve ✨</button>
-                </div>
-            )}
-
-            {message && <div style={{ marginTop: 8, color: 'red' }}>{message}</div>}
-
-            {/* Evolution overlay — full-screen animation */}
-            <AnimatePresence>
-                {showEvolution && (
-                    <EvolutionOverlay
-                        currentSpecies={getPetSpecies(pet)}
-                        currentStage={getPetStage(pet)}
-                        targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
-                        onEvolve={handleEvolutionConfirm}
-                        onSkip={handleEvolutionSkip}
+                <div style={{ opacity: loading ? 0.6 : 1 }}>
+                    <PetSprite
+                        species={displaySpecies}
+                        stage={displayStage}
+                        animState={displayAnim}
+                        onClick={handlePetClick}
+                        size={280}
                     />
-                )}
-            </AnimatePresence>
-        </div>
-    )
-}
+                </div>
 
-export default PetView;
+                {pet && (
+                    <div className="pet-exp">
+                        <div className="exp-row">
+                            <div className="exp-label">Exp.</div>
+                            <div className="pet-level">Lv.{level}</div>
+                        </div>
+                        <div className="exp-bar" aria-hidden>
+                            <div className="exp-fill" style={{ width: `${percent}%` }} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Evolve button — shown when pet.evolutionReady */}
+                {pet?.evolutionReady && !showEvolution && (
+                    <div style={{ marginTop: 16 }}>
+                        <button onClick={handleEvolve} disabled={loading}>Evolve ✨</button>
+                    </div>
+                )}
+
+                {message && <div style={{ marginTop: 8, color: 'red' }}>{message}</div>}
+
+                {/* Evolution overlay — full-screen animation */}
+                <AnimatePresence>
+                    {showEvolution && (
+                        <EvolutionOverlay
+                            currentSpecies={getPetSpecies(pet)}
+                            currentStage={getPetStage(pet)}
+                            targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
+                            onEvolve={handleEvolutionConfirm}
+                            onSkip={handleEvolutionSkip}
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+        )
+    }
+
+    export default PetView;
