@@ -39,8 +39,24 @@ function Item({
             <div className="item-card item-card--inventory" title={name}>
                 <div className="item-image-wrap">
                     <img src={image} alt={name} className="item-image" />
+                    {isFoodItem && (
+                        <div className="item-tooltip" role="tooltip">
+                            <div className="item-tooltip-name">{name}</div>
+                            <div className="item-tooltip-line">{foodMeta.type}: {foodMeta.shortDescription}</div>
+                            <div className="item-tooltip-line">Growth Value: +{foodMeta.growthValue}</div>
+                            <div className="item-tooltip-line">Quantity: x{displayQuantity}</div>
+                        </div>
+                    )}
                 </div>
                 <div className="item-qty">x{quantity}</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="item-card item-card--store">
+            <div className="item-image-wrap">
+                <img src={image} alt={name} className="item-image" />
                 {isFoodItem && (
                     <div className="item-tooltip" role="tooltip">
                         <div className="item-tooltip-name">{name}</div>
@@ -50,24 +66,8 @@ function Item({
                     </div>
                 )}
             </div>
-        );
-    }
-
-    return (
-        <div className="item-card item-card--store">
-            <div className="item-image-wrap">
-                <img src={image} alt={name} className="item-image" />
-            </div>
             <h4 className="item-name">{name}</h4>
             <div className="item-cost">{cost} coins</div>
-            {isFoodItem && (
-                <div className="item-tooltip" role="tooltip">
-                    <div className="item-tooltip-name">{name}</div>
-                    <div className="item-tooltip-line">{foodMeta.type}: {foodMeta.shortDescription}</div>
-                    <div className="item-tooltip-line">Growth Value: +{foodMeta.growthValue}</div>
-                    <div className="item-tooltip-line">Quantity: x{displayQuantity}</div>
-                </div>
-            )}
             <button
                 className="item-buy"
                 onClick={onBuy}

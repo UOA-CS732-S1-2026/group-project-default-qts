@@ -33,7 +33,6 @@ function Dashboard() {
 
     try {
       const response = await getDashboard(token);
-      console.log(response.data);
       const currentCoins = response?.data?.userSummary?.coins;
 
       if (typeof currentCoins === 'number') {
