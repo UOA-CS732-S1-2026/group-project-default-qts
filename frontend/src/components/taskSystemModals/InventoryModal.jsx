@@ -1,4 +1,4 @@
-import './InventoryModal.css';
+import '@/styles/components/InventoryModal.css';
 import { useEffect, useRef, useState } from 'react';
 import Item from '../ui/Item';
 import { ITEM_IMAGES } from '../../data/itemAssets';
@@ -126,15 +126,16 @@ function InventoryModal({ onClose }) {
                 <p>Loading...</p>
               ) : error ? (
                 <p>{error}</p>
-              ) : inventoryItems.length === 0 ? (
+              ) : inventoryListItems.length === 0 ? (
                 <p>Your inventory is empty.</p>
               ) : (
                 <div className="inventory-grid">
-                  {inventoryItems.map((item) => (
+                  {inventoryListItems.map((item) => (
                     <Item
                       key={item.id || item.storeItemId || item.itemCode}
                       image={getItemImage(item)}
-                      name={item.itemName || item.itemCode}
+                      name={item.itemName || item.name || 'Unknown item'}
+                      itemCode={item.itemCode || item.code}
                       quantity={item.quantity ?? 0}
                       mode="inventory"
                       onDoubleClick={() => handleDoubleClick(item)}
