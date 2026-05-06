@@ -4,7 +4,7 @@ import '../../styles/components/CreateEditForm.css';
 function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const isEdit = initialData !== null;
 
-  const [taskType, setTaskType] = useState(initialData?.type ?? 'p2p');
+  const [taskType] = useState(initialData?.type ?? 'p2p');
   const [title, setTitle] = useState(initialData?.title ?? '');
   const [instructions, setInstructions] = useState(initialData?.instructions ?? '');
   const [objectives, setObjectives] = useState(initialData?.objectives ?? ['']);
