@@ -141,12 +141,9 @@ function TaskCardFront({
         )
       case 'active':
         return (
-          <button
-            className="task-card-btn task-card-btn--delete"
-            onClick={() => setShowCancelConfirm(true)}
-          >
-            Cancel
-          </button>
+          <p className="task-card-waiting-text">
+            Waiting for assignee to submit...
+          </p>
         )
       case 'pending_review':
       case 'pending_confirmation':
