@@ -1,31 +1,33 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+
+const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed', 'completed'];
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
 import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
-import { CURRENT_USER_ID } from '../../constants/mockUser';
+import { useApp } from '../../context/AppContext';
+import * as taskService from '../../services/taskService';
+import { toFrontend } from '../../utils/taskMapper';
+import { STATUS_B2F } from '../../utils/taskMapper';
 import Toolbar from '../toolbar/Toolbar';
 import loadIconSmall from '../../assets/load-icon-small.png';
 import TaskGrid from '../task/TaskGrid';
 import CreateEditForm from '../task/CreateEditForm';
 
-const devToggleStyle = {
-  position: 'fixed', bottom: 12, right: 12,
-  fontSize: 10, opacity: 0.35, padding: '2px 6px',
-  cursor: 'pointer', zIndex: 9999,
-};
-
 function MyTaskModal({ onNavigate, questTargetId }) {
-  const { tasks, createTask, updateTask, deleteTask } = useTasks();
-  const [isLoadingCreated, setIsLoadingCreated] = useState(true);
+  const { currentUser, updateCoins } = useApp();
+  const currentUserId = currentUser?.id;
+  const { tasks, isLoading, createTask, updateTask, patchTask, deleteTask } = useTasks();
+
+  // Shared loading state for manual tab switches.
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  // Quest tab has its own loading state for the "navigate to quest" animation only.
   const [isLoadingQuest, setIsLoadingQuest] = useState(false);
-  const [error, setError] = useState(false); // set to true to test error UI
+  const [error] = useState(false);
 
   const createdTasks = useMemo(() =>
-    tasks.filter((t) =>
-      t.type === 'mytask' ||
-      (t.type === 'p2p' && t.createdBy?.id === CURRENT_USER_ID)
-    ), [tasks]);
+    tasks.filter((t) => (t.type === 'p2p' || t.type === 'mytask') && t.createdBy?.id === currentUserId),
+    [tasks, currentUserId]);
 
   const {
     filteredTasks,
@@ -42,82 +44,156 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const [showHelp, setShowHelp] = useState(false);
   const [expandedTaskId, setExpandedTaskId] = useState(null);
   const handledTargetRef = useRef(null);
+  const tabLoadingTimeoutRef = useRef(null);
+
+  useEffect(() => () => {
+    if (tabLoadingTimeoutRef.current) {
+      clearTimeout(tabLoadingTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (questTargetId && questTargetId !== handledTargetRef.current) {
       handledTargetRef.current = questTargetId;
-      setActiveSubTab('quest');
-      setIsLoadingQuest(true);
-      setExpandedTaskId(questTargetId);
+      // Defer state updates to avoid synchronous setState calls inside effect
       setTimeout(() => {
-        setIsLoadingQuest(false);
-        // Clear after grid renders so TaskCard uses it once on mount only
-        setTimeout(() => setExpandedTaskId(null), 50);
-      }, 1000);
+        setActiveSubTab('quest');
+        setIsLoadingQuest(true);
+        setExpandedTaskId(questTargetId);
+        setTimeout(() => {
+          setIsLoadingQuest(false);
+          setTimeout(() => setExpandedTaskId(null), 50);
+        }, 1000);
+      }, 0);
     }
   }, [questTargetId]);
 
-  const { acceptedIds, cancelTask, submittedIds, submitTask } = useAcceptedTasks();
+  const { acceptedIds, withdrawTask, cleanupCancelledTask, submittedIds, submitTask } = useAcceptedTasks();
   const [questSource, setQuestSource] = useState(null);
   const [questStatus, setQuestStatus] = useState(null);
   const [questCategory, setQuestCategory] = useState(null);
   const [questSort, setQuestSort] = useState('');
   const [cancelledQuestIds, setCancelledQuestIds] = useState(new Set());
 
-  const fetchData = () => {
-    setError(false);
-    setIsLoadingCreated(true);
-    setIsLoadingQuest(true);
-    // TODO: replace setTimeout with axios.get('/api/tasks') when integrating backend
-    setTimeout(() => {
-      setIsLoadingCreated(false);
-      setIsLoadingQuest(false);
-    }, 1000);
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
   const handleSubTabChange = (tab) => {
+    if (tab === activeSubTab) return;
+    if (tabLoadingTimeoutRef.current) {
+      clearTimeout(tabLoadingTimeoutRef.current);
+    }
+    setIsTabLoading(true);
     setActiveSubTab(tab);
     resetModes();
-    if (tab === 'created' && !isLoadingCreated) {
-      setIsLoadingCreated(true);
-      setTimeout(() => setIsLoadingCreated(false), 1000);
-    } else if (tab === 'quest' && !isLoadingQuest) {
-      setIsLoadingQuest(true);
-      setTimeout(() => setIsLoadingQuest(false), 1000);
+    tabLoadingTimeoutRef.current = setTimeout(() => {
+      setIsTabLoading(false);
+      tabLoadingTimeoutRef.current = null;
+    }, 350);
+  };
+
+  // Phase 1: API call only — no state changes so card stays mounted for success overlay.
+  const handleCancelQuestApi = async (id) => {
+    const task = tasks.find((t) => t.id === id);
+    try {
+      await withdrawTask(id, task?.type);
+    } catch {
+      // Withdrawal failed — still proceed to show success and hide from quest view
     }
   };
 
-  const handleCancelQuest = (id) => {
-    cancelTask(id);
+  // Phase 2: state cleanup — called after success overlay finishes (1500ms delay).
+  const handleCancelQuestDone = (id) => {
+    cleanupCancelledTask(id);
     setCancelledQuestIds((prev) => new Set([...prev, id]));
-    const task = tasks.find((t) => t.id === id);
-    if (task?.type === 'p2p') {
-      updateTask(id, { status: 'cancelled', assignee: null });
-    }
-    // community: no global status change — other players are unaffected
   };
 
-  const handleUpdateCard = (id, fields) => {
-    updateTask(id, fields);
+  // Dismiss a completed SystemTask from quest list — local cleanup only, no backend delete.
+  const handleDismissQuest = (id) => {
+    cleanupCancelledTask(id);
+    setCancelledQuestIds((prev) => new Set([...prev, id]));
+  };
+
+  const handleUpdateCard = async (id, fields) => {
+    const task = tasks.find((t) => t.id === id);
+
+    if (task?.type === 'p2p' && fields.status === 'completed') {
+      const response = await taskService.confirmTask(id);
+      const data = response?.data?.data;
+      if (data?.task?.status) {
+        updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+      }
+      // Creator's escrow was already deducted at create time — no coin change needed here.
+      return;
+    }
+
+    if (task?.type === 'p2p' && fields.status === 'active' && fields.rejectedAt) {
+      const response = await taskService.rejectTaskSubmission(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask?.status) {
+        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+      }
+      return;
+    }
+
+    if (fields.status === 'cancelled') {
+      const response = await taskService.cancelTask(id);
+      const data = response?.data?.data;
+      if (data?.task?.status) {
+        updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+      }
+      // Escrow refunded to creator — sync creator coins if returned.
+      if (data?.coins !== undefined) updateCoins(data.coins);
+      return;
+    }
+
+    // Re-assign: re-open a cancelled task via API, clear assignee in local state.
     if (fields.status === 'open' && fields.assignee === null) {
-      cancelTask(id);
+      const response = await taskService.reopenTask(id);
+      const backendTask = response?.data?.data?.task;
+      if (backendTask) {
+        updateTask(id, { ...toFrontend(backendTask), assignee: null });
+      }
+      return;
     }
-  };
 
-  const handleQuestUpdate = (id, fields) => {
-    const task = tasks.find((t) => t.id === id);
-    // Community tasks: track submission locally only — never change global status
-    // (multiple players can accept the same task; one submit must not affect others)
-    if (task?.type === 'community' && fields.status === 'pending_review') {
-      submitTask(id);
+    // If task is being submitted, call API first to sync status from backend.
+    if (fields.status === 'pending_review' || fields.status === 'pending_confirmation') {
+      try {
+        const data = await submitTask(id);
+        if (data?.task?.status) {
+          updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+        }
+      } catch {
+        // Submit failed — task stays in current state
+      }
     } else {
+      // For non-submit updates, just update local state.
       updateTask(id, fields);
     }
   };
 
-  const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed'];
+  // Submit action: call API and sync returned task status to local state.
+  // All other field updates are local-only (no PATCH endpoint in backend yet).
+  const handleQuestUpdate = async (id, fields) => {
+    if (fields.status === 'pending_review') {
+      try {
+        const data = await submitTask(id);
+        const task = tasks.find((t) => t.id === id);
+        if (task?.type === 'community') {
+          // SYSTEM task stays OPEN on backend — set completed locally so Delete button appears
+          updateTask(id, { status: 'completed' });
+          // Community submit gives coins immediately — sync balance if returned
+          if (data?.coinsAwarded !== undefined && currentUser?.coins !== undefined) {
+            updateCoins(currentUser.coins + data.coinsAwarded);
+          }
+        } else if (data?.task?.status) {
+          updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+        }
+      } catch {
+        // Submit failed — task stays in current state
+      }
+    } else {
+      updateTask(id, fields);
+    }
+  };
 
   const filteredQuest = useMemo(() => {
     let result = tasks.filter((t) => {
@@ -125,7 +201,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       if (cancelledQuestIds.has(t.id)) return false;
       if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
       const iExplicitlyAccepted = acceptedIds.has(t.id);
-      const isAssignedToMe = t.assignee?.id === CURRENT_USER_ID;
+      const isAssignedToMe = t.assignee?.id === currentUserId;
       return iExplicitlyAccepted || isAssignedToMe;
     });
     if (questSource) result = result.filter((t) => t.type === questSource);
@@ -135,7 +211,6 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         t.status === 'pending_confirmation'
       );
     } else if (questStatus === 'active') {
-      // Community tasks stay 'open' globally when locally accepted — match both
       result = result.filter((t) => t.status === 'active' || (t.status === 'open' && acceptedIds.has(t.id)));
     } else if (questStatus) {
       result = result.filter((t) => t.status === questStatus);
@@ -148,7 +223,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (questSort === 'expiry-early') result.sort((a, b) => new Date(a.expiredAt) - new Date(b.expiredAt));
     if (questSort === 'expiry-late') result.sort((a, b) => new Date(b.expiredAt) - new Date(a.expiredAt));
     return result;
-  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, submittedIds]);
+  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, currentUserId]);
 
   const handleQuestSourceFilter = (source) => {
     const next = questSource === source ? null : source;
@@ -170,11 +245,23 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     setShowForm(true);
   };
 
-  const handleFormSubmit = (taskData) => {
+  const handleFormSubmit = async (taskData) => {
     if (editingTask) {
-      updateTask(taskData.id, taskData);
+      try {
+        await patchTask(taskData.id, taskData);
+      } catch {
+        // Edit failed — form stays open, user can retry
+      }
     } else {
-      createTask(taskData);
+      try {
+        const created = await createTask(taskData);
+        // P2P task creation deducts coins into escrow — backend returns updated balance
+        if (created?._coins !== undefined) {
+          updateCoins(created._coins);
+        }
+      } catch {
+        // Creation failed — form stays open, user can retry
+      }
     }
   };
 
@@ -208,15 +295,15 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       <p className="task-error-icon">⚠️</p>
       <p className="task-error-title">Oops!</p>
       <p className="task-error-msg">Failed to load tasks</p>
-      <button className="task-error-retry" onClick={fetchData}>Try Again</button>
     </div>
   );
 
   const renderContent = () => {
     if (error) return errorState;
+    if (isTabLoading) return skeletonLoader;
 
     if (activeSubTab === 'created') {
-      if (isLoadingCreated) return skeletonLoader;
+      if (isLoading) return skeletonLoader;
       if (filteredTasks.length === 0) {
         const hasFilter = filterStatus !== 'all' || sortBy !== '';
         if (hasFilter) {
@@ -280,8 +367,10 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         taskType="quest"
         acceptedIds={acceptedIds}
         submittedIds={submittedIds}
-        onCancelCard={handleCancelQuest}
+        onCancelCard={handleCancelQuestApi}
+        onCancelDone={handleCancelQuestDone}
         onUpdateCard={handleQuestUpdate}
+        onDismissQuest={handleDismissQuest}
         expandedTaskId={expandedTaskId}
       />
     );
@@ -291,7 +380,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     <>
       <div className="mytask-toolbar-row">
         {subtabButtons}
-        {!isLoadingCreated && !error && activeSubTab === 'created' && (
+        {!isTabLoading && !isLoading && !error && activeSubTab === 'created' && (
           <Toolbar
             taskType="mytask"
             filterStatus={filterStatus}
@@ -306,7 +395,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
             onHelpClick={() => setShowHelp(true)}
           />
         )}
-        {!isLoadingQuest && !error && activeSubTab === 'quest' && (
+        {!isTabLoading && !isLoadingQuest && !error && activeSubTab === 'quest' && (
           <Toolbar
             taskType="quest"
             questMode
@@ -323,7 +412,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         )}
       </div>
 
-      {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isLoadingCreated && !error && (
+      {activeSubTab === 'created' && (isEditMode || isDeleteMode) && !isTabLoading && !isLoading && !error && (
         <p className="mode-hint">
           {isEditMode
             ? '✏ Move cursor to the card to edit'
@@ -357,12 +446,6 @@ function MyTaskModal({ onNavigate, questTargetId }) {
             </button>
           </div>
         </div>
-      )}
-
-      {process.env.NODE_ENV === 'development' && (
-        <button style={devToggleStyle} onClick={() => setError((e) => !e)}>
-          Toggle Error
-        </button>
       )}
     </>
   );

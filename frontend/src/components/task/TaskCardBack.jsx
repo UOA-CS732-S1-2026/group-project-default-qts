@@ -1,12 +1,13 @@
 import CoinBadge from '../ui/CoinBadge'
-import { CURRENT_USER_ID } from '../../constants/mockUser'
+import { useApp } from '../../context/AppContext'
 
 function TaskCardBack({ task, cardColor, onFlip, onClose, isQuest = false, isAccepted = false, isCreatorView = false }) {
+  const { currentUser } = useApp()
   const getTakenByName = () => {
     if (isAccepted) return 'You'
     if (!task.assignee) return null
     if (isCreatorView) return task.assignee.name
-    if (task.assignee.id === CURRENT_USER_ID) return 'You'
+    if (task.assignee.id === currentUser?.id) return 'You'
     return task.assignee.name
   }
 
@@ -41,14 +42,6 @@ function TaskCardBack({ task, cardColor, onFlip, onClose, isQuest = false, isAcc
         </div>
       )}
 
-      {task.type === 'community' && task.difficulty && (
-        <div className="task-card-detail">
-          <span className="task-card-detail-label">Difficulty</span>
-          <span className={`task-card-difficulty task-card-difficulty--${task.difficulty.toLowerCase()}`}>
-            {task.difficulty}
-          </span>
-        </div>
-      )}
 
       <div className="task-card-footer">
         <CoinBadge amount={task.rewardCoins} />

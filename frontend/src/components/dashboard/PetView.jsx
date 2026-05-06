@@ -33,7 +33,7 @@ const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']
 // ── Component ────────────────────────────────────────────────────────────────
 
 function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('gf_token') ?? localStorage.getItem("token");
     const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);

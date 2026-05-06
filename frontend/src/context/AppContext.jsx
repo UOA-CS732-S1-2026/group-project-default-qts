@@ -61,10 +61,7 @@ export function AppProvider({ children }) {
   async function handleLogin(email, password) {
     try {
       const res = await login(email, password);
-      const token = res.data?.token || res.token;
       const user = res.data?.user || res.user;
-
-      if (token) localStorage.setItem('token', token);
 
       let profileData = null;
       try {
@@ -85,9 +82,9 @@ export function AppProvider({ children }) {
         };
         setCurrentUser(mappedUser);
         localStorage.setItem('gf_current_user', JSON.stringify(mappedUser));
+        return { success: true, user: mappedUser };
       }
-
-      return { success: true, user, token };
+      return { success: false, error: res.error || 'Login failed' };
     } catch (err) {
       return { success: false, error: err?.message || 'Login failed' };
     }
@@ -96,7 +93,7 @@ export function AppProvider({ children }) {
   async function handleLogout() {
     await logout(setCurrentUser);
     localStorage.removeItem('gf_current_user');
-    localStorage.removeItem('token');
+    localStorage.removeItem('gf_token');
   }
 
   async function handleRegister(formData) {
@@ -117,10 +114,7 @@ export function AppProvider({ children }) {
 
     try {
       const res = await register(payload);
-      const token = res.data?.token || res.token;
       const user = res.data?.user || res.user;
-
-      if (token) localStorage.setItem('token', token);
 
       if (user) {
         let avatar = null;
@@ -132,11 +126,11 @@ export function AppProvider({ children }) {
         const mappedUser = { ...user, username: user.name, avatar };
         setCurrentUser(mappedUser);
         localStorage.setItem('gf_current_user', JSON.stringify(mappedUser));
+        return { success: true, user: mappedUser };
       }
-
-      return { success: true, user, token };
+      return { success: false, error: res.error || 'Registration failed' };
     } catch (err) {
-      return { success: false, error: err?.message || 'Register failed' };
+      return { success: false, error: err?.message || 'Registration failed' };
     }
   }
 
@@ -245,6 +239,12 @@ export function AppProvider({ children }) {
     }
   }
 
+  function updateCoins(newBalance) {
+    const updatedUser = { ...(currentUser || {}), coins: newBalance };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
+  }
+
   const value = {
     currentUser,
     darkMode,
@@ -258,6 +258,7 @@ export function AppProvider({ children }) {
     updatePetName,
     updatePassword,
     updateAvatar,
+    updateCoins,
     refreshCoins,
     SECURITY_QUESTIONS,
   };

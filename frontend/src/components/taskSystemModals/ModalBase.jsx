@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../../styles/components/ModalBase.css';
+import loadIconSmall from '../../assets/load-icon-small.png';
 
 const MODAL_TABS = [
   { type: 'mytask', label: 'My Tasks' },
@@ -15,10 +16,47 @@ const MODAL_DESCRIPTIONS = {
 
 function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
   const CLOSE_ANIM_MS = 320;
+  const TAB_SWITCH_LOADING_MS = 350;
 
   const [render, setRender] = useState(isOpen);
   const [closing, setClosing] = useState(false);
   const [activeType, setActiveType] = useState(modalType);
+  const [isMainTabLoading, setIsMainTabLoading] = useState(false);
+  const tabSwitchTimeoutRef = useRef(null);
+  const prevModalTypeRef = useRef(modalType);
+
+  useEffect(() => {
+    return () => {
+      if (tabSwitchTimeoutRef.current) {
+        clearTimeout(tabSwitchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      prevModalTypeRef.current = modalType;
+      return;
+    }
+
+    if (prevModalTypeRef.current && prevModalTypeRef.current !== modalType) {
+      if (tabSwitchTimeoutRef.current) {
+        clearTimeout(tabSwitchTimeoutRef.current);
+      }
+      setIsMainTabLoading(true);
+      tabSwitchTimeoutRef.current = setTimeout(() => {
+        setIsMainTabLoading(false);
+        tabSwitchTimeoutRef.current = null;
+      }, TAB_SWITCH_LOADING_MS);
+    }
+
+    prevModalTypeRef.current = modalType;
+  }, [isOpen, modalType]);
+
+  const handleMainTabChange = (nextType) => {
+    if (nextType === modalType) return;
+    onChangeType(nextType);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +102,7 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
               <button
                 key={tab.type}
                 className={`task-modal-tab ${modalType === tab.type ? 'task-modal-tab--active' : ''}`}
-                onClick={() => onChangeType(tab.type)}
+                onClick={() => handleMainTabChange(tab.type)}
               >
                 {tab.label}
               </button>
@@ -76,7 +114,13 @@ function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
         <p className="task-modal-description">{MODAL_DESCRIPTIONS[modalType]}</p>
 
         <div className="task-modal-body">
-          {children}
+          {isMainTabLoading ? (
+            <div className="task-loading-state">
+              <img src={loadIconSmall} alt="" className="task-loading-icon" />
+              <p className="task-loading-title">Loading...</p>
+              <p className="task-loading-sub">Switching tab...</p>
+            </div>
+          ) : children}
         </div>
 
       </div>
