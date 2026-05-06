@@ -122,6 +122,7 @@ function InventoryModal({ onClose }) {
                       key={item.id || item.storeItemId || item.itemCode}
                       image={getItemImage(item)}
                       name={item.itemName || item.name || 'Unknown item'}
+                      itemCode={item.itemCode || item.code}
                       quantity={item.quantity ?? 0}
                       mode="inventory"
                     />

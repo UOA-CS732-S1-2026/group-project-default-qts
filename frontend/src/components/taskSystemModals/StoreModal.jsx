@@ -154,6 +154,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                                         key={item.id || item._id || item.code}
                                         image={getItemImage(item)}
                                         name={item.name}
+                                        itemCode={item.code}
                                         cost={item.price}
                                         mode="store"
                                         disabled={disabled}
