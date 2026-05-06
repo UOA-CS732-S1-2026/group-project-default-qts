@@ -4,6 +4,7 @@ import StatusBadge from '../ui/StatusBadge'
 import { useApp } from '../../context/AppContext'
 import { getDisplayStatus } from '../../utils/taskUtils'
 import DisputeForm from './DisputeForm'
+import * as taskService from '../../services/taskService'
 
 function TaskCardFront({
   task,
@@ -92,7 +93,8 @@ function TaskCardFront({
   const handleDisputeSubmit = async ({ reason, details }) => {
     if (!reason || !disputePov) return
     try {
-      await onUpdateTask(task.id, {
+      await taskService.disputeTask(task.id, { reason, details: details || '' })
+      onUpdateTask(task.id, {
         status: 'disputed',
         disputeRaisedBy: disputePov,
         disputeReason: reason,
@@ -327,6 +329,24 @@ function TaskCardFront({
                 <p className="task-card-waiting-text">
                   Task is under review. Awaiting admin decision.
                 </p>
+              )}
+              {hideAccept && task.status === 'cancelled' && task.type === 'p2p' && task.disputeRaisedBy && (
+                <>
+                  <p className="task-card-waiting-text">
+                    Dispute resolved. Creator was favored.
+                  </p>
+                  {onDismissQuest && (
+                    <button
+                      className="task-card-btn task-card-btn--delete"
+                      onClick={() => {
+                        onDismissQuest(task.id)
+                        onClose()
+                      }}
+                    >
+                      Dismiss
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

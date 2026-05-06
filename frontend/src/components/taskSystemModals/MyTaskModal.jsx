@@ -249,7 +249,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     let result = tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
       if (cancelledQuestIds.has(t.id)) return false;
-      if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
+      const isDisputeResolved = t.status === 'cancelled' && t.type === 'p2p' && t.disputeRaisedBy;
+      if (!ACTIVE_QUEST_STATUSES.includes(t.status) && !isDisputeResolved) return false;
       const iExplicitlyAccepted = acceptedIds.has(t.id);
       const isAssignedToMe = t.assignee?.id === currentUserId;
       return iExplicitlyAccepted || isAssignedToMe;
@@ -262,6 +263,10 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       );
     } else if (questStatus === 'active') {
       result = result.filter((t) => t.status === 'active' || (t.status === 'open' && acceptedIds.has(t.id)));
+    } else if (questStatus === 'rejected') {
+      result = result.filter((t) => t.status === 'active' && t.rejectedAt);
+    } else if (questStatus === 'cancelled') {
+      result = result.filter((t) => t.status === 'cancelled' && t.disputeRaisedBy);
     } else if (questStatus) {
       result = result.filter((t) => t.status === questStatus);
     }

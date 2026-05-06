@@ -60,6 +60,8 @@ function Toolbar({
                 <option value="active">Active</option>
                 <option value="pending_review">Pending Review</option>
                 <option value="disputed">Disputed</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </>
           )}
