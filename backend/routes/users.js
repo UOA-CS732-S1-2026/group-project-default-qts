@@ -1,7 +1,10 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const UserPet = require('../models/UserPet');
+const Task = require('../models/Task');
+const TaskAssignment = require('../models/TaskAssignment');
 const { requireAuth } = require('../middleware/auth');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -31,6 +34,38 @@ router.get('/me', requireAuth, async (req, res) => {
     }, 'User profile loaded');
   } catch (err) {
     return sendError(res, 'Failed to load user profile', 500, { detail: err.message });
+  }
+});
+
+// GET /api/users/me/task-stats
+router.get('/me/task-stats', requireAuth, async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.userId);
+
+    const [createdCount, completedByType] = await Promise.all([
+      Task.countDocuments({ createdBy: userId }),
+      TaskAssignment.aggregate([
+        { $match: { assignedTo: userId, status: 'COMPLETED' } },
+        { $lookup: { from: 'tasks', localField: 'taskId', foreignField: '_id', as: 'task' } },
+        { $unwind: '$task' },
+        { $match: { 'task.type': { $in: ['SYSTEM', 'P2P'] } } },
+        { $group: { _id: '$task.type', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const stats = completedByType.reduce((acc, row) => {
+      if (row._id === 'SYSTEM') acc.systemCompleted = row.count;
+      if (row._id === 'P2P') acc.p2pCompleted = row.count;
+      return acc;
+    }, { systemCompleted: 0, p2pCompleted: 0 });
+
+    return sendSuccess(res, {
+      systemCompleted: stats.systemCompleted,
+      p2pCompleted: stats.p2pCompleted,
+      tasksCreated: createdCount
+    }, 'Task stats loaded');
+  } catch (err) {
+    return sendError(res, 'Failed to load task stats', 500, { detail: err.message });
   }
 });
 

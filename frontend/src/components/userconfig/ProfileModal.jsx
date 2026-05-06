@@ -1,12 +1,13 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
+import { getTaskStats } from '../../utils/userApi';
 import avatarPlaceholder from '../../assets/avatar_placeholder.png';
 
 
 const STAT_LABELS = [
-    { key: 'publicTaskCompleted', label: 'Platform Tasks' },
-    { key: 'p2pTaskCompleted', label: 'P2P Tasks' },
+    { key: 'systemCompleted', label: 'System Tasks Done' },
+    { key: 'p2pCompleted', label: 'P2P Tasks Done' },
     { key: 'tasksCreated', label: 'Tasks Created' },
 ];
 
@@ -28,6 +29,11 @@ function StatBar({ label, value, max = 10 }) {
 export default function ProfileModal({ onClose }) {
     const { currentUser, updateAvatar } = useApp();
     const fileInputRef = useRef(null);
+    const [stats, setStats] = useState({
+        systemCompleted: 0,
+        p2pCompleted: 0,
+        tasksCreated: 0
+    });
 
     function handleAvatarClick() {
         fileInputRef.current?.click();
@@ -41,7 +47,30 @@ export default function ProfileModal({ onClose }) {
         reader.readAsDataURL(file);
     }
 
-    const stats = currentUser?.stats || {};
+    useEffect(() => {
+        let isActive = true;
+
+        async function loadStats() {
+            try {
+                const res = await getTaskStats();
+                const data = res?.data || {};
+                if (!isActive) return;
+                setStats({
+                    systemCompleted: data.systemCompleted ?? 0,
+                    p2pCompleted: data.p2pCompleted ?? 0,
+                    tasksCreated: data.tasksCreated ?? 0
+                });
+            } catch {
+                if (!isActive) return;
+                setStats({ systemCompleted: 0, p2pCompleted: 0, tasksCreated: 0 });
+            }
+        }
+
+        loadStats();
+        return () => { isActive = false; };
+    }, [currentUser?.id, currentUser?._id]);
+
+    const statMax = Math.max(10, ...STAT_LABELS.map(({ key }) => stats[key] ?? 0));
 
     return (
         <AnimatePresence>
@@ -94,7 +123,7 @@ export default function ProfileModal({ onClose }) {
                     {/* Stats */}
                     <div className="profile-stats">
                         {STAT_LABELS.map(({ key, label }) => (
-                            <StatBar key={key} label={label} value={stats[key] ?? 0} />
+                            <StatBar key={key} label={label} value={stats[key] ?? 0} max={statMax} />
                         ))}
                     </div>
                 </motion.div>

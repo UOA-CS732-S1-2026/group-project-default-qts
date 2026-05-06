@@ -67,3 +67,21 @@ export async function resetPasswordWithSecurityAnswer(payload) {
     throw wrapAxiosError(error, 'Failed to reset password');
   }
 }
+
+export async function getTaskStats() {
+  const token = localStorage.getItem('gf_token');
+  if (!token) {
+    const err = new Error('Not authenticated. Please log in again.');
+    err.status = 401;
+    throw err;
+  }
+
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/users/me/task-stats`, {
+      headers: { ...authHeader() }
+    });
+    return res.data;
+  } catch (error) {
+    throw wrapAxiosError(error, 'Failed to load task stats');
+  }
+}
