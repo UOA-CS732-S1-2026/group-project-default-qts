@@ -1,4 +1,4 @@
-import './StoreModal.css';
+import '@/styles/components/StoreModal.css';
 import { useState, useEffect, useRef } from 'react';
 import Item from '../ui/Item';
 import { ITEM_IMAGES } from '../../data/itemAssets';
@@ -154,6 +154,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                                         key={item.id || item._id || item.code}
                                         image={getItemImage(item)}
                                         name={item.name}
+                                        itemCode={item.code}
                                         cost={item.price}
                                         mode="store"
                                         disabled={disabled}

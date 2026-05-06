@@ -5,7 +5,7 @@ import loadIconSmall from '../../assets/load-icon-small.png';
 const MODAL_TABS = [
   { type: 'mytask', label: 'My Tasks' },
   { type: 'p2p', label: 'P2P Tasks' },
-  { type: 'community', label: 'System' },
+  { type: 'system', label: 'System' },
 ];
 
 const MODAL_DESCRIPTIONS = {

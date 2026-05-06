@@ -213,7 +213,7 @@ export function AppProvider({ children }) {
       });
       if (res?.data?.success) {
         setCurrentUser((prev) => {
-          const updated = prev ? { ...prev, coins: res.data.data.coins } : prev;
+          const updated = prev ? { ...prev, coins: res.data.coins } : prev;
           if (updated) localStorage.setItem('gf_current_user', JSON.stringify(updated));
           return updated;
         });
