@@ -17,7 +17,7 @@ import { getDashboard } from '../../utils/dashboardApi';
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
   p2p: <P2PModal />,
-  community: <CommunityModal />,
+  system: <CommunityModal />,
 };
 
 function Dashboard() {
@@ -103,7 +103,7 @@ function Dashboard() {
           modalType={modalType}
           onChangeType={openModal}
         >
-          {modalType && React.cloneElement(MODAL_CONTENTS[modalType], {
+          {modalType && MODAL_CONTENTS[modalType] && React.cloneElement(MODAL_CONTENTS[modalType], {
             onClose: handleCloseModal,
             onNavigate: openModal,
             questTargetId: modalType === 'mytask' ? questTargetId : undefined,

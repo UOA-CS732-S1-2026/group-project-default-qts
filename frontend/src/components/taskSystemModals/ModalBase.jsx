@@ -4,7 +4,7 @@ import '../../styles/components/ModalBase.css';
 const MODAL_TABS = [
   { type: 'mytask', label: 'My Tasks' },
   { type: 'p2p', label: 'P2P Tasks' },
-  { type: 'community', label: 'System' },
+  { type: 'system', label: 'System' },
 ];
 
 const MODAL_DESCRIPTIONS = {
