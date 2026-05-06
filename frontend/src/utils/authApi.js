@@ -1,11 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001';
 
 export async function register(payload) {
   try {
     const res = await axios.post(`${API_BASE_URL}/api/auth/register`, payload);
-    return res.data; // { success, data: { token, user } }
+    // Backend wraps response: { success, message, data: { token, user } }
+    // Save token and return user for App to handle
+    if (res.data.data?.token) {
+      localStorage.setItem('gf_token', res.data.data.token);
+    }
+    return { success: res.data.success, user: res.data.data?.user, error: res.data.message };
   } catch (error) {
     throw new Error(error.response?.data?.message || 'failed to register');
   }
@@ -14,14 +19,19 @@ export async function register(payload) {
 export async function login(email, password) {
   try {
     const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
-    return res.data; // { success, data: { token, user } }
+    // Backend wraps response: { success, message, data: { token, user } }
+    // Save token and return user for App to handle
+    if (res.data.data?.token) {
+      localStorage.setItem('gf_token', res.data.data.token);
+    }
+    return { success: res.data.success, user: res.data.data?.user, error: res.data.message };
   } catch (error) {
     throw new Error(error.response?.data?.message || 'failed to login');
   }
 }
 
 export async function getCurrentUser() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('gf_token');
   if (!token) return null;
   try {
     const res = await axios.get(`${API_BASE_URL}/api/users/me`, {
@@ -35,5 +45,5 @@ export async function getCurrentUser() {
 
 export function logout(setCurrentUser) {
   setCurrentUser(null);
-  localStorage.removeItem('token');
+  localStorage.removeItem('gf_token');
 }

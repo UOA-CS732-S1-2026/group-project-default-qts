@@ -35,9 +35,12 @@ export default function LoginForm() {
         }
         const result = await login(data.email, data.password);
         if (result.success) {
-            navigate(result.user.role === 'admin' ? '/admin' : '/dashboard');
+            // handleLogin already saved user to AppContext and localStorage
+            const roles = result.user?.roles || [];
+            const isAdmin = roles.includes('ADMIN') || roles.includes('admin') || result.user?.role === 'admin';
+            navigate(isAdmin ? '/admin' : '/dashboard');
         } else {
-            setLoginError(result.error);
+            setLoginError(result.error || 'Login failed');
         }
     };
 

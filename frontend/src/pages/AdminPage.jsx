@@ -10,18 +10,24 @@ export default function AdminPage() {
     const { currentUser, logout, darkMode, toggleDarkMode } = useApp();
     const navigate = useNavigate();
 
+    const isAdmin = currentUser && (
+        (currentUser.roles || []).includes('ADMIN') ||
+        (currentUser.roles || []).includes('admin') ||
+        currentUser.role === 'admin'
+    );
+
     useEffect(() => {
-        if (!currentUser || currentUser.role !== 'admin') {
+        if (!currentUser || !isAdmin) {
             navigate('/landingpage', { replace: true });
         }
-    }, [currentUser, navigate]);
+    }, [currentUser, isAdmin, navigate]);
 
     function handleLogout() {
         logout();
         navigate('/landingpage');
     }
 
-    if (!currentUser || currentUser.role !== 'admin') return null;
+    if (!currentUser || !isAdmin) return null;
 
     return (
         <div className="admin-page">

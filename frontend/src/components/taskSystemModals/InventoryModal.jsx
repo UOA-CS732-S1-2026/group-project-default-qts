@@ -27,6 +27,7 @@ function InventoryModal({ onClose }) {
   const [closing, setClosing] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmItem, setConfirmItem] = useState(null);
   const [error, setError] = useState('');
   const timeoutRef = useRef(null);
 
@@ -78,6 +79,19 @@ function InventoryModal({ onClose }) {
     };
   }, []);
 
+  const handleDoubleClick = (item) => {
+    // Only food can be fed (prevent eggs from being fed)
+    if (item.type !== 'FOOD') return;
+    setConfirmItem(item);
+  };
+
+  const handleConfirmFeed = () => {
+    if (confirmItem) {
+      window.dispatchEvent(new CustomEvent('gf-feed-pet', { detail: { itemCode: confirmItem.itemCode } }));
+      setConfirmItem(null);
+      handleClose();
+    }
+  };
   const petCollectionItems = inventoryItems.filter(isEggItem);
   const inventoryListItems = inventoryItems.filter((item) => !isEggItem(item));
   const petCollectionEggSlots = petCollectionItems.flatMap((item) => {
@@ -104,20 +118,20 @@ function InventoryModal({ onClose }) {
             <button className="modal-close" onClick={handleClose}>✕</button>
           </div>
 
-          <p className="inventory-desc">Your items and collected pets.</p>
+          <p className="inventory-desc">Your items and collected pets. Double click to feed your pet</p>
 
           <div className="inventory-wrapper">
             <section className="inventory-section">
               <h4 className="section-title">Items</h4>
               {loading ? (
-                <p>Loading inventory...</p>
+                <p>Loading...</p>
               ) : error ? (
                 <p>{error}</p>
-              ) : inventoryListItems.length === 0 ? (
-                <p>No inventory items found.</p>
+              ) : inventoryItems.length === 0 ? (
+                <p>Your inventory is empty.</p>
               ) : (
                 <div className="inventory-grid">
-                  {inventoryListItems.map((item) => (
+                  {inventoryItems.map((item) => (
                     <Item
                       key={item.id || item.storeItemId || item.itemCode}
                       image={getItemImage(item)}
@@ -125,6 +139,7 @@ function InventoryModal({ onClose }) {
                       itemCode={item.itemCode || item.code}
                       quantity={item.quantity ?? 0}
                       mode="inventory"
+                      onDoubleClick={() => handleDoubleClick(item)}
                     />
                   ))}
                 </div>
@@ -153,6 +168,19 @@ function InventoryModal({ onClose }) {
           </div>
         </div>
       </aside>
+
+      {/* Confirmation Bubble */}
+      {confirmItem && (
+        <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
+          <div className="feed-confirm-content">
+            <p>Do you want to feed your pet <b>{confirmItem.itemName || confirmItem.itemCode}</b>?</p>
+            <div className="feed-confirm-actions">
+              <button className="gf-btn gf-btn-ghost" onClick={() => setConfirmItem(null)}>Cancel</button>
+              <button className="gf-btn gf-btn-primary" onClick={handleConfirmFeed}>Feed</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

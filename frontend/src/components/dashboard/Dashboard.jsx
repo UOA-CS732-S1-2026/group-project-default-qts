@@ -69,7 +69,6 @@ function Dashboard() {
   };
 
   return (
-    <AcceptedTasksProvider>
     <div className="app-container">
       <DashboardHeader coins={coins} />
 
@@ -113,7 +112,6 @@ function Dashboard() {
 
       <DashboardFooter openModal={openModal} modalType={modalType} closeModal={handleCloseModal} />
     </div>
-    </AcceptedTasksProvider>
   );
 }
 

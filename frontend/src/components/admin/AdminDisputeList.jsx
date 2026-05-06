@@ -1,23 +1,36 @@
 import { useState } from 'react';
 import { useTasks } from '../../context/TasksContext';
 import CoinBadge from '../ui/CoinBadge';
+import * as taskService from '../../services/taskService';
 
 export default function AdminDisputeList() {
     const { tasks, updateTask } = useTasks();
     const [confirmAction, setConfirmAction] = useState(null);
     const [resolvedId, setResolvedId] = useState(null);
+    const [isResolvingId, setIsResolvingId] = useState(null);
+    const [resolveError, setResolveError] = useState(null);
 
     const disputedTasks = tasks.filter((t) => t.status === 'disputed');
 
-    function handleResolve(taskId, favorOf) {
-        const fields =
-            favorOf === 'creator'
-                ? { status: 'cancelled', resolvedBy: 'admin', resolvedInFavorOf: 'creator' }
-                : { status: 'completed', resolvedBy: 'admin', resolvedInFavorOf: 'assignee' };
-        updateTask(taskId, fields);
-        setResolvedId(taskId);
-        setConfirmAction(null);
-        setTimeout(() => setResolvedId(null), 1200);
+    async function handleResolve(taskId, favorOf) {
+        setIsResolvingId(taskId);
+        setResolveError(null);
+        try {
+            if (favorOf === 'creator') {
+                await taskService.cancelTask(taskId);
+            } else {
+                await taskService.confirmTask(taskId);
+            }
+            updateTask(taskId, { status: favorOf === 'creator' ? 'cancelled' : 'completed' });
+            setResolvedId(taskId);
+            setConfirmAction(null);
+            setTimeout(() => setResolvedId(null), 1200);
+        } catch {
+            setResolveError('Failed to resolve dispute. Please try again.');
+            setConfirmAction(null);
+        } finally {
+            setIsResolvingId(null);
+        }
     }
 
     return (
@@ -27,12 +40,19 @@ export default function AdminDisputeList() {
                 Review and resolve disputes raised by players on P2P tasks.
             </p>
 
+            {resolveError && (
+                <div className="admin-error-banner">
+                    <span>{resolveError}</span>
+                    <button className="admin-error-banner-close" onClick={() => setResolveError(null)}>✕</button>
+                </div>
+            )}
+
             <p className="admin-dispute-count">{disputedTasks.length} active disputes</p>
 
             {disputedTasks.length === 0 ? (
                 <div className="admin-empty-state">
                     <p className="admin-empty-title">No active disputes</p>
-                    <p className="admin-empty-sub">All clear! No disputes need attention right now.</p>
+                    <p className="admin-empty-sub">All clear for now. The backend dispute flow is not connected yet, so this view may stay empty.</p>
                 </div>
             ) : (
                 <div className="admin-dispute-list">
@@ -78,15 +98,17 @@ export default function AdminDisputeList() {
                             <span className="admin-dispute-col admin-dispute-col--actions">
                                 <button
                                     className="admin-dispute-btn admin-dispute-btn--creator"
+                                    disabled={isResolvingId === task.id}
                                     onClick={() => setConfirmAction({ taskId: task.id, favorOf: 'creator' })}
                                 >
-                                    Favor Creator
+                                    {isResolvingId === task.id ? '...' : 'Favor Creator'}
                                 </button>
                                 <button
                                     className="admin-dispute-btn admin-dispute-btn--assignee"
+                                    disabled={isResolvingId === task.id}
                                     onClick={() => setConfirmAction({ taskId: task.id, favorOf: 'assignee' })}
                                 >
-                                    Favor Assignee
+                                    {isResolvingId === task.id ? '...' : 'Favor Assignee'}
                                 </button>
                             </span>
 
@@ -100,6 +122,7 @@ export default function AdminDisputeList() {
                                     <div className="admin-dispute-confirm-actions">
                                         <button
                                             className="admin-dispute-confirm-btn admin-dispute-confirm-btn--yes"
+                                            disabled={isResolvingId === task.id}
                                             onClick={() => handleResolve(task.id, confirmAction.favorOf)}
                                         >
                                             Yes, Resolve
