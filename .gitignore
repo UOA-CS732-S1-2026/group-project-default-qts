@@ -10,4 +10,5 @@ node_modules/
 !.env.example
 !.env.test
 .claude/settings.local.json
+.claude/settings.json
 CLAUDE.md
