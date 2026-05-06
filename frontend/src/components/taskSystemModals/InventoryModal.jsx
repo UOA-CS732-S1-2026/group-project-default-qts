@@ -127,11 +127,11 @@ function InventoryModal({ onClose }) {
                 <p>Loading...</p>
               ) : error ? (
                 <p>{error}</p>
-              ) : inventoryItems.length === 0 ? (
+              ) : inventoryListItems.length === 0 ? (
                 <p>Your inventory is empty.</p>
               ) : (
                 <div className="inventory-grid">
-                  {inventoryItems.map((item) => (
+                  {inventoryListItems.map((item) => (
                     <Item
                       key={item.id || item.storeItemId || item.itemCode}
                       image={getItemImage(item)}
