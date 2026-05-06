@@ -12,14 +12,8 @@ import NotFound from './components/404page/NotFound';
 
 import './App.css';
 
-const TOKEN_KEYS = ['gf_token', 'token'];
-
 function getAuthToken() {
-  for (const key of TOKEN_KEYS) {
-    const value = localStorage.getItem(key);
-    if (value) return value;
-  }
-  return null;
+  return localStorage.getItem('token');
 }
 
 function RequireAuth({ children }) {

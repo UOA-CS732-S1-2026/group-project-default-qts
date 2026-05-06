@@ -17,7 +17,7 @@ export function TasksProvider({ children }) {
         setIsLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem('gf_token');
+            const token = localStorage.getItem('token');
             if (token) {
                 // Fetch in parallel:
                 // 1. mine=true → personal tasks, p2p (created/assigned), system tasks already accepted
