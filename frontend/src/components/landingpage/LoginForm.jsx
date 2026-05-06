@@ -1,7 +1,9 @@
 import { useForm } from 'react-hook-form';  
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useApp, isValidUniEmail } from '../../context/AppContext';
+import { useApp } from '../../context/AppContext';
+import { isValidUniEmail } from '../../context/appConstants';
+
 import SignupModal from './SignupModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 

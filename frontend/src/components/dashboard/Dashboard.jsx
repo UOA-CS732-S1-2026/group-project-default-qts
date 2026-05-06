@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useModal from '../../hooks/useModal';
 import ModalBase from '../taskSystemModals/ModalBase';
 import MyTaskModal from '../taskSystemModals/MyTaskModal';
@@ -9,6 +9,8 @@ import InventoryModal from '../taskSystemModals/InventoryModal';
 import DashboardHeader from './DashboardHeader';
 import DashboardFooter from './DashboardFooter';
 import DasboardMain from './DashboardMain';
+import { ITEM_IMAGE_LIST } from '../../data/itemAssets';
+import { getDashboard } from '../../utils/dashboardApi';
 
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
@@ -19,6 +21,33 @@ const MODAL_CONTENTS = {
 function Dashboard() {
   const { isOpen, modalType, openModal, closeModal } = useModal();
   const [questTargetId, setQuestTargetId] = useState(null);
+  const [coins, setCoins] = useState(0);
+
+  async function loadDashboardCoins() {
+    const token = localStorage.getItem('token');
+
+    if (!token) return;
+
+    try {
+      const response = await getDashboard(token);
+      const currentCoins = response?.data?.user?.coins;
+
+      if (typeof currentCoins === 'number') {
+        setCoins(currentCoins);
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard coins:', err);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardCoins();
+    // Warm browser cache for store/inventory item images while user is on dashboard.
+    ITEM_IMAGE_LIST.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   const openQuestDetail = (taskId) => {
     setQuestTargetId(taskId);
@@ -32,7 +61,7 @@ function Dashboard() {
 
   return (
     <div className="app-container">
-      <DashboardHeader></DashboardHeader>
+      <DashboardHeader coins={coins} />
 
       <DasboardMain onQuestDetails={openQuestDetail}></DasboardMain>
 
@@ -43,7 +72,20 @@ function Dashboard() {
       {modalType === 'inventory' ? (
         isOpen && <InventoryModal onClose={handleCloseModal} />
       ) : modalType === 'store' ? (
-        isOpen && <StoreModal onClose={handleCloseModal} />
+        isOpen && (
+        <StoreModal
+          onClose={handleCloseModal}
+          onPurchaseSuccess={async (response) => {
+            const updatedCoins = response?.data?.coins;
+
+            if (typeof updatedCoins === 'number') {
+              setCoins(updatedCoins);
+            } else {
+              await loadDashboardCoins();
+            }
+          }}
+        />
+        )
       ) : (
         <ModalBase
           isOpen={isOpen}
