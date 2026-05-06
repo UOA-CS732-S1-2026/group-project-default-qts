@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 function authHeader() {
-  const token = localStorage.getItem('gf_token');
+  const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -15,7 +15,7 @@ function wrapAxiosError(error, fallback = 'Request failed') {
 }
 
 export async function updateProfile(payload) {
-  const token = localStorage.getItem('gf_token');
+  const token = localStorage.getItem('token');
   if (!token) {
     const err = new Error('Not authenticated. Please log in again.');
     err.status = 401;
@@ -33,7 +33,7 @@ export async function updateProfile(payload) {
 }
 
 export async function updatePassword(payload) {
-  const token = localStorage.getItem('gf_token');
+  const token = localStorage.getItem('token');
   if (!token) {
     const err = new Error('Not authenticated. Please log in again.');
     err.status = 401;
@@ -69,7 +69,7 @@ export async function resetPasswordWithSecurityAnswer(payload) {
 }
 
 export async function getTaskStats() {
-  const token = localStorage.getItem('gf_token');
+  const token = localStorage.getItem('token');
   if (!token) {
     const err = new Error('Not authenticated. Please log in again.');
     err.status = 401;
