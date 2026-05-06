@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import usePomodoro from '../../hooks/usePomodoro';
-import petImgPlaceholder from '../../assets/pet_placeholder.png';
 import '../../styles/pomodoro.css';
 import { useApp } from '../../context/AppContext';
 import PetSprite from '../petAnimations/PetSprite';
