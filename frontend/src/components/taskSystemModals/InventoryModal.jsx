@@ -161,7 +161,7 @@ function InventoryModal({ onClose }) {
             <button className="modal-close" onClick={handleClose}>✕</button>
           </div>
 
-          <p className="inventory-desc">Your items and collected pets. Double click to feed your pet</p>
+          <p className="inventory-desc">Your items and collected pets. Double click to interact with the items</p>
 
           <div className="inventory-wrapper">
             <section className="inventory-section">
@@ -227,7 +227,9 @@ function InventoryModal({ onClose }) {
         </div>
       </aside>
 
-      {/* Confirmation Bubble */}
+      {/* Confirmation Bubble 
+          Need to create message handling. currently using generic response.
+      */}
       {confirmItem && (
         <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
           <div className="feed-confirm-content">
@@ -244,6 +246,7 @@ function InventoryModal({ onClose }) {
         <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
           <div className="feed-confirm-content">
             <p>
+              {/* Nickname for new pet is still empty from the backend. Handling default name after purchasing the pet */}
               Set <b>{confirmSwitchPet.nickname || confirmSwitchPet.speciesName || 'this pet'}</b> as your active pet?
             </p>
             <div className="feed-confirm-actions">

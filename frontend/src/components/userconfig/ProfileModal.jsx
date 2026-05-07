@@ -116,6 +116,9 @@ export default function ProfileModal({ onClose }) {
                             onChange={handleFileChange}
                             id="profile-avatar-upload"
                         />
+                        {/* Profile information needs to reflect the current user's data (pet name changes or switch pet)
+                            OR consider delete pet name in profile summary only show username
+                        */}
                         <div className="profile-username">{currentUser?.username || 'User'}</div>
                         <div className="profile-petname">🐾 {currentUser?.petName || 'Buddy'}</div>
                     </div>
