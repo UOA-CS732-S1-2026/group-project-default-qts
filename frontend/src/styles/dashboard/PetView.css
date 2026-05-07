@@ -9,9 +9,103 @@
 .pet-name{
   font-family: var(--font-body);
   letter-spacing: 5%;
-  color: #2D6A4F;
+  color: var(--text-dark);
   font-size: 2.5rem;
   margin: 0;
+}
+
+.pet-name-row{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pet-name-edit-btn{
+  min-height: 34px;
+  /* padding: 0 10px; */
+  border: none;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.square24px{
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.pet-name-editor{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+div.pet-name-row button.pet-name-edit-btn{
+  padding: 0;
+  background-color: transparent;
+}
+
+.pet-name-input{
+  font-family: inherit;
+  text-align: center;;
+  height: 38px;
+  min-width: 220px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.pet-name-input:focus{
+  outline: solid 1px var(--accent);
+}
+
+.pet-name-action{
+  min-width: 38px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pet-name-action-icon{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.pet-name-editor .pet-name-action-confirm{
+  background: #059669;
+  border-color: #059669;
+}
+
+.pet-name-editor .pet-name-action-cancel{
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.pet-name-edit-btn:active,
+.pet-name-action:active{
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.92);
+}
+
+[data-theme="dark"] .edit-icon,
+.dark-mode .edit-icon {
+    filter: brightness(0) invert(1);
 }
 
 .pet-img{
