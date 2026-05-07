@@ -32,7 +32,7 @@ const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
+function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evolveRequestId = 0 }) {
     const token = localStorage.getItem('token');
     const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
@@ -45,6 +45,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const [animState, setAnimState] = useState('idle');
     const [showEvolution, setShowEvolution] = useState(false);
     const clickCountRef = useRef(0); // track double-click for playing animation
+    const evolveRequestRef = useRef(0);
     const bubbleTimerRef = useRef(null);
     const errorBubbleTimerRef = useRef(null);
 
@@ -172,14 +173,21 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         }
     }
 
-    if (loading) return <div className="pet-container">Loading...</div>;
-
     // ── Evolve ───────────────────────────────────────────────────────────────
     const handleEvolve = async () => {
         if (!pet) return;
         // Show the evolution overlay (visual animation) first
         setShowEvolution(true);
     };
+
+    useEffect(() => {
+        if (!pet?.evolutionReady) return;
+        if (evolveRequestId === evolveRequestRef.current) return;
+        evolveRequestRef.current = evolveRequestId;
+        if (!showEvolution) {
+            handleEvolve();
+        }
+    }, [evolveRequestId, pet?.evolutionReady, showEvolution]);
 
     // Called by EvolutionOverlay when user confirms the evolution
     const handleEvolutionConfirm = async (chosenSpeciesId) => {
@@ -242,6 +250,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
 
     return (
         <div className="pet-container">
+            {loading && <div>Loading...</div>}
             <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
 
                 <div style={{ opacity: loading ? 0.6 : 1 }}>
@@ -263,13 +272,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                         <div className="exp-bar" aria-hidden>
                             <div className="exp-fill" style={{ width: `${percent}%` }} />
                         </div>
-                    </div>
-                )}
-
-                {/* Evolve button — shown when pet.evolutionReady */}
-                {pet?.evolutionReady && !showEvolution && (
-                    <div style={{ marginTop: 16 }}>
-                        <button onClick={handleEvolve} disabled={loading}>Evolve ✨</button>
                     </div>
                 )}
 
