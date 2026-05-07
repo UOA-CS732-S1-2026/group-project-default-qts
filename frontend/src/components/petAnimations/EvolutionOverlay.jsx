@@ -66,7 +66,7 @@ export default function EvolutionOverlay({
           >
             <h2 className="evolution-title">🎉 Your pet is ready to evolve!</h2>
             <p className="evolution-subtitle">
-              {currentStage === 'egg' ? 'Choose your companion!' : 'Your pet is growing stronger!'}
+              {currentStage === 'egg' ? 'A companion will be chosen for you!' : 'Your pet is growing stronger!'}
             </p>
 
             {/* Current pet */}
@@ -76,35 +76,22 @@ export default function EvolutionOverlay({
               <div className="evolution-question">?</div>
             </div>
 
-            {/* Species selection (only when hatching from egg) */}
-            {currentStage === 'egg' && (
-              <div className="evolution-species-grid">
-                {speciesList.map((s) => (
-                  <button
-                    key={s.id}
-                    className="evolution-species-btn"
-                    onClick={() => handleEvolve(s.id)}
-                  >
-                    <img src={getImg(s.id, targetStage)} alt={s.name} className="evolution-species-img" />
-                    <span className="evolution-species-name">{s.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Direct evolve (kid → adult) */}
-            {currentStage === 'kid' && (
-              <div className="evolution-direct">
-                <button className="evolution-evolve-btn" onClick={() => handleEvolve(currentSpecies)}>
-                  <img src={getImg(currentSpecies, targetStage)} alt="evolved" className="evolution-preview-img" />
-                  <span>Evolve to Adult!</span>
-                </button>
-              </div>
-            )}
-
-            <button className="evolution-skip-btn" onClick={onSkip}>
-              Not now. Stay as {currentStage}
-            </button>
+            <div className="evolution-confirm-actions">
+              <button
+                className="evolution-confirm-btn"
+                onClick={() => {
+                  const chosen = currentStage === 'egg'
+                    ? speciesList[Math.floor(Math.random() * speciesList.length)]?.id
+                    : currentSpecies;
+                  handleEvolve(chosen || currentSpecies);
+                }}
+              >
+                Confirm evolve
+              </button>
+              <button className="evolution-decline-btn" onClick={onSkip}>
+                Not now. Stay as {currentStage}
+              </button>
+            </div>
           </MotionDiv>
         )}
 

@@ -9,8 +9,8 @@ function DashboardHeader({ coins = 0, activePet, onEvolveRequest }) {
         <header className="dashboard-header">
             {showEvolve ? (
                 <button className="evolve-header-btn" onClick={onEvolveRequest} type="button">
-                    Click to EVOLVE
-                    <span className="evolve-tooltip">ready to evolve?</span>
+                    Ready to EVOLVE
+                    <span className="evolve-tooltip">click to evolve</span>
                 </button>
             ) : (
                 <h1 className="app-title">GrowFriend</h1>
