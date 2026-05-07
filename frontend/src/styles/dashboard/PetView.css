@@ -110,6 +110,11 @@ div.pet-name-row button.pet-name-edit-btn{
   filter: brightness(0.92);
 }
 
+[data-theme="dark"] .edit-icon,
+.dark-mode .edit-icon {
+    filter: brightness(0) invert(1);
+}
+
 .pet-img{
   width: 25rem;
   height: auto

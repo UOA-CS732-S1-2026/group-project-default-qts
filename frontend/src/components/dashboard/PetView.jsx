@@ -5,6 +5,7 @@ import { getActivePet, feedPet, evolvePet, updateActivePetNickname } from '@/uti
 import { getInventory } from '@/utils/inventoryApi'
 import PetSprite from '../petAnimations/PetSprite'
 import EvolutionOverlay from '../petAnimations/EvolutionOverlay'
+import NotificationPopup from '../ui/NotificationPopup';
 import editIcon from '/edit.png'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const [isEditingName, setIsEditingName] = useState(false);
     const [petNameDraft, setPetNameDraft] = useState('');
     const [savingPetName, setSavingPetName] = useState(false);
+    const [notifications, setNotifications] = useState([]);
     const clickCountRef = useRef(0); // track double-click for playing animation
 
     async function fetchPetData() {
@@ -171,8 +173,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const handleSavePetName = async () => {
         if (!token || !pet || savingPetName) return;
         const nextName = String(petNameDraft || '').trim();
+        const currentName = String(pet.nickname || '').trim();
         if (!nextName) {
             setMessage('Pet name cannot be empty.');
+            return;
+        }
+        if (nextName === currentName) {
+            setIsEditingName(false);
+            setMessage('');
             return;
         }
 
@@ -193,7 +201,17 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                 }));
             }
             setIsEditingName(false);
-            setMessage('Pet name updated!');
+            setNotifications((prev) => {
+                const next = [
+                    ...prev,
+                    {
+                        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                        message: 'Pet name updated successfully!',
+                        type: 'success'
+                    }
+                ];
+                return next.length > 3 ? next.slice(next.length - 3) : next;
+            });
         } catch (error) {
             setMessage(error.message || 'Failed to update pet name.');
         } finally {
@@ -270,6 +288,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
 
     return (
         <div className="pet-container">
+            <NotificationPopup
+                notifications={notifications}
+                duration={3200}
+                onClose={(id) => setNotifications((prev) => prev.filter((item) => item.id !== id))}
+            />
             <div className="pet-name-row">
                 {isEditingName ? (
                     <div className="pet-name-editor">
@@ -317,7 +340,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                                 aria-label="Edit pet name"
                                 title="Edit pet name"
                             >
-                                <img className="square24px" src={editIcon} alt="Edit" />
+                                <img className="square24px edit-icon" src={editIcon} alt="Edit" />
                             </button>
                         )}
                     </>
