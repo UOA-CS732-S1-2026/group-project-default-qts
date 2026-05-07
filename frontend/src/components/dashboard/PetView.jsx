@@ -28,6 +28,10 @@ function getPetStage(pet) {
 
 // One-shot animations that should not be interrupted
 const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']);
+const MAX_LEVEL = 10;
+const MAX_GROWTH_POINTS = 99;
+const STATUS_POPUP_MS = 2000;
+const MAX_UNLOCK_MS = 3000;
 
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -40,6 +44,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [errorBubbleMessage, setErrorBubbleMessage] = useState('');
+    const [statusPopupMessage, setStatusPopupMessage] = useState('');
+    const [maxUnlockMessage, setMaxUnlockMessage] = useState('');
     const [inventory, setInventory] = useState([]);
     const [selectedItemCode, setSelectedItemCode] = useState('');
     const [animState, setAnimState] = useState('idle');
@@ -48,6 +54,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const evolveRequestRef = useRef(0);
     const bubbleTimerRef = useRef(null);
     const errorBubbleTimerRef = useRef(null);
+    const statusPopupTimerRef = useRef(null);
+    const maxUnlockTimerRef = useRef(null);
+    const wasMaxRef = useRef(false);
 
     function showSuccessBubble(text) {
         setSuccessMessage(text);
@@ -63,6 +72,22 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         errorBubbleTimerRef.current = window.setTimeout(() => {
             setErrorBubbleMessage('');
         }, 2000);
+    }
+
+    function showStatusPopup(text) {
+        setStatusPopupMessage(text);
+        if (statusPopupTimerRef.current) window.clearTimeout(statusPopupTimerRef.current);
+        statusPopupTimerRef.current = window.setTimeout(() => {
+            setStatusPopupMessage('');
+        }, STATUS_POPUP_MS);
+    }
+
+    function showMaxUnlockBubble() {
+        setMaxUnlockMessage('Unlocked new egg!');
+        if (maxUnlockTimerRef.current) window.clearTimeout(maxUnlockTimerRef.current);
+        maxUnlockTimerRef.current = window.setTimeout(() => {
+            setMaxUnlockMessage('');
+        }, MAX_UNLOCK_MS);
     }
 
 
@@ -134,6 +159,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         return () => {
             if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
             if (errorBubbleTimerRef.current) window.clearTimeout(errorBubbleTimerRef.current);
+            if (statusPopupTimerRef.current) window.clearTimeout(statusPopupTimerRef.current);
+            if (maxUnlockTimerRef.current) window.clearTimeout(maxUnlockTimerRef.current);
         };
     }, []);
 
@@ -153,6 +180,15 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     async function handleFeed(itemCode) {
         if (!pet) return;
         if (!itemCode) { setErrorMessage('Please select a food item.'); return; }
+        const isMax = Number(pet.level || 0) >= MAX_LEVEL && Number(pet.growthPoints || 0) >= MAX_GROWTH_POINTS;
+        if (pet.evolutionReady) {
+            showStatusPopup("No more food! I'm ready to evolve already!");
+            return;
+        }
+        if (isMax) {
+            showStatusPopup("I've already grown up. No more feeding! Get a new buddy from the store!");
+            return;
+        }
         setLoading(true);
         setErrorMessage('');
         setSuccessMessage('');
@@ -167,6 +203,15 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             setTimeout(() => setAnimState(pomoIsRunning ? 'idle' : 'sleeping'), 1500);
             showSuccessBubble('Fed pet successfully!');
         } catch {
+            if (pet.evolutionReady) {
+                showStatusPopup("No more food! I'm ready to evolve already!");
+                return;
+            }
+            const isMaxNow = Number(pet.level || 0) >= MAX_LEVEL && Number(pet.growthPoints || 0) >= MAX_GROWTH_POINTS;
+            if (isMaxNow) {
+                showStatusPopup("I've already grown up. No more feeding! Get a new buddy from the store!");
+                return;
+            }
             showErrorBubble('Failed to feed pet.');
         } finally {
             setLoading(false);
@@ -242,7 +287,19 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     };
 
     const { level, growthPoints } = pet || {};
-    const percent = Math.max(0, Math.min(100, Number(growthPoints || 0)));
+    const isMax = Number(level || 0) >= MAX_LEVEL && Number(growthPoints || 0) >= MAX_GROWTH_POINTS;
+    const percent = Math.max(
+        0,
+        Math.min(100, (Number(growthPoints || 0) / MAX_GROWTH_POINTS) * 100)
+    );
+
+    useEffect(() => {
+        if (!pet) return;
+        if (isMax && !wasMaxRef.current) {
+            showMaxUnlockBubble();
+        }
+        wasMaxRef.current = isMax;
+    }, [isMax, pet]);
 
     const displaySpecies = getPetSpecies(pet);
     const displayStage = getPetStage(pet);
@@ -253,7 +310,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             {loading && <div>Loading...</div>}
             <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
 
-                <div style={{ opacity: loading ? 0.6 : 1 }}>
+                <div className="pet-sprite-wrap" style={{ opacity: loading ? 0.6 : 1 }}>
                     <PetSprite
                         species={displaySpecies}
                         stage={displayStage}
@@ -261,13 +318,16 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                         onClick={handlePetClick}
                         size={280}
                     />
+                    {statusPopupMessage && (
+                        <div className="pet-status-pop">{statusPopupMessage}</div>
+                    )}
                 </div>
 
                 {pet && (
                     <div className="pet-exp">
                         <div className="exp-row">
-                            <div className="exp-label">Exp.</div>
-                            <div className="pet-level">Lv.{level}</div>
+                            <div className="exp-label">{isMax ? '' : 'Exp.'}</div>
+                            <div className="pet-level">{isMax ? 'MAX' : `Lv.${level}`}</div>
                         </div>
                         <div className="exp-bar" aria-hidden>
                             <div className="exp-fill" style={{ width: `${percent}%` }} />
@@ -279,6 +339,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 {successMessage && (
                     <div className="pet-bubble-overlay">
                         <div className="pet-bubble">{successMessage}</div>
+                    </div>
+                )}
+                {maxUnlockMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble">{maxUnlockMessage}</div>
                     </div>
                 )}
                 {errorBubbleMessage && (

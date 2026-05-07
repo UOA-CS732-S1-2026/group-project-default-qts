@@ -103,7 +103,7 @@ export default function EvolutionOverlay({
             )}
 
             <button className="evolution-skip-btn" onClick={onSkip}>
-              Not now — Stay as {currentStage}
+              Not now. Stay as {currentStage}
             </button>
           </MotionDiv>
         )}
