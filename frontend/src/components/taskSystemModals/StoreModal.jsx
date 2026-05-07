@@ -29,9 +29,18 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
     const [storeItems, setStoreItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [buyingCode, setBuyingCode] = useState(null);
-    const [message, setMessage] = useState('');
+    const [successBubble, setSuccessBubble] = useState('');
     const [error, setError] = useState('');
     const timeoutRef = useRef(null);
+    const bubbleTimerRef = useRef(null);
+
+    function showSuccessBubble(text) {
+        setSuccessBubble(text);
+        if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+        bubbleTimerRef.current = window.setTimeout(() => {
+            setSuccessBubble('');
+        }, 500);
+    }
 
     async function loadStoreItems() {
         const token = localStorage.getItem('token');
@@ -64,12 +73,12 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
 
         try {
             setBuyingCode(item.code);
-            setMessage('');
+            setSuccessBubble('');
             setError('');
 
             const response = await purchaseItem(item.code, 1, token);
 
-            setMessage(response?.message || `${item.name} purchased successfully`);
+            showSuccessBubble(response?.message || `${item.name} purchased successfully`);
 
             if (onPurchaseSuccess) {
                 await onPurchaseSuccess(response);
@@ -107,6 +116,10 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
+            if (bubbleTimerRef.current) {
+                clearTimeout(bubbleTimerRef.current);
+                bubbleTimerRef.current = null;
+            }
         };
     }, []);
 
@@ -120,6 +133,11 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                 aria-label="Store"
             >
                 <div className="store-modal">
+                    {successBubble && (
+                        <div className="store-bubble-overlay">
+                            <div className="store-bubble">{successBubble}</div>
+                        </div>
+                    )}
                     <div className="store-header">
                         <h3 className="store-title">Store</h3>
                         <button className="modal-close" aria-label="Close" onClick={handleClose}>
@@ -128,8 +146,6 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                     </div>
 
                     <p className="store-desc">Spend coins to buy items for your pet.</p>
-
-                    {message && <p className="store-success">{message}</p>}
                     {error && <p className="store-error">{error}</p>}
 
                     {loading ? (

@@ -4,6 +4,33 @@
   align-items:center;
   gap:12px;
   padding:8px;
+  position: relative;
+}
+
+.pet-bubble-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pet-bubble {
+  background: var(--bg-modal);
+  border: 2px solid var(--success-border);
+  color: var(--text-success);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.2px;
+}
+
+.pet-bubble.pet-bubble-error {
+  border-color: var(--border-error);
+  color: var(--text-error);
 }
 
 .pet-name{

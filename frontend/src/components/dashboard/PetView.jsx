@@ -37,12 +37,32 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [errorBubbleMessage, setErrorBubbleMessage] = useState('');
     const [inventory, setInventory] = useState([]);
     const [selectedItemCode, setSelectedItemCode] = useState('');
     const [animState, setAnimState] = useState('idle');
     const [showEvolution, setShowEvolution] = useState(false);
     const clickCountRef = useRef(0); // track double-click for playing animation
+    const bubbleTimerRef = useRef(null);
+    const errorBubbleTimerRef = useRef(null);
+
+    function showSuccessBubble(text) {
+        setSuccessMessage(text);
+        if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+        bubbleTimerRef.current = window.setTimeout(() => {
+            setSuccessMessage('');
+        }, 1000);
+    }
+
+    function showErrorBubble(text) {
+        setErrorBubbleMessage(text);
+        if (errorBubbleTimerRef.current) window.clearTimeout(errorBubbleTimerRef.current);
+        errorBubbleTimerRef.current = window.setTimeout(() => {
+            setErrorBubbleMessage('');
+        }, 2000);
+    }
 
 
     // ── Pomodoro sleeping / idle toggle ──────────────────────────────────────
@@ -75,12 +95,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
-                setMessage('');
+                setErrorMessage('');
+                setSuccessMessage('');
                 setPet(null);
                 return;
             }
             setLoading(true);
-            setMessage('');
+            setErrorMessage('');
+            setSuccessMessage('');
             try {
                 const [petRes, inventoryRes] = await Promise.all([
                     getActivePet(token),
@@ -89,12 +111,12 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                 const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
                 setPet(activePet);
                 if (onPetLoaded) onPetLoaded(activePet);
-                if (!activePet) setMessage('No active pet found.');
+                if (!activePet) setErrorMessage('No active pet found.');
 
                 const items = inventoryRes?.data?.items || [];
                 setInventory(items);
             } catch {
-                setMessage('Failed to fetch pet data.');
+                setErrorMessage('Failed to fetch pet data.');
             } finally {
                 setLoading(false);
             }
@@ -106,6 +128,13 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         if (!currentUser?.petName) return;
         setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
     }, [currentUser?.petName]);
+
+    useEffect(() => {
+        return () => {
+            if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+            if (errorBubbleTimerRef.current) window.clearTimeout(errorBubbleTimerRef.current);
+        };
+    }, []);
 
     // ── Global Event Listener for Feeding from Inventory ─────────────────────
     useEffect(() => {
@@ -122,9 +151,10 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     // ── Feed ─────────────────────────────────────────────────────────────────
     async function handleFeed(itemCode) {
         if (!pet) return;
-        if (!itemCode) { setMessage('Please select a food item.'); return; }
+        if (!itemCode) { setErrorMessage('Please select a food item.'); return; }
         setLoading(true);
-        setMessage('');
+        setErrorMessage('');
+        setSuccessMessage('');
         try {
             const data = await feedPet(pet.id, itemCode, token);
             const updatedPet = data?.data?.pet || data?.data?.activePet || null;
@@ -134,9 +164,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             setInventory(inventoryRes?.data?.items || []);
             setAnimState('feeding');
             setTimeout(() => setAnimState(pomoIsRunning ? 'idle' : 'sleeping'), 1500);
-            setMessage('Fed pet successfully!');
+            showSuccessBubble('Fed pet successfully!');
         } catch {
-            setMessage('Failed to feed pet.');
+            showErrorBubble('Failed to feed pet.');
         } finally {
             setLoading(false);
         }
@@ -156,19 +186,20 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         setShowEvolution(false);
         setAnimState('evolving');
         setLoading(true);
-        setMessage('');
+        setErrorMessage('');
+        setSuccessMessage('');
         try {
             const data = await evolvePet(pet.id, token);
             const updatedPet = data?.data?.pet || data?.data?.activePet || null;
             setPet(updatedPet);
             if (onPetLoaded) onPetLoaded(updatedPet);
-            setMessage('Evolved pet successfully!');
+            showSuccessBubble('Evolved pet successfully!');
             // Brief celebrating after evolve
             setTimeout(() => setAnimState('celebrating'), 200);
             setTimeout(() => setAnimState('idle'), 2500);
         } catch (error) {
             setAnimState('idle');
-            setMessage('Failed to evolve pet.');
+            setErrorMessage('Failed to evolve pet.');
         } finally {
             setLoading(false);
         }
@@ -242,7 +273,17 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                     </div>
                 )}
 
-                {message && <div style={{ marginTop: 8, color: 'red' }}>{message}</div>}
+                {errorMessage && <div style={{ marginTop: 8, color: 'red' }}>{errorMessage}</div>}
+                {successMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble">{successMessage}</div>
+                    </div>
+                )}
+                {errorBubbleMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble pet-bubble-error">{errorBubbleMessage}</div>
+                    </div>
+                )}
 
                 {/* Evolution overlay — full-screen animation */}
                 <AnimatePresence>

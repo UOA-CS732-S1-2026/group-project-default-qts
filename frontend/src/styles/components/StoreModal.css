@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
 }
 
 .store-header {
@@ -65,6 +66,28 @@
     color: #c62828;
     margin: 8px 0;
     font-size: 0.9rem;
+}
+
+.store-bubble-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.store-bubble {
+  background: var(--bg-modal);
+  border: 2px solid var(--success-border);
+  color: var(--text-success);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.2px;
 }
 
 /* overlay + sliding behaviour for Store (kept in store css) */
