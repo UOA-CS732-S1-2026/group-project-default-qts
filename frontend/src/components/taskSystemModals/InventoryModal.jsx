@@ -2,6 +2,7 @@ import '@/styles/components/InventoryModal.css';
 import { useEffect, useRef, useState } from 'react';
 import Item from '../ui/Item';
 import PetSprite from '../petAnimations/PetSprite';
+import { activatePet } from '../../utils/petApi';
 import { ITEM_IMAGES } from '../../data/itemAssets';
 import {
   getInventory,
@@ -36,7 +37,9 @@ function InventoryModal({ onClose }) {
   const [inventoryItems, setInventoryItems] = useState([]);
   const [petCollection, setPetCollection] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [switchingPet, setSwitchingPet] = useState(false);
   const [confirmItem, setConfirmItem] = useState(null);
+  const [confirmSwitchPet, setConfirmSwitchPet] = useState(null);
   const [error, setError] = useState('');
   const timeoutRef = useRef(null);
 
@@ -105,6 +108,40 @@ function InventoryModal({ onClose }) {
       handleClose();
     }
   };
+
+  const handlePetDoubleClick = (pet) => {
+    setConfirmSwitchPet(pet);
+  };
+
+  const handleConfirmSwitchPet = async () => {
+    if (!confirmSwitchPet || switchingPet) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setSwitchingPet(true);
+      setError('');
+
+      const response = await activatePet(confirmSwitchPet.id, token);
+      const nextActivePet = response?.data?.activePet || null;
+
+      setConfirmSwitchPet(null);
+      await loadInventory();
+
+      window.dispatchEvent(new CustomEvent('gf-active-pet-changed', {
+        detail: {
+          activePetId: response?.data?.activePetId || confirmSwitchPet.id,
+          activePet: nextActivePet
+        }
+      }));
+    } catch (err) {
+      setError(err.message || 'Failed to switch active pet');
+    } finally {
+      setSwitchingPet(false);
+    }
+  };
+
   const inventoryListItems = inventoryItems.filter((item) => item.type === 'FOOD');
   const filledPetSlots = petCollection.slice(0, MAX_PET_SLOTS);
   const emptyPetSlots = Math.max(0, MAX_PET_SLOTS - filledPetSlots.length);
@@ -156,7 +193,20 @@ function InventoryModal({ onClose }) {
               <h4 className="section-title">Pet Collection</h4>
               <div className="pets-grid">
                 {filledPetSlots.map((pet) => (
-                  <div key={pet.id} className="pet-slot">
+                  <div
+                    key={pet.id}
+                    className="pet-slot"
+                    onDoubleClick={() => handlePetDoubleClick(pet)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handlePetDoubleClick(pet);
+                      }
+                    }}
+                    aria-label={`Inactive pet ${pet.nickname || pet.speciesName || 'pet'}. Double click to switch active pet.`}
+                  >
                     <PetSprite
                       species={(pet.speciesCode || 'apteryx').toLowerCase()}
                       stage={getPetStage(pet.stage)}
@@ -185,6 +235,32 @@ function InventoryModal({ onClose }) {
             <div className="feed-confirm-actions">
               <button className="gf-btn gf-btn-ghost" onClick={() => setConfirmItem(null)}>Cancel</button>
               <button className="gf-btn gf-btn-primary" onClick={handleConfirmFeed}>Feed</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmSwitchPet && (
+        <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
+          <div className="feed-confirm-content">
+            <p>
+              Set <b>{confirmSwitchPet.nickname || confirmSwitchPet.speciesName || 'this pet'}</b> as your active pet?
+            </p>
+            <div className="feed-confirm-actions">
+              <button
+                className="gf-btn gf-btn-ghost"
+                onClick={() => setConfirmSwitchPet(null)}
+                disabled={switchingPet}
+              >
+                Cancel
+              </button>
+              <button
+                className="gf-btn gf-btn-primary"
+                onClick={handleConfirmSwitchPet}
+                disabled={switchingPet}
+              >
+                {switchingPet ? 'Switching...' : 'Switch Pet'}
+              </button>
             </div>
           </div>
         </div>
