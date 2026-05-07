@@ -5,7 +5,6 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [objectives, setObjectives] = useState(['']);
-    const [category, setCategory] = useState('');
 
     const [timeLimit, setTimeLimit] = useState('');
     const [rewardCoins, setRewardCoins] = useState('');
@@ -32,8 +31,6 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
         if (!description.trim()) next.description = 'Description is required';
         if (objectives.filter((o) => o.trim() !== '').length === 0)
             next.objectives = 'At least one objective is required';
-        if (!category) next.category = 'Category is required';
-
         if (!timeLimit || Number(timeLimit) <= 0) next.timeLimit = 'Time limit is required';
         if (!rewardCoins || Number(rewardCoins) <= 0) {
             next.rewardCoins = 'Reward coins is required';
@@ -59,8 +56,6 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
             assignee: null,
             createdBy: { id: 'admin-001', name: 'Admin' },
             createdAt: new Date().toISOString(),
-
-            category,
         });
     }
 
@@ -128,21 +123,6 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
                             + Add Objective
                         </button>
                     </div>
-
-                    <div className="form-field">
-                        <label className="form-label">Category</label>
-                        <select
-                            className={'form-input' + (errors.category ? ' form-input--error' : '')}
-                            value={category}
-                            onChange={(e) => { setCategory(e.target.value); clearError('category'); }}
-                        >
-                            <option value="" disabled>Select category...</option>
-                            <option value="organization">Organization</option>
-                            <option value="activity">Activity</option>
-                        </select>
-                        {errors.category && <p className="form-error">{errors.category}</p>}
-                    </div>
-
 
                     <div className="form-field">
                         <label className="form-label">Time Limit (hours)</label>

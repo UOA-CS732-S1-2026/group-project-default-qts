@@ -11,6 +11,8 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
   const [timeLimit, setTimeLimit] = useState(initialData?.timeLimit ?? '');
   const [rewardCoins, setRewardCoins] = useState(initialData?.rewardCoins ?? '');
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleObjectiveChange = (index, value) => {
     const updated = [...objectives];
@@ -42,7 +44,7 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     const taskData = {
       id: initialData?.id,
@@ -60,8 +62,16 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
         initialData?.expiredAt ??
         new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     };
-    onSubmit(taskData);
-    onClose();
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      await onSubmit(taskData);
+      onClose();
+    } catch (err) {
+      setSubmitError(err?.response?.data?.error?.message ?? err?.message ?? 'Failed to save task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -162,8 +172,9 @@ function CreateEditForm({ onClose, onSubmit, initialData = null }) {
         </div>
 
         <div className="form-footer">
-          <button className="form-btn form-btn--submit" onClick={handleSubmit}>
-            {isEdit ? 'Done' : 'Create'}
+          {submitError && <p className="form-error" style={{ marginBottom: '8px' }}>{submitError}</p>}
+          <button className="form-btn form-btn--submit" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : isEdit ? 'Done' : 'Create'}
           </button>
         </div>
 

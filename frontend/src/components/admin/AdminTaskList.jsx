@@ -8,7 +8,6 @@ import loadIconSmall from '../../assets/load-icon-small.png';
 
 export default function AdminTaskList() {
     const { tasks, isLoading, error, refetch, createTask, patchTask, deleteTask } = useTasks();
-    const [categoryFilter, setCategoryFilter] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editTask, setEditTask] = useState(null);
@@ -26,14 +25,9 @@ export default function AdminTaskList() {
     }
 
     const filtered = communityTasks.filter((t) => {
-        if (categoryFilter !== null && t.category !== categoryFilter) return false;
         if (statusFilter !== 'all' && getDisplayStatus(t) !== statusFilter) return false;
         return true;
     });
-
-    function handleCategoryClick(value) {
-        setCategoryFilter((prev) => (prev === value ? null : value));
-    }
 
     async function handleCreateSubmit(taskData) {
         setIsCreating(true);
@@ -107,24 +101,6 @@ export default function AdminTaskList() {
 
             <div className="admin-toolbar">
                 <div className="admin-toolbar-filters">
-                    <button
-                        className={'admin-filter-btn' + (categoryFilter === null ? ' admin-filter-btn--active' : '')}
-                        onClick={() => setCategoryFilter(null)}
-                    >
-                        All
-                    </button>
-                    <button
-                        className={'admin-filter-btn admin-filter-btn--org' + (categoryFilter === 'organization' ? ' admin-filter-btn--active' : '')}
-                        onClick={() => handleCategoryClick('organization')}
-                    >
-                        Organization
-                    </button>
-                    <button
-                        className={'admin-filter-btn admin-filter-btn--act' + (categoryFilter === 'activity' ? ' admin-filter-btn--active' : '')}
-                        onClick={() => handleCategoryClick('activity')}
-                    >
-                        Activity
-                    </button>
                     <select
                         className="admin-filter-select"
                         value={statusFilter}
@@ -154,8 +130,6 @@ export default function AdminTaskList() {
                         <thead>
                             <tr>
                                 <th>Title</th>
-                                <th>Category</th>
-
                                 <th>Reward</th>
                                 <th>Accepted</th>
                                 <th>Status</th>
@@ -168,20 +142,10 @@ export default function AdminTaskList() {
                                 <tr key={task.id}>
                                     <td>{task.title}</td>
                                     <td>
-                                        <span className={`admin-category-badge admin-category-badge--${task.category}`}>
-                                            {task.category === 'organization'
-                                                ? 'Organization'
-                                                : task.category === 'activity'
-                                                ? 'Activity'
-                                                : '—'}
-                                        </span>
-                                    </td>
-
-                                    <td>
                                         <CoinBadge amount={task.rewardCoins} />
                                     </td>
                                     <td>
-                                        <span className="admin-accepted-count">—</span>
+                                        <span className="admin-accepted-count">{task.acceptedCount ?? 0}</span>
                                     </td>
                                     <td>
                                         <StatusBadge status={getDisplayStatus(task)} />

@@ -51,8 +51,14 @@ export function AcceptedTasksProvider({ children }) {
 
   // API call only — does NOT touch acceptedIds/submittedIds.
   // Caller is responsible for calling cleanupCancelledTask after showing success UI.
+  // P2P: POST /abandon — reverts task to OPEN so creator sees it as cancelled/open again.
+  // SYSTEM: DELETE /assignment — removes assignment, task stays OPEN.
   const withdrawTask = async (id, taskType) => {
-    await taskService.withdrawAssignment(id);
+    if (taskType === 'p2p') {
+      await taskService.abandonP2PTask(id);
+    } else {
+      await taskService.withdrawAssignment(id);
+    }
   };
 
   // State cleanup only — call this after success overlay finishes.

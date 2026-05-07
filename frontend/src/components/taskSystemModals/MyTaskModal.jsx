@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 
-const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed', 'completed'];
+const ACTIVE_QUEST_STATUSES = ['open', 'active', 'pending_confirmation', 'pending_review', 'disputed', 'completed', 'expired'];
 import '../../styles/components/MyTaskModal.css';
 import useTaskManager from '../../hooks/useTaskManager';
 import { useTasks } from '../../context/TasksContext';
@@ -17,7 +17,7 @@ import CreateEditForm from '../task/CreateEditForm';
 function MyTaskModal({ onNavigate, questTargetId }) {
   const { currentUser, updateCoins } = useApp();
   const currentUserId = currentUser?.id;
-  const { tasks, isLoading, createTask, updateTask, patchTask, deleteTask } = useTasks();
+  const { tasks, isLoading, createTask, updateTask, patchTask, deleteTask, refetch } = useTasks();
 
   // Shared loading state for manual tab switches.
   const [isTabLoading, setIsTabLoading] = useState(false);
@@ -52,6 +52,11 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     }
   }, []);
 
+  // Refetch on mount so creator sees up-to-date task statuses (e.g. pending_confirmation after assignee submits)
+  useEffect(() => {
+    refetch();
+  }, []);
+
   useEffect(() => {
     if (questTargetId && questTargetId !== handledTargetRef.current) {
       handledTargetRef.current = questTargetId;
@@ -71,7 +76,6 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const { acceptedIds, withdrawTask, cleanupCancelledTask, submittedIds, submitTask } = useAcceptedTasks();
   const [questSource, setQuestSource] = useState(null);
   const [questStatus, setQuestStatus] = useState(null);
-  const [questCategory, setQuestCategory] = useState(null);
   const [questSort, setQuestSort] = useState('');
   const [cancelledQuestIds, setCancelledQuestIds] = useState(new Set());
 
@@ -103,6 +107,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const handleCancelQuestDone = (id) => {
     cleanupCancelledTask(id);
     setCancelledQuestIds((prev) => new Set([...prev, id]));
+    // Refetch so the creator (Player B) sees the task reverted to cancelled/open
+    refetch();
   };
 
   // Dismiss a completed SystemTask from quest list — local cleanup only, no backend delete.
@@ -126,9 +132,31 @@ function MyTaskModal({ onNavigate, questTargetId }) {
 
     if (task?.type === 'p2p' && fields.status === 'active' && fields.rejectedAt) {
       const response = await taskService.rejectTaskSubmission(id);
-      const backendTask = response?.data?.data?.task;
+      const data = response?.data?.data;
+      const backendTask = data?.task;
+      const backendAssignment = data?.assignment;
       if (backendTask?.status) {
-        updateTask(id, { status: STATUS_B2F[backendTask.status] ?? backendTask.status });
+        updateTask(id, {
+          status: STATUS_B2F[backendTask.status] ?? backendTask.status,
+          lastRejectedAt: backendAssignment?.rejectedAt ?? new Date().toISOString(),
+        });
+      }
+      return;
+    }
+
+    if (task?.type === 'p2p' && fields.status === 'disputed') {
+      const response = await taskService.disputeTask(id, {
+        reason: fields.disputeReason,
+        details: fields.disputeDetails ?? '',
+      });
+      const backendTask = response?.data?.data?.task;
+      if (backendTask) {
+        updateTask(id, {
+          status: 'disputed',
+          disputeRaisedBy: backendTask.disputeRaisedBy,
+          disputeReason: backendTask.disputeReason,
+          disputeDetails: backendTask.disputeDetails,
+        });
       }
       return;
     }
@@ -173,7 +201,27 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   // Submit action: call API and sync returned task status to local state.
   // All other field updates are local-only (no PATCH endpoint in backend yet).
   const handleQuestUpdate = async (id, fields) => {
-    if (fields.status === 'pending_review') {
+    if (fields.status === 'disputed') {
+      const task = tasks.find((t) => t.id === id);
+      if (task?.type === 'p2p') {
+        const response = await taskService.disputeTask(id, {
+          reason: fields.disputeReason,
+          details: fields.disputeDetails ?? '',
+        });
+        const backendTask = response?.data?.data?.task;
+        if (backendTask) {
+          updateTask(id, {
+            status: 'disputed',
+            disputeRaisedBy: backendTask.disputeRaisedBy,
+            disputeReason: backendTask.disputeReason,
+            disputeDetails: backendTask.disputeDetails,
+          });
+        }
+      }
+      return;
+    }
+
+    if (fields.status === 'pending_review' || fields.status === 'pending_confirmation') {
       try {
         const data = await submitTask(id);
         const task = tasks.find((t) => t.id === id);
@@ -187,6 +235,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
         } else if (data?.task?.status) {
           updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
         }
+        // Refetch so the creator (Player B) sees the updated status on their next view
+        refetch();
       } catch {
         // Submit failed — task stays in current state
       }
@@ -199,7 +249,8 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     let result = tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
       if (cancelledQuestIds.has(t.id)) return false;
-      if (!ACTIVE_QUEST_STATUSES.includes(t.status)) return false;
+      const isDisputeResolved = t.status === 'cancelled' && t.type === 'p2p' && t.disputeRaisedBy;
+      if (!ACTIVE_QUEST_STATUSES.includes(t.status) && !isDisputeResolved) return false;
       const iExplicitlyAccepted = acceptedIds.has(t.id);
       const isAssignedToMe = t.assignee?.id === currentUserId;
       return iExplicitlyAccepted || isAssignedToMe;
@@ -212,10 +263,13 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       );
     } else if (questStatus === 'active') {
       result = result.filter((t) => t.status === 'active' || (t.status === 'open' && acceptedIds.has(t.id)));
+    } else if (questStatus === 'rejected') {
+      result = result.filter((t) => t.status === 'active' && t.rejectedAt);
+    } else if (questStatus === 'cancelled') {
+      result = result.filter((t) => t.status === 'cancelled' && t.disputeRaisedBy);
     } else if (questStatus) {
       result = result.filter((t) => t.status === questStatus);
     }
-    if (questCategory && questSource !== 'p2p') result = result.filter((t) => t.category === questCategory);
     if (questSort === 'reward-high') result.sort((a, b) => b.rewardCoins - a.rewardCoins);
     if (questSort === 'reward-low') result.sort((a, b) => a.rewardCoins - b.rewardCoins);
     if (questSort === 'timelimit-long') result.sort((a, b) => b.timeLimit - a.timeLimit);
@@ -223,12 +277,10 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (questSort === 'expiry-early') result.sort((a, b) => new Date(a.expiredAt) - new Date(b.expiredAt));
     if (questSort === 'expiry-late') result.sort((a, b) => new Date(b.expiredAt) - new Date(a.expiredAt));
     return result;
-  }, [tasks, questSource, questStatus, questCategory, questSort, cancelledQuestIds, acceptedIds, currentUserId]);
+  }, [tasks, questSource, questStatus, questSort, cancelledQuestIds, acceptedIds, currentUserId]);
 
   const handleQuestSourceFilter = (source) => {
-    const next = questSource === source ? null : source;
-    setQuestSource(next);
-    if (next === 'p2p') setQuestCategory(null);
+    setQuestSource((prev) => (prev === source ? null : source));
   };
 
   const handleQuestStatusFilter = (status) => {
@@ -247,20 +299,11 @@ function MyTaskModal({ onNavigate, questTargetId }) {
 
   const handleFormSubmit = async (taskData) => {
     if (editingTask) {
-      try {
-        await patchTask(taskData.id, taskData);
-      } catch {
-        // Edit failed — form stays open, user can retry
-      }
+      await patchTask(taskData.id, taskData);
     } else {
-      try {
-        const created = await createTask(taskData);
-        // P2P task creation deducts coins into escrow — backend returns updated balance
-        if (created?._coins !== undefined) {
-          updateCoins(created._coins);
-        }
-      } catch {
-        // Creation failed — form stays open, user can retry
+      const created = await createTask(taskData);
+      if (created?._coins !== undefined) {
+        updateCoins(created._coins);
       }
     }
   };
@@ -405,8 +448,6 @@ function MyTaskModal({ onNavigate, questTargetId }) {
             onSortChange={setQuestSort}
             sourceFilter={questSource}
             onSourceFilter={handleQuestSourceFilter}
-            categoryFilter={questSource !== 'p2p' ? questCategory : null}
-            onCategoryFilter={(cat) => setQuestCategory((prev) => (prev === cat ? null : cat))}
             onHelpClick={() => setShowHelp(true)}
           />
         )}

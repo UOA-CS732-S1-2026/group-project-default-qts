@@ -9,6 +9,7 @@ const TaskAssignmentSchema = new mongoose.Schema(
     checkOutAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
     creatorConfirmedAt: { type: Date, default: null },
+    rejectedAt: { type: Date, default: null },
     disputedAt: { type: Date, default: null },
     status: {
       type: String,

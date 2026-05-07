@@ -20,7 +20,10 @@ const TaskSchema = new mongoose.Schema(
     location: { type: String, default: null },
     startAt: { type: Date, default: null },
     endAt: { type: Date, default: null },
-    requiresApplication: { type: Boolean, default: false }
+    requiresApplication: { type: Boolean, default: false },
+    disputeRaisedBy: { type: String, enum: ['creator', 'assignee'], default: null },
+    disputeReason: { type: String, default: null },
+    disputeDetails: { type: String, default: null },
   },
   { timestamps: true }
 );

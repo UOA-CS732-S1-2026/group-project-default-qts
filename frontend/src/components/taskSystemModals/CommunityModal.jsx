@@ -11,7 +11,7 @@ function CommunityModal() {
   const { tasks, isLoading, error, refetch } = useTasks();
 
   const communityData = useMemo(
-    () => tasks.filter((t) => t.type === 'community'),
+    () => tasks.filter((t) => t.type === 'community' && t.status !== 'expired'),
     [tasks]
   );
 
@@ -19,7 +19,6 @@ function CommunityModal() {
     filteredTasks,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,
-    categoryFilter, setCategoryFilter,
   } = useTaskManager(communityData);
 
   const { acceptedIds, acceptTask } = useAcceptedTasks();
@@ -60,8 +59,6 @@ function CommunityModal() {
             onFilterChange={setFilterStatus}
             sortBy={sortBy}
             onSortChange={setSortBy}
-            categoryFilter={categoryFilter}
-            onCategoryFilter={setCategoryFilter}
             onHelpClick={() => setShowHelp(true)}
           />
 
