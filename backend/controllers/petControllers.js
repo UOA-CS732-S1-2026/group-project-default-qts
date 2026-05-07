@@ -123,6 +123,107 @@ const getInactivePets = async (req, res) => {
   }
 };
 
+const updateActivePetNickname = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { nickname } = req.body || {};
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
+          details: {}
+        }
+      });
+    }
+
+    if (typeof nickname !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_NICKNAME_REQUIRED',
+          message: 'nickname is required',
+          details: {}
+        }
+      });
+    }
+
+    const trimmedNickname = nickname.trim();
+    if (!trimmedNickname) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_NICKNAME_EMPTY',
+          message: 'Pet name cannot be empty',
+          details: {}
+        }
+      });
+    }
+
+    if (trimmedNickname.length > 30) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'PET_NICKNAME_TOO_LONG',
+          message: 'Pet name must be 30 characters or fewer',
+          details: {}
+        }
+      });
+    }
+
+    const activePet = await UserPet.findOne({
+      userId,
+      status: 'ACTIVE'
+    }).populate('speciesId', 'code displayName');
+
+    if (!activePet) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'ACTIVE_PET_NOT_FOUND',
+          message: 'No active pet found for this user',
+          details: {}
+        }
+      });
+    }
+
+    activePet.nickname = trimmedNickname;
+    await activePet.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Active pet name updated successfully',
+      data: {
+        activePet: {
+          id: activePet._id,
+          speciesCode: activePet.speciesId?.code || null,
+          speciesName: activePet.speciesId?.displayName || null,
+          nickname: activePet.nickname,
+          stage: activePet.stage,
+          level: activePet.level,
+          growthPoints: activePet.growthPoints,
+          evolutionReady: activePet.evolutionReady,
+          isGrowthFrozen: activePet.isGrowthFrozen,
+          status: activePet.status
+        }
+      }
+    });
+  } catch (error) {
+    console.error('updateActivePetNickname error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'ACTIVE_PET_NAME_UPDATE_FAILED',
+        message: 'Failed to update active pet name',
+        details: {}
+      }
+    });
+  }
+};
+
 const getStageCap = (stage) => {
   if (stage === 'EGG') return 4;
   if (stage === 'KID') return 9;
@@ -529,6 +630,10 @@ const activatePet = async (req, res) => {
     user.activePetId = targetPet._id;
     await user.save({ session });
 
+    const populatedActivePet = await UserPet.findById(targetPet._id)
+      .populate('speciesId', 'code displayName')
+      .session(session);
+
     await session.commitTransaction();
     session.endSession();
 
@@ -536,7 +641,19 @@ const activatePet = async (req, res) => {
       success: true,
       message: 'Active pet updated successfully',
       data: {
-        activePetId: targetPet._id
+        activePetId: targetPet._id,
+        activePet: {
+          id: populatedActivePet?._id || targetPet._id,
+          speciesCode: populatedActivePet?.speciesId?.code || null,
+          speciesName: populatedActivePet?.speciesId?.displayName || null,
+          nickname: populatedActivePet?.nickname || '',
+          stage: populatedActivePet?.stage || null,
+          level: populatedActivePet?.level ?? null,
+          growthPoints: populatedActivePet?.growthPoints ?? null,
+          evolutionReady: populatedActivePet?.evolutionReady ?? false,
+          isGrowthFrozen: populatedActivePet?.isGrowthFrozen ?? false,
+          status: populatedActivePet?.status || 'ACTIVE'
+        }
       }
     });
   } catch (error) {
@@ -559,6 +676,7 @@ const activatePet = async (req, res) => {
 module.exports = {
   getActivePet,
   getInactivePets,
+  updateActivePetNickname,
   feedPet,
   evolvePet,
   activatePet
