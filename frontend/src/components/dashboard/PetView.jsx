@@ -317,7 +317,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                                 aria-label="Edit pet name"
                                 title="Edit pet name"
                             >
-                                <img className="square24px" src={editIcon} alt="Edit" />
+                                <img className="square24px edit-icon" src={editIcon} alt="Edit" />
                             </button>
                         )}
                     </>
