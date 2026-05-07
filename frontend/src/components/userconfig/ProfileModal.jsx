@@ -11,6 +11,8 @@ const STAT_LABELS = [
     { key: 'tasksCreated', label: 'Tasks Created' },
 ];
 
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
 
 function StatBar({ label, value, max = 10 }) {
     const pct = Math.min((value / max) * 100, 100);
@@ -29,21 +31,46 @@ function StatBar({ label, value, max = 10 }) {
 export default function ProfileModal({ onClose }) {
     const { currentUser, updateAvatar } = useApp();
     const fileInputRef = useRef(null);
+    const bubbleTimerRef = useRef(null);
     const [stats, setStats] = useState({
         systemCompleted: 0,
         p2pCompleted: 0,
         tasksCreated: 0
     });
+    const [showAvatarNotice, setShowAvatarNotice] = useState(false);
+    const [avatarError, setAvatarError] = useState('');
 
     function handleAvatarClick() {
         fileInputRef.current?.click();
     }
 
+    function showAvatarBubble() {
+        setAvatarError('');
+        setShowAvatarNotice(true);
+        if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+        bubbleTimerRef.current = window.setTimeout(() => {
+            setShowAvatarNotice(false);
+        }, 2000);
+    }
+
     function handleFileChange(e) {
         const file = e.target.files[0];
         if (!file) return;
+        setAvatarError('');
+        if (file.size > MAX_AVATAR_BYTES) {
+            setAvatarError('Image too large. Please use a photo under 2 MB.');
+            e.target.value = '';
+            return;
+        }
         const reader = new FileReader(); // Convert image file to base64 string for preview and storage
-        reader.onload = (ev) => updateAvatar(ev.target.result);
+        reader.onload = async (ev) => {
+            const result = await updateAvatar(ev.target.result);
+            if (result?.success) {
+                showAvatarBubble();
+            } else {
+                setAvatarError(result?.error || 'Failed to update profile photo.');
+            }
+        };
         reader.readAsDataURL(file);
     }
 
@@ -69,6 +96,12 @@ export default function ProfileModal({ onClose }) {
         loadStats();
         return () => { isActive = false; };
     }, [currentUser?.id, currentUser?._id]);
+
+    useEffect(() => {
+        return () => {
+            if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+        };
+    }, []);
 
     const statMax = Math.max(10, ...STAT_LABELS.map(({ key }) => stats[key] ?? 0));
 
@@ -118,7 +151,33 @@ export default function ProfileModal({ onClose }) {
                         />
                         <div className="profile-username">{currentUser?.username || 'User'}</div>
                         <div className="profile-petname">🐾 {currentUser?.petName || 'Buddy'}</div>
+                        {avatarError && (
+                            <div className="msg-error" style={{ marginTop: 6, textAlign: 'center' }}>
+                                {avatarError}
+                            </div>
+                        )}
                     </div>
+
+                        <AnimatePresence>
+                            {showAvatarNotice && (
+                                <motion.div
+                                    className="profile-bubble-overlay"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <motion.div
+                                        className="profile-bubble"
+                                        initial={{ scale: 0.9, y: 12 }}
+                                        animate={{ scale: 1, y: 0 }}
+                                        exit={{ scale: 0.9, opacity: 0 }}
+                                        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                                    >
+                                        ✅ Profile photo updated!
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                     {/* Stats */}
                     <div className="profile-stats">
