@@ -101,7 +101,7 @@
 /* --- Dark Mode Palette --- */
 .dark-mode,
 [data-theme="dark"] {
-  --bg-main: #1a1510;
+  --bg-main: #201a14ce;
   --bg-surface: #241e18;
   --bg-elevated: #2e2720;
   --bg-card: #2a2218;
