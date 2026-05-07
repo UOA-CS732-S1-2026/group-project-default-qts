@@ -69,6 +69,60 @@ const getActivePet = async (req, res) => {
   }
 };
 
+const getInactivePets = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_AUTH_USER',
+          message: 'Authenticated user id is missing or invalid',
+          details: {}
+        }
+      });
+    }
+
+    const inactivePets = await UserPet.find({
+      userId,
+      status: { $ne: 'ACTIVE' }
+    })
+      .populate('speciesId', 'code displayName')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Inactive pets loaded successfully',
+      data: {
+        pets: inactivePets.map((pet) => ({
+          id: pet._id,
+          speciesCode: pet.speciesId?.code || null,
+          speciesName: pet.speciesId?.displayName || null,
+          nickname: pet.nickname,
+          stage: pet.stage,
+          level: pet.level,
+          growthPoints: pet.growthPoints,
+          evolutionReady: pet.evolutionReady,
+          isGrowthFrozen: pet.isGrowthFrozen,
+          status: pet.status
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('getInactivePets error:', error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INACTIVE_PETS_FETCH_FAILED',
+        message: 'Failed to load inactive pets',
+        details: {}
+      }
+    });
+  }
+};
+
 const getStageCap = (stage) => {
   if (stage === 'EGG') return 4;
   if (stage === 'KID') return 9;
@@ -504,6 +558,7 @@ const activatePet = async (req, res) => {
 
 module.exports = {
   getActivePet,
+  getInactivePets,
   feedPet,
   evolvePet,
   activatePet

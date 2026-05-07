@@ -1,8 +1,14 @@
 import '@/styles/components/InventoryModal.css';
 import { useEffect, useRef, useState } from 'react';
 import Item from '../ui/Item';
+import PetSprite from '../petAnimations/PetSprite';
 import { ITEM_IMAGES } from '../../data/itemAssets';
-import { getInventory, normalizeInventoryItems } from '../../utils/inventoryApi';
+import {
+  getInventory,
+  getPetCollection,
+  normalizeInventoryItems,
+  normalizePetCollection
+} from '../../utils/inventoryApi';
 
 function getItemImage(item) {
   const code = item?.itemCode || item?.code;
@@ -15,10 +21,12 @@ function getItemImage(item) {
   return ITEM_IMAGES.snack;
 }
 
-function isEggItem(item) {
-  const code = String(item?.itemCode || item?.code || '').toUpperCase();
-  const name = String(item?.itemName || item?.name || '').toUpperCase();
-  return code === 'RANDOM_EGG' || code === 'EGG' || name === 'EGG';
+function getPetStage(stage) {
+  const normalizedStage = String(stage || '').toUpperCase();
+  if (normalizedStage === 'EGG') return 'egg';
+  if (normalizedStage === 'KID') return 'kid';
+  if (normalizedStage === 'ADULT') return 'adult';
+  return 'egg';
 }
 
 function InventoryModal({ onClose }) {
@@ -26,6 +34,7 @@ function InventoryModal({ onClose }) {
   const CLOSE_ANIM_MS = 320;
   const [closing, setClosing] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
+  const [petCollection, setPetCollection] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmItem, setConfirmItem] = useState(null);
   const [error, setError] = useState('');
@@ -42,9 +51,14 @@ function InventoryModal({ onClose }) {
     try {
       setLoading(true);
       setError('');
-      const response = await getInventory(token);
-      const items = normalizeInventoryItems(response);
+      const [inventoryResponse, petCollectionResponse] = await Promise.all([
+        getInventory(token),
+        getPetCollection(token)
+      ]);
+      const items = normalizeInventoryItems(inventoryResponse);
+      const pets = normalizePetCollection(petCollectionResponse);
       setInventoryItems(items);
+      setPetCollection(pets);
     } catch (err) {
       setError(err.message || 'Failed to fetch inventory');
     } finally {
@@ -91,16 +105,9 @@ function InventoryModal({ onClose }) {
       handleClose();
     }
   };
-  const petCollectionItems = inventoryItems.filter(isEggItem);
-  const inventoryListItems = inventoryItems.filter((item) => !isEggItem(item));
-  const petCollectionEggSlots = petCollectionItems.flatMap((item) => {
-    const quantity = Math.max(0, Number(item.quantity || 0));
-    return Array.from({ length: quantity }, (_, i) => ({
-      ...item,
-      slotKey: `egg-${item.id || item.storeItemId || item.itemCode}-${i}`
-    }));
-  });
-  const emptyPetSlots = Math.max(0, MAX_PET_SLOTS - petCollectionEggSlots.length);
+  const inventoryListItems = inventoryItems.filter((item) => item.type === 'FOOD');
+  const filledPetSlots = petCollection.slice(0, MAX_PET_SLOTS);
+  const emptyPetSlots = Math.max(0, MAX_PET_SLOTS - filledPetSlots.length);
 
   return (
     <div className="inventory-overlay" onClick={handleClose}>
@@ -148,12 +155,14 @@ function InventoryModal({ onClose }) {
             <section className="pet-collection-section">
               <h4 className="section-title">Pet Collection</h4>
               <div className="pets-grid">
-                {petCollectionEggSlots.slice(0, MAX_PET_SLOTS).map((item) => (
-                  <div key={item.slotKey} className="pet-slot">
-                    <img
-                      src={getItemImage(item)}
-                      alt={item.itemName || item.name || 'Egg'}
-                      className="pet-slot-img"
+                {filledPetSlots.map((pet) => (
+                  <div key={pet.id} className="pet-slot">
+                    <PetSprite
+                      species={(pet.speciesCode || 'apteryx').toLowerCase()}
+                      stage={getPetStage(pet.stage)}
+                      animState="idle"
+                      size={64}
+                      showShadow={false}
                     />
                   </div>
                 ))}
