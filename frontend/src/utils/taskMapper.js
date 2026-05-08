@@ -72,6 +72,7 @@ export function toFrontend(task) {
     expiredAt: task.endAt ?? null,
 
     category: task.category ?? null,
+    acceptedCount: task.acceptedCount ?? 0,
     isAcceptedByMe: task.isAcceptedByMe ?? false,
     rejectedAt: task.rejectedAt ?? null,
     lastRejectedAt: task.lastRejectedAt ?? null,
@@ -89,27 +90,6 @@ export function toFrontendList(tasks) {
 }
 
 /**
- * Build a backend createTask request body from AdminCreateForm output.
- * Frontend-only fields (category, objectives, timeLimit) are dropped
- * since the backend schema does not have them.
- *
- * @param {object} formData - object emitted by AdminCreateForm.handleSubmit
- * @returns {object} body for POST /api/tasks
- */
-export function adminCreateToBackend(formData) {
-  return {
-    type: TYPE_F2B[formData.type] ?? formData.type?.toUpperCase() ?? 'SYSTEM',
-    title: formData.title,
-    description: formData.instructions ?? formData.description ?? '',
-    objectives: Array.isArray(formData.objectives) ? formData.objectives.filter(o => String(o).trim()) : [],
-    timeLimit: formData.timeLimit ? Number(formData.timeLimit) : null,
-    category: formData.category ?? null,
-    rewardCoins: Number(formData.rewardCoins) || 0,
-    requiresApplication: false,
-  };
-}
-
-/**
  * Build a backend createTask request body from the user-facing CreateEditForm
  * (P2P and MyTask).
  *
@@ -123,6 +103,7 @@ export function userCreateToBackend(formData) {
     description: formData.instructions ?? formData.description ?? '',
     objectives: Array.isArray(formData.objectives) ? formData.objectives.filter(o => String(o).trim()) : [],
     timeLimit: formData.timeLimit ? Number(formData.timeLimit) : null,
+    endAt: formData.endAt ?? null,
     category: formData.category ?? null,
     rewardCoins: Number(formData.rewardCoins) || 0,
     requiresApplication: false,

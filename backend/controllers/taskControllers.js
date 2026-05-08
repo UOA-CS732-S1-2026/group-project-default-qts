@@ -103,11 +103,12 @@ const listTasks = async (req, res) => {
 
     // Always fetch user's own assignments so we can set isAcceptedByMe on every response
     const ACTIVE_ASSIGNMENT_STATUSES = ['ASSIGNED', 'DONE_PENDING_CONFIRMATION', 'DISPUTED'];
+    const MY_ASSIGNMENT_STATUSES = [...ACTIVE_ASSIGNMENT_STATUSES, 'COMPLETED'];
     const [taskAssignments, myAssignments, acceptedCounts] = await Promise.all([
       mineMode
         ? TaskAssignment.find({ taskId: { $in: taskIds }, status: { $in: ACTIVE_ASSIGNMENT_STATUSES } }).populate('assignedTo', 'name email').lean()
         : [],
-      TaskAssignment.find({ taskId: { $in: taskIds }, assignedTo: userId, status: { $in: ACTIVE_ASSIGNMENT_STATUSES } }).lean(),
+      TaskAssignment.find({ taskId: { $in: taskIds }, assignedTo: userId, status: { $in: MY_ASSIGNMENT_STATUSES } }).lean(),
       TaskAssignment.aggregate([
         { $match: { taskId: { $in: taskIds }, status: { $in: [...ACTIVE_ASSIGNMENT_STATUSES, 'COMPLETED'] } } },
         { $group: { _id: '$taskId', count: { $sum: 1 } } },

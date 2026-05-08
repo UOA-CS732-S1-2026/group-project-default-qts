@@ -49,7 +49,7 @@ export default function AdminCreateForm({ onClose, onSubmit, submitError, isSubm
             title: title.trim(),
             instructions: description.trim(),
             objectives: objectives.filter((o) => o.trim() !== ''),
-            expiredAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            endAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
             timeLimit: Number(timeLimit),
             rewardCoins: Number(rewardCoins),
             status: 'open',

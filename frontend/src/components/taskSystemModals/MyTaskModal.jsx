@@ -383,7 +383,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (isLoadingQuest) return skeletonLoader;
 
     if (filteredQuest.length === 0) {
-      const hasFilter = questStatus !== null || questSource !== null || questCategory !== null;
+      const hasFilter = questStatus !== null || questSource !== null;
       if (hasFilter) {
         return (
           <div className="task-empty-state">
