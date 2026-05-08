@@ -39,6 +39,9 @@ function formatTask(t) {
     startAt: t.startAt,
     endAt: t.endAt,
     requiresApplication: t.requiresApplication,
+    disputeRaisedBy: t.disputeRaisedBy ?? null,
+    disputeReason: t.disputeReason ?? null,
+    disputeDetails: t.disputeDetails ?? null,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt
   };
@@ -65,7 +68,8 @@ function formatAssignment(a) {
     checkInAt: a.checkInAt,
     checkOutAt: a.checkOutAt,
     completedAt: a.completedAt,
-    creatorConfirmedAt: a.creatorConfirmedAt
+    creatorConfirmedAt: a.creatorConfirmedAt,
+    rejectedAt: a.rejectedAt ?? null
   };
 }
 
@@ -79,7 +83,7 @@ const listTasks = async (req, res) => {
     let filter;
 
     if (mine === 'true') {
-      const assignments = await TaskAssignment.find({ assignedTo: userId }).lean();
+      const assignments = await TaskAssignment.find({ assignedTo: userId, status: { $in: ['ASSIGNED', 'DONE_PENDING_CONFIRMATION', 'DISPUTED', 'COMPLETED'] } }).lean();
       const assignedTaskIds = assignments.map((a) => a.taskId);
 
       filter = { $or: [{ createdBy: userId }, { _id: { $in: assignedTaskIds } }] };
@@ -98,17 +102,23 @@ const listTasks = async (req, res) => {
     const taskIds = tasks.map((task) => task._id);
 
     // Always fetch user's own assignments so we can set isAcceptedByMe on every response
-    const [taskAssignments, myAssignments] = await Promise.all([
+    const ACTIVE_ASSIGNMENT_STATUSES = ['ASSIGNED', 'DONE_PENDING_CONFIRMATION', 'DISPUTED'];
+    const [taskAssignments, myAssignments, acceptedCounts] = await Promise.all([
       mineMode
-        ? TaskAssignment.find({ taskId: { $in: taskIds } }).populate('assignedTo', 'name email').lean()
+        ? TaskAssignment.find({ taskId: { $in: taskIds }, status: { $in: ACTIVE_ASSIGNMENT_STATUSES } }).populate('assignedTo', 'name email').lean()
         : [],
-      TaskAssignment.find({ taskId: { $in: taskIds }, assignedTo: userId, status: { $in: ['ASSIGNED', 'DONE_PENDING_CONFIRMATION'] } }).lean(),
+      TaskAssignment.find({ taskId: { $in: taskIds }, assignedTo: userId, status: { $in: ACTIVE_ASSIGNMENT_STATUSES } }).lean(),
+      TaskAssignment.aggregate([
+        { $match: { taskId: { $in: taskIds }, status: { $in: [...ACTIVE_ASSIGNMENT_STATUSES, 'COMPLETED'] } } },
+        { $group: { _id: '$taskId', count: { $sum: 1 } } },
+      ]),
     ]);
 
     const assignmentByTaskId = new Map(
       taskAssignments.map((assignment) => [String(assignment.taskId), assignment])
     );
-    const myAssignedTaskIds = new Set(myAssignments.map((a) => String(a.taskId)));
+    const myAssignmentByTaskId = new Map(myAssignments.map((a) => [String(a.taskId), a]));
+    const acceptedCountByTaskId = new Map(acceptedCounts.map((a) => [String(a._id), a.count]));
 
     return res.status(200).json({
       success: true,
@@ -117,13 +127,17 @@ const listTasks = async (req, res) => {
         tasks: tasks.map((task) => {
           const formatted = formatTask(task);
           const assignment = assignmentByTaskId.get(String(task._id));
+          const myAssignment = myAssignmentByTaskId.get(String(task._id));
           return {
             ...formatted,
             assignee: assignment?.assignedTo ? {
               id: String(assignment.assignedTo._id ?? assignment.assignedTo),
               name: assignment.assignedTo.name || '',
             } : null,
-            isAcceptedByMe: myAssignedTaskIds.has(String(task._id)),
+            isAcceptedByMe: !!myAssignment,
+            rejectedAt: myAssignment?.rejectedAt ?? null,
+            lastRejectedAt: assignment?.rejectedAt ?? null,
+            acceptedCount: acceptedCountByTaskId.get(String(task._id)) ?? 0,
           };
         })
       }
@@ -347,6 +361,9 @@ const applyForTask = async (req, res) => {
     if (task.status !== 'OPEN') {
       throw { status: 400, code: 'TASK_NOT_OPEN', message: 'Task is no longer open for applications' };
     }
+    if (task.endAt && new Date(task.endAt) < new Date()) {
+      throw { status: 400, code: 'TASK_EXPIRED', message: 'This task has expired and can no longer be accepted' };
+    }
     if (task.type === 'PERSONAL') {
       throw { status: 400, code: 'CANNOT_APPLY_PERSONAL', message: 'Cannot apply for a personal task' };
     }
@@ -382,7 +399,7 @@ const applyForTask = async (req, res) => {
 
     // P2P (direct, first-come-first-served): task moves to IN_PROGRESS, locked to one assignee
     if (task.type === 'P2P') {
-      const existingAssignment = await TaskAssignment.findOne({ taskId: id }).session(dbSession);
+      const existingAssignment = await TaskAssignment.findOne({ taskId: id, status: { $in: ['ASSIGNED', 'DONE_PENDING_CONFIRMATION'] } }).session(dbSession);
       if (existingAssignment) {
         throw { status: 409, code: 'TASK_ALREADY_ASSIGNED', message: 'This task has already been taken' };
       }
@@ -960,6 +977,7 @@ const rejectTaskSubmission = async (req, res) => {
     assignment.status = 'ASSIGNED';
     assignment.completedAt = null;
     assignment.creatorConfirmedAt = null;
+    assignment.rejectedAt = new Date();
     await assignment.save({ session: dbSession });
 
     task.status = 'IN_PROGRESS';
@@ -1188,6 +1206,149 @@ const withdrawAssignment = async (req, res) => {
   }
 };
 
+// POST /api/tasks/:id/dispute
+// Creator or assignee raises a dispute on a P2P task in PENDING_CONFIRMATION or IN_PROGRESS.
+const disputeTask = async (req, res) => {
+  const dbSession = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const { reason, details } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    if (!reason || String(reason).trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'REASON_REQUIRED', message: 'Dispute reason is required', details: {} }
+      });
+    }
+
+    dbSession.startTransaction();
+
+    const task = await Task.findById(id).populate('createdBy', 'name email').session(dbSession);
+    if (!task) {
+      throw { status: 404, code: 'TASK_NOT_FOUND', message: 'Task not found' };
+    }
+    if (task.type !== 'P2P') {
+      throw { status: 400, code: 'INVALID_TASK_TYPE', message: 'Only P2P tasks can be disputed' };
+    }
+    if (!['IN_PROGRESS', 'PENDING_CONFIRMATION'].includes(task.status)) {
+      throw { status: 400, code: 'TASK_NOT_DISPUTABLE', message: 'Only active or pending confirmation P2P tasks can be disputed' };
+    }
+
+    const isCreator = String(task.createdBy._id) === String(userId);
+
+    const assignment = await TaskAssignment.findOne({
+      taskId: id,
+      status: { $in: ['ASSIGNED', 'DONE_PENDING_CONFIRMATION'] }
+    }).session(dbSession);
+
+    if (!assignment) {
+      throw { status: 404, code: 'ASSIGNMENT_NOT_FOUND', message: 'No active assignment found for this task' };
+    }
+
+    const isAssignee = String(assignment.assignedTo) === String(userId);
+
+    if (!isCreator && !isAssignee) {
+      throw { status: 403, code: 'FORBIDDEN', message: 'Only the task creator or assignee can raise a dispute' };
+    }
+
+    const raisedBy = isCreator ? 'creator' : 'assignee';
+
+    task.status = 'DISPUTED';
+    task.disputeRaisedBy = raisedBy;
+    task.disputeReason = String(reason).trim();
+    task.disputeDetails = details ? String(details).trim() : null;
+    await task.save({ session: dbSession });
+
+    assignment.status = 'DISPUTED';
+    assignment.disputedAt = new Date();
+    await assignment.save({ session: dbSession });
+
+    await dbSession.commitTransaction();
+    dbSession.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dispute raised successfully',
+      data: { task: formatTask(task) }
+    });
+  } catch (error) {
+    await dbSession.abortTransaction();
+    dbSession.endSession();
+    console.error('disputeTask error:', error);
+    return res.status(error.status || 500).json({
+      success: false,
+      error: { code: error.code || 'TASK_DISPUTE_FAILED', message: error.message || 'Failed to raise dispute', details: {} }
+    });
+  }
+};
+
+// POST /api/tasks/:id/abandon
+// P2P assignee withdraws from an active task. Task reverts to OPEN so it can be accepted again.
+const abandonP2PTask = async (req, res) => {
+  const dbSession = await mongoose.startSession();
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
+      });
+    }
+
+    dbSession.startTransaction();
+
+    const task = await Task.findById(id).session(dbSession);
+    if (!task) {
+      throw { status: 404, code: 'TASK_NOT_FOUND', message: 'Task not found' };
+    }
+    if (task.type !== 'P2P') {
+      throw { status: 400, code: 'INVALID_TASK_TYPE', message: 'Only P2P tasks can be abandoned this way' };
+    }
+    if (!['IN_PROGRESS'].includes(task.status)) {
+      throw { status: 400, code: 'TASK_NOT_ABANDONABLE', message: 'Only active P2P tasks can be abandoned' };
+    }
+
+    const assignment = await TaskAssignment.findOne({ taskId: id, assignedTo: userId, status: 'ASSIGNED' }).session(dbSession);
+    if (!assignment) {
+      throw { status: 404, code: 'ASSIGNMENT_NOT_FOUND', message: 'No active assignment found for this task' };
+    }
+
+    assignment.status = 'CANCELLED';
+    await assignment.save({ session: dbSession });
+
+    task.status = 'CANCELLED';
+    task.assignee = null;
+    await task.save({ session: dbSession });
+
+    await dbSession.commitTransaction();
+    dbSession.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Task abandoned — marked as cancelled',
+      data: { task: formatTask(task) }
+    });
+  } catch (error) {
+    await dbSession.abortTransaction();
+    dbSession.endSession();
+    console.error('abandonP2PTask error:', error);
+    return res.status(error.status || 500).json({
+      success: false,
+      error: { code: error.code || 'TASK_ABANDON_FAILED', message: error.message || 'Failed to abandon task', details: {} }
+    });
+  }
+};
+
 // PATCH /api/tasks/:id
 // body: { title?, description?, rewardCoins? }
 // Auth: creator or admin. SYSTEM tasks: admin only.
@@ -1231,7 +1392,7 @@ const updateTask = async (req, res) => {
       });
     }
 
-    const editableStatuses = task.type === 'PERSONAL' ? ['IN_PROGRESS'] : ['OPEN'];
+    const editableStatuses = task.type === 'PERSONAL' ? ['IN_PROGRESS'] : ['OPEN', 'CANCELLED'];
     if (!editableStatuses.includes(task.status)) {
       return res.status(400).json({
         success: false,
@@ -1320,8 +1481,8 @@ const deleteTask = async (req, res) => {
     if (task.type !== 'SYSTEM' && !isCreator && !isAdmin) {
       throw { status: 403, code: 'FORBIDDEN', message: 'Only the task creator can delete this task' };
     }
-    if (!['OPEN', 'CANCELLED'].includes(task.status)) {
-      throw { status: 400, code: 'TASK_NOT_DELETABLE', message: 'Only open or cancelled tasks can be deleted' };
+    if (!['OPEN', 'CANCELLED', 'COMPLETED'].includes(task.status)) {
+      throw { status: 400, code: 'TASK_NOT_DELETABLE', message: 'Only open, cancelled, or completed tasks can be deleted' };
     }
 
     if (task.type === 'P2P') {
@@ -1388,5 +1549,7 @@ module.exports = {
   confirmTask,
   rejectTaskSubmission,
   cancelTask,
-  reopenTask
+  reopenTask,
+  abandonP2PTask,
+  disputeTask
 };

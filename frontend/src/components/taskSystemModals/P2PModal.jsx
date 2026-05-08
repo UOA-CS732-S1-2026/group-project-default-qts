@@ -7,7 +7,7 @@ import { useAcceptedTasks } from '../../context/AcceptedTasksContext';
 import loadIconSmall from '../../assets/load-icon-small.png';
 
 function P2PModal() {
-  const { tasks, isLoading, error, refetch } = useTasks();
+  const { tasks, isLoading, error, refetch, updateTask } = useTasks();
 
   const p2pData = useMemo(() =>
     tasks.filter((t) => t.type === 'p2p' && t.status === 'open'),
@@ -22,14 +22,15 @@ function P2PModal() {
   const { acceptedIds, acceptTask } = useAcceptedTasks();
   const [showHelp, setShowHelp] = useState(false);
 
-  // P2P accept creates an application (PENDING) — task status stays OPEN.
-  // No local status update needed; AcceptedTasksContext tracks accepted state.
+  // P2P accept is direct assignment — backend immediately sets task to IN_PROGRESS.
+  // Delay status update so the success overlay in TaskCardFront has time to display (2500ms),
+  // then update local state and refetch so the task moves to Quest tab.
   const handleAccept = async (id) => {
-    try {
-      await acceptTask(id);
-    } catch {
-      // API error — AcceptedTasksContext already rolled back acceptedIds
-    }
+    await acceptTask(id);
+    setTimeout(() => {
+      updateTask(id, { status: 'active' });
+      refetch();
+    }, 2500);
   };
 
   return (

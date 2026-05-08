@@ -1,16 +1,34 @@
-import { useState } from 'react';
-import { useTasks } from '../../context/TasksContext';
+import { useState, useEffect, useCallback } from 'react';
 import CoinBadge from '../ui/CoinBadge';
 import * as taskService from '../../services/taskService';
+import { toFrontendList } from '../../utils/taskMapper';
+import loadIconSmall from '../../assets/load-icon-small.png';
 
 export default function AdminDisputeList() {
-    const { tasks, updateTask } = useTasks();
+    const [disputes, setDisputes] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fetchError, setFetchError] = useState(null);
     const [confirmAction, setConfirmAction] = useState(null);
     const [resolvedId, setResolvedId] = useState(null);
     const [isResolvingId, setIsResolvingId] = useState(null);
     const [resolveError, setResolveError] = useState(null);
 
-    const disputedTasks = tasks.filter((t) => t.status === 'disputed');
+    const fetchDisputes = useCallback(async () => {
+        setIsLoading(true);
+        setFetchError(null);
+        try {
+            const res = await taskService.getTasks({ type: 'p2p', status: 'disputed' });
+            setDisputes(toFrontendList(res.data.data.tasks));
+        } catch {
+            setFetchError('Failed to load disputes. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchDisputes();
+    }, [fetchDisputes]);
 
     async function handleResolve(taskId, favorOf) {
         setIsResolvingId(taskId);
@@ -21,7 +39,7 @@ export default function AdminDisputeList() {
             } else {
                 await taskService.confirmTask(taskId);
             }
-            updateTask(taskId, { status: favorOf === 'creator' ? 'cancelled' : 'completed' });
+            setDisputes((prev) => prev.filter((t) => t.id !== taskId));
             setResolvedId(taskId);
             setConfirmAction(null);
             setTimeout(() => setResolvedId(null), 1200);
@@ -31,6 +49,24 @@ export default function AdminDisputeList() {
         } finally {
             setIsResolvingId(null);
         }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="admin-loading-state">
+                <img src={loadIconSmall} alt="" className="admin-loading-icon" />
+                <p className="admin-loading-text">Loading disputes...</p>
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div className="admin-error-state">
+                <p className="admin-error-title">⚠️ {fetchError}</p>
+                <button className="admin-error-retry" onClick={fetchDisputes}>Try Again</button>
+            </div>
+        );
     }
 
     return (
@@ -47,12 +83,12 @@ export default function AdminDisputeList() {
                 </div>
             )}
 
-            <p className="admin-dispute-count">{disputedTasks.length} active disputes</p>
+            <p className="admin-dispute-count">{disputes.length} active disputes</p>
 
-            {disputedTasks.length === 0 ? (
+            {disputes.length === 0 ? (
                 <div className="admin-empty-state">
                     <p className="admin-empty-title">No active disputes</p>
-                    <p className="admin-empty-sub">All clear for now. The backend dispute flow is not connected yet, so this view may stay empty.</p>
+                    <p className="admin-empty-sub">All clear for now. No disputes have been raised by players.</p>
                 </div>
             ) : (
                 <div className="admin-dispute-list">
@@ -66,7 +102,7 @@ export default function AdminDisputeList() {
                         <span className="admin-dispute-col admin-dispute-col--actions">Actions</span>
                     </div>
 
-                    {disputedTasks.map((task) => (
+                    {disputes.map((task) => (
                         <div className="admin-dispute-row" key={task.id}>
                             <span className="admin-dispute-col admin-dispute-col--title">
                                 {task.title}

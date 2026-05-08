@@ -12,7 +12,7 @@ import DashboardHeader from './DashboardHeader';
 import DashboardFooter from './DashboardFooter';
 import DasboardMain from './DashboardMain';
 import { ITEM_IMAGE_LIST } from '../../data/itemAssets';
-import { getDashboard } from '../../utils/dashboardApi';
+import { getDashboard } from '../../utils/dashBoardApi';
 
 const MODAL_CONTENTS = {
   mytask: <MyTaskModal />,
@@ -93,18 +93,18 @@ function Dashboard() {
         isOpen && <InventoryModal onClose={handleCloseModal} />
       ) : modalType === 'store' ? (
         isOpen && (
-        <StoreModal
-          onClose={handleCloseModal}
-          onPurchaseSuccess={async (response) => {
-            const updatedCoins = response?.data?.coins;
+          <StoreModal
+            onClose={handleCloseModal}
+            onPurchaseSuccess={async (response) => {
+              const updatedCoins = response?.data?.coins;
 
-            if (typeof updatedCoins === 'number') {
-              setCoins(updatedCoins);
-            }
-            await refreshCoins();
-            if (typeof updatedCoins !== 'number') await loadDashboardCoins();
-          }}
-        />
+              if (typeof updatedCoins === 'number') {
+                setCoins(updatedCoins);
+              }
+              await refreshCoins();
+              if (typeof updatedCoins !== 'number') await loadDashboardCoins();
+            }}
+          />
         )
       ) : (
         <ModalBase

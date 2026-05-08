@@ -16,7 +16,9 @@ const {
   confirmTask,
   rejectTaskSubmission,
   cancelTask,
-  reopenTask
+  reopenTask,
+  abandonP2PTask,
+  disputeTask
 } = require('../controllers/taskControllers');
 
 router.get('/', requireAuth, listTasks);
@@ -34,5 +36,7 @@ router.post('/:id/confirm', requireAuth, confirmTask);
 router.post('/:id/reject', requireAuth, rejectTaskSubmission);
 router.post('/:id/cancel', requireAuth, cancelTask);
 router.post('/:id/reopen', requireAuth, reopenTask);
+router.post('/:id/abandon', requireAuth, abandonP2PTask);
+router.post('/:id/dispute', requireAuth, disputeTask);
 
 module.exports = router;

@@ -1,12 +1,11 @@
 import '../../styles/dashboard/PetView.css'
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { getActivePet, feedPet, evolvePet } from '@/utils/petApi'
+import { getActivePet, feedPet, evolvePet, updateActivePetNickname } from '@/utils/petApi'
 import { getInventory } from '@/utils/inventoryApi'
 import PetSprite from '../petAnimations/PetSprite'
 import EvolutionOverlay from '../petAnimations/EvolutionOverlay'
-import { useApp } from '../../context/AppContext'
-//import petImg from '@/assets/pets/apteryx_1.png'
+import editIcon from '/edit.png'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -38,7 +37,6 @@ const MAX_UNLOCK_MS = 3000;
 
 function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evolveRequestId = 0 }) {
     const token = localStorage.getItem('token');
-    const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -50,6 +48,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const [selectedItemCode, setSelectedItemCode] = useState('');
     const [animState, setAnimState] = useState('idle');
     const [showEvolution, setShowEvolution] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [petNameDraft, setPetNameDraft] = useState('');
+    const [savingPetName, setSavingPetName] = useState(false);
     const clickCountRef = useRef(0); // track double-click for playing animation
     const evolveRequestRef = useRef(0);
     const bubbleTimerRef = useRef(null);
@@ -88,6 +89,34 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         maxUnlockTimerRef.current = window.setTimeout(() => {
             setMaxUnlockMessage('');
         }, MAX_UNLOCK_MS);
+    }
+
+    async function fetchPetData() {
+        if (!token) {
+            setMessage('');
+            setPet(null);
+            return;
+        }
+        setLoading(true);
+        setMessage('');
+        try {
+            const [petRes, inventoryRes] = await Promise.all([
+                getActivePet(token),
+                getInventory(token)
+            ]);
+            const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
+            setPet(activePet);
+            setPetNameDraft(activePet?.nickname || '');
+            if (onPetLoaded) onPetLoaded(activePet);
+            if (!activePet) setMessage('No active pet found.');
+
+            const items = inventoryRes?.data?.items || [];
+            setInventory(items);
+        } catch {
+            setMessage('Failed to fetch pet data.');
+        } finally {
+            setLoading(false);
+        }
     }
 
 
@@ -172,8 +201,24 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 handleFeed(itemCode);
             }
         };
+        const onActivePetChanged = async (e) => {
+            const nextActivePet = e.detail?.activePet || null;
+            if (nextActivePet) {
+                setPet(nextActivePet);
+                setPetNameDraft(nextActivePet.nickname || '');
+                setIsEditingName(false);
+                if (onPetLoaded) onPetLoaded(nextActivePet);
+                setAnimState(pomoIsRunning ? 'idle' : 'sleeping');
+                return;
+            }
+            await fetchPetData();
+        };
         window.addEventListener('gf-feed-pet', onFeedEvent);
-        return () => window.removeEventListener('gf-feed-pet', onFeedEvent);
+        window.addEventListener('gf-active-pet-changed', onActivePetChanged);
+        return () => {
+            window.removeEventListener('gf-feed-pet', onFeedEvent);
+            window.removeEventListener('gf-active-pet-changed', onActivePetChanged);
+        };
     }, [pet, token, pomoIsRunning]); // Add dependencies used in handleFeed
 
     // ── Feed ─────────────────────────────────────────────────────────────────
@@ -217,6 +262,53 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             setLoading(false);
         }
     }
+
+    const handleStartEditPetName = () => {
+        if (!pet || loading) return;
+        setPetNameDraft(pet.nickname || '');
+        setIsEditingName(true);
+        setMessage('');
+    };
+
+    const handleCancelEditPetName = () => {
+        setPetNameDraft(pet?.nickname || '');
+        setIsEditingName(false);
+    };
+
+    const handleSavePetName = async () => {
+        if (!token || !pet || savingPetName) return;
+        const nextName = String(petNameDraft || '').trim();
+        if (!nextName) {
+            setMessage('Pet name cannot be empty.');
+            return;
+        }
+
+        try {
+            setSavingPetName(true);
+            setMessage('');
+            const data = await updateActivePetNickname(nextName, token);
+            const updatedPet = data?.data?.activePet || null;
+            if (updatedPet) {
+                setPet(updatedPet);
+                setPetNameDraft(updatedPet.nickname || '');
+                if (onPetLoaded) onPetLoaded(updatedPet);
+                window.dispatchEvent(new CustomEvent('gf-active-pet-changed', {
+                    detail: {
+                        activePetId: updatedPet.id,
+                        activePet: updatedPet
+                    }
+                }));
+            }
+            setIsEditingName(false);
+            setMessage('Pet name updated!');
+        } catch (error) {
+            setMessage(error.message || 'Failed to update pet name.');
+        } finally {
+            setSavingPetName(false);
+        }
+    };
+
+    if (loading) return <div className="pet-container">Loading...</div>;
 
     // ── Evolve ───────────────────────────────────────────────────────────────
     const handleEvolve = async () => {
@@ -307,8 +399,59 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
 
     return (
         <div className="pet-container">
-            {loading && <div>Loading...</div>}
-            <h1 className="pet-name">{pet ? (pet.nickname || currentUser?.petName || 'Buddy') : 'Please select a pet'}</h1>
+            <div className="pet-name-row">
+                {isEditingName ? (
+                    <div className="pet-name-editor">
+                        <input
+                            className="pet-name-input"
+                            value={petNameDraft}
+                            onChange={(e) => setPetNameDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSavePetName();
+                                if (e.key === 'Escape') handleCancelEditPetName();
+                            }}
+                            maxLength={30}
+                            disabled={savingPetName}
+                            placeholder="Enter pet name"
+                        />
+                        <button
+                            type="button"
+                            className="pet-name-action square24px pet-name-action-confirm"
+                            onClick={handleSavePetName}
+                            disabled={savingPetName}
+                            aria-label="Confirm pet name"
+                            title="Confirm pet name"
+                        >
+                            <span className="pet-name-action-icon">✓</span>
+                        </button>
+                        <button
+                            type="button"
+                            className="pet-name-action square24px pet-name-action-cancel"
+                            onClick={handleCancelEditPetName}
+                            disabled={savingPetName}
+                            aria-label="Cancel pet name edit"
+                            title="Cancel"
+                        >
+                            <span className="pet-name-action-icon">✕</span>
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <h1 className="pet-name">{pet ? (pet.nickname || 'Buddy') : 'Please select a pet'}</h1>
+                        {pet && (
+                            <button
+                                type="button"
+                                className="pet-name-edit-btn"
+                                onClick={handleStartEditPetName}
+                                aria-label="Edit pet name"
+                                title="Edit pet name"
+                            >
+                                <img className="square24px edit-icon" src={editIcon} alt="Edit" />
+                            </button>
+                        )}
+                    </>
+                )}
+            </div>
 
                 <div className="pet-sprite-wrap" style={{ opacity: loading ? 0.6 : 1 }}>
                     <PetSprite

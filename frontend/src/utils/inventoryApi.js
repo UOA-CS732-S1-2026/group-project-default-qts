@@ -31,3 +31,24 @@ export async function getInventory(token) {
     throw new Error(getErrorMessage(error, 'failed to fetch inventory'));
   }
 }
+
+export function normalizePetCollection(response) {
+  const payload = response?.data || response;
+
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.pets)) return payload.pets;
+  if (Array.isArray(payload?.inactivePets)) return payload.inactivePets;
+
+  return [];
+}
+
+export async function getPetCollection(token) {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/pets/collection`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return res.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, 'failed to fetch pet collection'));
+  }
+}

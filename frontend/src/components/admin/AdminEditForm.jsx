@@ -7,8 +7,6 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
     const [objectives, setObjectives] = useState(
         task.objectives?.length ? task.objectives : ['']
     );
-    const [category, setCategory] = useState(task.category);
-
     const [timeLimit, setTimeLimit] = useState(String(task.timeLimit));
     const [rewardCoins, setRewardCoins] = useState(String(task.rewardCoins));
     const [errors, setErrors] = useState({});
@@ -34,8 +32,6 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
         if (!description.trim()) next.description = 'Description is required';
         if (objectives.filter((o) => o.trim() !== '').length === 0)
             next.objectives = 'At least one objective is required';
-        if (!category) next.category = 'Category is required';
-
         if (!timeLimit || Number(timeLimit) <= 0) next.timeLimit = 'Time limit is required';
         if (!rewardCoins || Number(rewardCoins) <= 0) {
             next.rewardCoins = 'Reward coins is required';
@@ -52,8 +48,6 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
             title: title.trim(),
             instructions: description.trim(),
             objectives: objectives.filter((o) => o.trim() !== ''),
-            category,
-
             timeLimit: Number(timeLimit),
             rewardCoins: Number(rewardCoins),
         });
@@ -123,21 +117,6 @@ export default function AdminEditForm({ task, onClose, onSubmit, submitError, is
                             + Add Objective
                         </button>
                     </div>
-
-                    <div className="form-field">
-                        <label className="form-label">Category</label>
-                        <select
-                            className={'form-input' + (errors.category ? ' form-input--error' : '')}
-                            value={category}
-                            onChange={(e) => { setCategory(e.target.value); clearError('category'); }}
-                        >
-                            <option value="" disabled>Select category...</option>
-                            <option value="organization">Organization</option>
-                            <option value="activity">Activity</option>
-                        </select>
-                        {errors.category && <p className="form-error">{errors.category}</p>}
-                    </div>
-
 
                     <div className="form-field">
                         <label className="form-label">Time Limit (hours)</label>

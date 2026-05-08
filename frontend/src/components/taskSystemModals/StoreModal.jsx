@@ -153,6 +153,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                     ) : storeItems.length === 0 ? (
                         <p>No store items available.</p>
                     ) : (
+                        // Need to implement notification buying items in store
                         <div className="store-grid">
                             {storeItems.map((item) => {
                                 const disabled = item.locked || buyingCode === item.code;
