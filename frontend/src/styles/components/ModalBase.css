@@ -152,8 +152,10 @@
 
 .task-modal-help-title {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 14px;
   color: var(--color-text-dark);
+  text-align: center;
+  text-decoration: underline;
 }
 
 .task-modal-help-list {

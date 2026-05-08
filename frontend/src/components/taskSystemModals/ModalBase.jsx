@@ -11,7 +11,7 @@ const MODAL_TABS = [
 const MODAL_DESCRIPTIONS = {
   mytask: 'My Tasks — tasks you have created and your active quests',
   p2p: 'P2P Tasks — tasks from other players you can accept',
-  community: 'System Tasks — tasks created by admins for all players',
+  system: 'System Tasks — tasks created by admins, complete them to earn coins',
 };
 
 function ModalBase({ isOpen, onClose, modalType, onChangeType, children }) {
