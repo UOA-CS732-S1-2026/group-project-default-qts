@@ -80,97 +80,69 @@
   50%      { transform: scale(1.08); box-shadow: 0 4px 30px rgba(255,215,0,0.6); }
 }
 
-/* Species grid */
-.evolution-species-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* Confirm actions */
+.evolution-confirm-actions {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 20px;
-}
-
-.evolution-species-btn {
-  display: flex;
-  flex-direction: column;
+  margin-top: 8px;
   align-items: center;
-  gap: 6px;
-  padding: 12px 8px;
-  border: 2px solid transparent;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.evolution-species-btn:hover {
-  border-color: #ffd700;
-  background: rgba(255, 245, 200, 0.9);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.2);
-}
-
-.evolution-species-img {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.12));
-}
-
-.evolution-species-name {
-  font-size: 0.8rem;
+.evolution-confirm-btn,
+.evolution-decline-btn {
+  width: 300px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 0.7rem; 
   font-weight: 700;
-  color: #2D6A4F;
-}
-
-/* Direct evolve */
-.evolution-direct {
-  margin-bottom: 20px;
-}
-
-.evolution-evolve-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 20px 32px;
-  border: 2px solid #ffd700;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,179,71,0.15));
+  line-height: 1.2;
+  font-family: var(--font-pixel);
+  letter-spacing: 0.5px;
+  text-align: center;
   cursor: pointer;
-  transition: all 0.25s ease;
-  margin: 0 auto;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #2D6A4F;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.evolution-evolve-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 30px rgba(255, 215, 0, 0.3);
-  background: linear-gradient(135deg, rgba(255,215,0,0.25), rgba(255,179,71,0.25));
+.evolution-confirm-btn {
+  border: 2px solid var(--color-card-1);
+  background: var(--color-card-1);
+  color: var(--color-text-light);
+  box-shadow: 0 6px 16px rgba(45, 106, 79, 0.2);
 }
 
-.evolution-preview-img {
-  width: 120px;
-  height: 120px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.15));
+.evolution-confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(45, 106, 79, 0.28);
 }
 
-/* Skip button */
-.evolution-skip-btn {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: #999;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: color 0.2s;
+.evolution-decline-btn {
+  border: 2px solid var(--color-card-2);
+  background: var(--color-card-2);
+  color: var(--color-text-light);
 }
 
-.evolution-skip-btn:hover {
-  color: #666;
-  text-decoration: underline;
+.evolution-panel .evolution-confirm-btn,
+.evolution-panel .evolution-decline-btn {
+  font-size: 1rem !important;
+  padding: 7px 16px !important;
+  letter-spacing: 0.5px !important;
+}
+
+.evolution-panel .evolution-confirm-btn {
+  background: var(--color-card-1) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--color-card-1) !important;
+}
+
+.evolution-panel .evolution-decline-btn {
+  background: var(--color-card-2) !important;
+  color: var(--color-text-light) !important;
+  border-color: var(--color-card-2) !important;
+}
+.evolution-decline-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(122, 106, 69, 0.2);
 }
 
 /* ── Animation phase ───────────────────────────────── */

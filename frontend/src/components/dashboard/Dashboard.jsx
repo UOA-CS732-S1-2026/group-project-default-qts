@@ -25,6 +25,8 @@ function Dashboard() {
   const { isOpen, modalType, openModal, closeModal } = useModal();
   const [questTargetId, setQuestTargetId] = useState(null);
   const [coins, setCoins] = useState(0);
+  const [activePet, setActivePet] = useState(null);
+  const [evolveRequestId, setEvolveRequestId] = useState(0);
 
   async function loadDashboardCoins() {
     const token = localStorage.getItem('token');
@@ -70,9 +72,18 @@ function Dashboard() {
 
   return (
     <div className="app-container">
-      <DashboardHeader coins={coins} />
+      <DashboardHeader
+        coins={coins}
+        activePet={activePet}
+        onEvolveRequest={() => setEvolveRequestId((prev) => prev + 1)}
+      />
 
-      <DasboardMain onQuestDetails={openQuestDetail}></DasboardMain>
+      <DasboardMain
+        onQuestDetails={openQuestDetail}
+        activePet={activePet}
+        onPetLoaded={setActivePet}
+        evolveRequestId={evolveRequestId}
+      ></DasboardMain>
 
       {/* <button className="btn-open-board" onClick={() => openModal('mytask')}>
         Open Task Board

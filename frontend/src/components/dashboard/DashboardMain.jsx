@@ -4,11 +4,10 @@ import PomodoroModal from '../pomodoro/PomodoroModal';
 import QuestSlider from './QuestSlider';
 import '@/styles/dashboard/DashboardMain.css'
 
-function DashboardMain({ onQuestDetails }) {
+function DashboardMain({ onQuestDetails, activePet, onPetLoaded, evolveRequestId }) {
     const [showPomo, setShowPomo] = useState(false);
     const [pomoIsRunning, setPomoIsRunning] = useState(false);
     const [petExternalAnim, setPetExternalAnim] = useState(null); // null = let PetView decide
-    const [activePet, setActivePet] = useState(null);
 
     // Called when a Pomodoro focus session completes → pet celebrates
     const handleSessionComplete = () => {
@@ -22,7 +21,8 @@ function DashboardMain({ onQuestDetails }) {
                 <PetView
                     pomoIsRunning={pomoIsRunning}
                     externalAnim={petExternalAnim}
-                    onPetLoaded={setActivePet}
+                    onPetLoaded={onPetLoaded}
+                    evolveRequestId={evolveRequestId}
                 />
                 <button onClick={() => setShowPomo(true)}>POMODORO</button>
             </div>
