@@ -5,6 +5,7 @@ import { getActivePet, feedPet, evolvePet, updateActivePetNickname } from '@/uti
 import { getInventory } from '@/utils/inventoryApi'
 import PetSprite from '../petAnimations/PetSprite'
 import EvolutionOverlay from '../petAnimations/EvolutionOverlay'
+import { useApp } from '../../context/AppContext'
 import editIcon from '/edit.png'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ const MAX_UNLOCK_MS = 3000;
 
 function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evolveRequestId = 0 }) {
     const token = localStorage.getItem('token');
+    const { currentUser } = useApp();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -93,12 +95,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
 
     async function fetchPetData() {
         if (!token) {
-            setMessage('');
+            setErrorMessage('');
+            setSuccessMessage('');
             setPet(null);
             return;
         }
         setLoading(true);
-        setMessage('');
+        setErrorMessage('');
+        setSuccessMessage('');
         try {
             const [petRes, inventoryRes] = await Promise.all([
                 getActivePet(token),
@@ -108,12 +112,12 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             setPet(activePet);
             setPetNameDraft(activePet?.nickname || '');
             if (onPetLoaded) onPetLoaded(activePet);
-            if (!activePet) setMessage('No active pet found.');
+            if (!activePet) setErrorMessage('No active pet found.');
 
             const items = inventoryRes?.data?.items || [];
             setInventory(items);
         } catch {
-            setMessage('Failed to fetch pet data.');
+            setErrorMessage('Failed to fetch pet data.');
         } finally {
             setLoading(false);
         }
@@ -267,7 +271,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         if (!pet || loading) return;
         setPetNameDraft(pet.nickname || '');
         setIsEditingName(true);
-        setMessage('');
+        setErrorMessage('');
+        setSuccessMessage('');
     };
 
     const handleCancelEditPetName = () => {
@@ -279,13 +284,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         if (!token || !pet || savingPetName) return;
         const nextName = String(petNameDraft || '').trim();
         if (!nextName) {
-            setMessage('Pet name cannot be empty.');
+            setErrorMessage('Pet name cannot be empty.');
             return;
         }
 
         try {
             setSavingPetName(true);
-            setMessage('');
+            setErrorMessage('');
+            setSuccessMessage('');
             const data = await updateActivePetNickname(nextName, token);
             const updatedPet = data?.data?.activePet || null;
             if (updatedPet) {
@@ -300,15 +306,13 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 }));
             }
             setIsEditingName(false);
-            setMessage('Pet name updated!');
+            showSuccessBubble('Pet name updated!');
         } catch (error) {
-            setMessage(error.message || 'Failed to update pet name.');
+            setErrorMessage(error.message || 'Failed to update pet name.');
         } finally {
             setSavingPetName(false);
         }
     };
-
-    if (loading) return <div className="pet-container">Loading...</div>;
 
     // ── Evolve ───────────────────────────────────────────────────────────────
     const handleEvolve = async () => {
@@ -399,6 +403,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
 
     return (
         <div className="pet-container">
+            {loading && !pet ? <div>Loading...</div> : null}
             <div className="pet-name-row">
                 {isEditingName ? (
                     <div className="pet-name-editor">
