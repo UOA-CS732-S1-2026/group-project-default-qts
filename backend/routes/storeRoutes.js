@@ -7,7 +7,7 @@ const {
   purchaseStoreItem
 } = require('../controllers/storeControllers');
 
-router.get('/items', getStoreItems);
+router.get('/items', requireAuth, getStoreItems);
 router.post('/purchase', requireAuth, purchaseStoreItem);
 
 module.exports = router;

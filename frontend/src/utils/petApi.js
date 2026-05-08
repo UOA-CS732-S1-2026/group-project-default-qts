@@ -26,6 +26,21 @@ export async function activatePet(petId, token) {
     }
 }
 
+export async function updateActivePetNickname(nickname, token) {
+    try {
+        const res = await axios.patch(`${API_BASE}/active/nickname`, { nickname }, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        return res.data;
+    } catch (error) {
+        const message =
+            error.response?.data?.error?.message ||
+            error.response?.data?.message ||
+            'failed to update pet name';
+        throw new Error(message);
+    }
+}
+
 // Feed pet
 export async function feedPet(petId, itemCode, token) {
     try {
