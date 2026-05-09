@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/api/store`;
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}`;
 
 function getErrorMessage(error, fallback) {
   return (
@@ -13,7 +13,7 @@ function getErrorMessage(error, fallback) {
 
 export async function getStoreItems(token) {
   try {
-    const res = await axios.get(`${API_BASE}/items`, {
+    const res = await axios.get(`${API_BASE}/api/store/items`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
@@ -25,7 +25,7 @@ export async function getStoreItems(token) {
 export async function purchaseItem(itemCode, quantity = 1, token) {
   try {
     const res = await axios.post(
-      `${API_BASE}/purchase`,
+      `${API_BASE}/api/store/purchase`,
       { itemCode, quantity },
       {
         headers: { Authorization: `Bearer ${token}` }

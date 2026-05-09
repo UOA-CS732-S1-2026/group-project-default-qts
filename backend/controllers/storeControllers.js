@@ -82,7 +82,7 @@ const getStoreItems = async (req, res) => {
 };
 
 const purchaseStoreItem = async (req, res) => {
-  const session = await mongoose.startSession();
+  let session = null;
 
   try {
     const userId = req.userId;
@@ -131,7 +131,8 @@ const purchaseStoreItem = async (req, res) => {
         }
       });
     }
-
+    
+    session = await mongoose.startSession();
     session.startTransaction();
 
     const user = await User.findById(userId).session(session);
@@ -153,6 +154,15 @@ const purchaseStoreItem = async (req, res) => {
     }
 
     const totalCost = item.price * quantity;
+    
+    if (item.type !== 'FOOD' && item.code !== 'RANDOM_EGG') {
+      throw {
+        status: 400,
+        code: 'UNSUPPORTED_STORE_ITEM_TYPE',
+        message: 'This store item type is not supported yet'
+      };
+    }
+
 
     if (user.coins < totalCost) {
       throw {
@@ -262,27 +272,31 @@ const purchaseStoreItem = async (req, res) => {
     }
 
     // RANDOM_EGG -> create new user pet(s)
-    const allSpecies = await PetSpecies.find({}).session(session);
+    const eggSpecies = await PetSpecies.find({
+      enabled: true,
+      eggEligible: true,
+      spriteKey: { $nin: [null, ''] }
+    }).session(session);
 
-    if (!allSpecies.length) {
+    if (!eggSpecies.length) {
       throw {
         status: 500,
         code: 'PET_SPECIES_NOT_AVAILABLE',
-        message: 'No pet species available for egg purchase'
+        message: 'No eligible pet species available for random egg purchase'
       };
     }
 
     const newPets = [];
 
     for (let i = 0; i < quantity; i++) {
-      const randomSpecies = allSpecies[Math.floor(Math.random() * allSpecies.length)];
+      const randomSpecies = eggSpecies[Math.floor(Math.random() * eggSpecies.length)];
 
       const createdPets = await UserPet.create(
         [
           {
             userId: user._id,
             speciesId: randomSpecies._id,
-            nickname: '',
+            nickname: randomSpecies.displayName,
             stage: 'EGG',
             level: 1,
             growthPoints: 0,
@@ -294,7 +308,10 @@ const purchaseStoreItem = async (req, res) => {
         { session }
       );
 
-      newPets.push(createdPets[0]);
+      newPets.push({
+        pet: createdPets[0],
+        species: randomSpecies
+      });
     }
 
     await session.commitTransaction();
@@ -309,30 +326,41 @@ const purchaseStoreItem = async (req, res) => {
           itemCode: item.code,
           quantity
         },
-        newPets: newPets.map((pet) => ({
+        newPets: newPets.map(({ pet, species }) => ({
           id: pet._id,
           speciesId: pet.speciesId,
+          speciesCode: species.code,
+          speciesName: species.displayName,
+          spriteKey: species.spriteKey,
+          nickname: pet.nickname,
           stage: pet.stage,
           level: pet.level,
+          growthPoints: pet.growthPoints,
+          evolutionReady: pet.evolutionReady,
+          isGrowthFrozen: pet.isGrowthFrozen,
           status: pet.status
         }))
       }
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
-    console.error('purchaseStoreItem error:', error);
-
-    return res.status(error.status || 500).json({
-      success: false,
-      error: {
-        code: error.code || 'STORE_PURCHASE_FAILED',
-        message: error.message || 'Failed to complete purchase',
-        details: {}
+      if (session) {
+        if (session.inTransaction()) {
+          await session.abortTransaction();
+        }
+        session.endSession();
       }
-    });
-  }
+
+      console.error('purchaseStoreItem error:', error);
+
+      return res.status(error.status || 500).json({
+        success: false,
+        error: {
+          code: error.code || 'STORE_PURCHASE_FAILED',
+          message: error.message || 'Failed to complete purchase',
+          details: {}
+        }
+      });
+    }
 };
 
 module.exports = {
