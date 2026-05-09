@@ -42,13 +42,15 @@ export default function AdminPage() {
                         className={'admin-nav-btn' + (activeView === 'tasks' ? ' admin-nav-btn--active' : '')}
                         onClick={() => setActiveView('tasks')}
                     >
-                        📋 Tasks
+                        <span className="admin-nav-icon">📋</span>
+                        <span className="admin-nav-label">Tasks</span>
                     </button>
                     <button
                         className={'admin-nav-btn' + (activeView === 'disputes' ? ' admin-nav-btn--active' : '')}
                         onClick={() => setActiveView('disputes')}
                     >
-                        ⚖️ Disputes
+                        <span className="admin-nav-icon">⚖️</span>
+                        <span className="admin-nav-label">Disputes</span>
                     </button>
                 </nav>
 

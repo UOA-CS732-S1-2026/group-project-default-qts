@@ -256,12 +256,33 @@
     }
 
     .admin-nav-btn {
-        justify-content: flex-start;
-        padding: 12px 8px;
-        font-size: 0;
+        justify-content: center;
+        padding: 10px 8px;
+        gap: 0;
     }
 
-    .admin-nav-btn::before {
+    .admin-nav-label {
+        display: none;
+    }
+
+    .admin-nav-icon {
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .admin-darkmode-row {
+        justify-content: center;
+    }
+
+    .admin-logout-btn {
+        font-size: 0;
+        padding: 10px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .admin-logout-btn::after {
+        content: '🚪';
         font-size: 18px;
     }
 
@@ -269,11 +290,6 @@
         margin-left: 60px;
         width: calc(100% - 60px);
         padding: 20px;
-    }
-
-    .admin-logout-btn {
-        font-size: 0;
-        padding: 10px;
     }
 }
 
