@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import '../styles/admin.css';
+import '../styles/admin/index.css';
 import AdminTaskList from '../components/admin/AdminTaskList';
 import AdminDisputeList from '../components/admin/AdminDisputeList';
 
