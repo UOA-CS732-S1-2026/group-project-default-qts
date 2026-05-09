@@ -37,14 +37,18 @@
   font-family: var(--font-body);
   letter-spacing: 5%;
   color: var(--text-dark);
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+  line-height: 50px;
+  height: 100%;
   margin: 0;
+  text-align: center;
 }
 
 .pet-name-row{
   display: flex;
   align-items: center;
   gap: 12px;
+  height: 50px;
 }
 
 .pet-name-edit-btn{
@@ -68,6 +72,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 div.pet-name-row button.pet-name-edit-btn{
@@ -78,7 +85,7 @@ div.pet-name-row button.pet-name-edit-btn{
 .pet-name-input{
   font-family: inherit;
   text-align: center;;
-  height: 38px;
+  height: 50px;
   min-width: 220px;
   padding: 0 10px;
   border: none;
@@ -91,7 +98,8 @@ div.pet-name-row button.pet-name-edit-btn{
 }
 
 .pet-name-action{
-  min-width: 38px;
+  min-width: 50px;
+  height: 50px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -187,6 +195,8 @@ div.pet-name-row button.pet-name-edit-btn{
 
 .pet-exp{
   width: 320px;
+  min-width: 320px;
+  max-width: 320px;
   display:flex;
   flex-direction:column;
   gap:8px;
@@ -223,8 +233,25 @@ div.pet-name-row button.pet-name-edit-btn{
 .pet-level{
   width:fit-content;
   font-family: inherit;
-  font-size: 1.625rem;
+  font-size: clamp(1.25rem, 2.3vw, 1.625rem);
   text-align:center;
   border-radius:2px;
   font-weight:900;
 }
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .pet-container {
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .pet-name-row {
+    gap: 8px;
+  }
+
+  .pet-name-input {
+    min-width: 180px;
+  }
+}
+
+

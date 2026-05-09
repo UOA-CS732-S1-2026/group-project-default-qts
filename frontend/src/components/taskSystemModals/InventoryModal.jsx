@@ -30,6 +30,13 @@ function getPetStage(stage) {
   return 'egg';
 }
 
+function formatPetType(speciesCode, speciesName) {
+  const fallback = String(speciesName || '').trim();
+  const raw = String(speciesCode || '').toLowerCase();
+  if (!raw) return fallback || 'Unknown';
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 function InventoryModal({ onClose }) {
   const MAX_PET_SLOTS = 9;
   const CLOSE_ANIM_MS = 320;
@@ -214,6 +221,13 @@ function InventoryModal({ onClose }) {
                       size={64}
                       showShadow={false}
                     />
+                    <div className="pet-slot-tooltip" role="tooltip">
+                      <div><strong>Nickname:</strong> {pet.nickname || 'Buddy'}</div>
+                      <div><strong>Level:</strong> {Number(pet.level || 0)}</div>
+                      {getPetStage(pet.stage) !== 'egg' && (
+                        <div><strong>Type:</strong> {formatPetType(pet.speciesCode, pet.speciesName)}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {Array.from({ length: emptyPetSlots }).map((_, i) => (

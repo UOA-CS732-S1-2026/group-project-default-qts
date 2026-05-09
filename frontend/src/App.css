@@ -5,6 +5,14 @@
   flex-direction: column;
 }
 
+@media (min-width: 1024px) {
+  .app-container {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+}
+
 
 .app-title {
   font-family: var(--font-display);
