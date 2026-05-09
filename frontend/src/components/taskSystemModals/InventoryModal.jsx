@@ -105,7 +105,6 @@ function InventoryModal({ onClose }) {
     if (confirmItem) {
       window.dispatchEvent(new CustomEvent('gf-feed-pet', { detail: { itemCode: confirmItem.itemCode } }));
       setConfirmItem(null);
-      handleClose();
     }
   };
 
