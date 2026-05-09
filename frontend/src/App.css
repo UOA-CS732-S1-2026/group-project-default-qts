@@ -3,6 +3,7 @@
   background-color: var(--bg-main);
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 @media (min-width: 1024px) {

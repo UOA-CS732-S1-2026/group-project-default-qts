@@ -10,6 +10,7 @@
 
 .form-container {
   width: 420px;
+  max-width: calc(100vw - 16px);
   max-height: 85vh;
   background: var(--color-bg-form);
   border: var(--border-pixel);

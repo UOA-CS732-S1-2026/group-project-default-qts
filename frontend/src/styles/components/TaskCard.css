@@ -4,6 +4,12 @@
   perspective: 1000px;
 }
 
+@media (max-width: 480px) {
+  .task-card-wrapper {
+    width: 100%;
+  }
+}
+
 .task-card-inner {
   width: 100%;
   height: 100%;
@@ -453,6 +459,7 @@
   align-items: center;
   gap: 16px;
   min-width: 240px;
+  max-width: calc(100vw - 32px);
 }
 
 .task-card-delete-modal-text {
