@@ -16,7 +16,7 @@ function DashboardMain({ onQuestDetails, activePet, onPetLoaded, evolveRequestId
     };
 
     return (
-        <main>
+        <main className="dashboard-main">
             <div className="main-content">
                 <PetView
                     pomoIsRunning={pomoIsRunning}
