@@ -225,7 +225,74 @@
     opacity: 0.8;
 }
 
+/* ---- Desktop large (min 1440px) — monitor umum ---- */
+@media (min-width: 1440px) {
+    .landing-left {
+        padding: 48px 64px;
+    }
+
+    .landing-logo-title {
+        font-size: 2.4rem;
+    }
+
+    .landing-preview-img {
+        max-width: 600px;
+    }
+
+    .landing-tagline {
+        font-size: 1.15rem;
+    }
+
+    .landing-right {
+        width: 500px;
+        padding: 56px 48px;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+    }
+}
+
+/* ---- Desktop Full HD (min 1920px) ---- */
+@media (min-width: 1920px) {
+    .landing-left {
+        padding: 56px 80px;
+    }
+
+    .landing-logo-title {
+        font-size: 2.8rem;
+    }
+
+    .landing-preview-img {
+        max-width: 720px;
+    }
+
+    .landing-tagline {
+        font-size: 1.25rem;
+    }
+
+    .landing-right {
+        width: 560px;
+        padding: 64px 56px;
+    }
+
+    .welcome-title {
+        font-size: 2.2rem;
+    }
+}
+
 /* ---- Responsive ---- */
+
+/* ---- Tablet (max 1024px) — iPad Pro / landscape ---- */
+@media (max-width: 1024px) {
+    .landing-right {
+        width: 380px;
+        min-width: 320px;
+        padding: 40px 32px;
+    }
+}
+
+/* ---- Tablet (max 860px) — iPad portrait / landscape phone ---- */
 @media (max-width: 860px) {
     .landing-page {
         flex-direction: column;
@@ -236,10 +303,35 @@
         min-height: auto;
     }
 
+    .landing-preview-img {
+        max-width: 320px;
+    }
+
     .landing-right {
         width: 100%;
         min-width: unset;
-        padding: 40px 24px;
+        padding: 40px 32px;
+    }
+}
+
+/* ---- Tablet kecil (481–767px) — preview disembunyikan ---- */
+@media (max-width: 767px) {
+    .landing-preview {
+        display: none;
+    }
+
+    .landing-left {
+        padding: 24px 20px;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .landing-tagline {
+        font-size: 0.95rem;
+    }
+
+    .landing-right {
+        padding: 32px 24px;
     }
 }
 
