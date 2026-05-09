@@ -234,3 +234,41 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   margin-bottom: 20px;
   text-align: center;
 }
+
+/* ---- Modal responsive (SignupModal, ForgotPasswordModal, dll) ---- */
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal-box {
+    padding: 24px 20px;
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .modal-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .modal-box {
+    padding: 20px 16px;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-box {
+    padding: 16px 12px;
+  }
+}
