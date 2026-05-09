@@ -13,7 +13,22 @@ import { useApp } from '../../context/AppContext'
 // Backend returns speciesCode (e.g. "APTERYX") → map to lowercase image filename
 function getPetSpecies(pet) {
     if (!pet) return 'apteryx';
-    return (pet.speciesCode || 'apteryx').toLowerCase();
+
+    if (pet.spriteKey) return pet.spriteKey;
+
+    const code = (pet.speciesCode || '').toUpperCase();
+
+    const speciesMap = {
+        TAO_KIWI: 'apteryx',
+        TAO_PENGUIN: 'penguin',
+        LEMUERA: 'lemuera',
+        APTERYX: 'apteryx',
+        PYRO: 'pyro',
+        MANU_PUKEKO: 'pukeko',
+        MANU_PATEKE: 'pateke',
+    };
+
+    return speciesMap[code] || 'apteryx';
 }
 
 // Backend returns stage in uppercase: 'EGG' | 'KID' | 'ADULT'
@@ -70,8 +85,22 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             return pomoIsRunning ? 'idle' : 'sleeping';
         });
     }, [pet?.isGrowthFrozen, pomoIsRunning]);
+    
+    // Normalizes various backend response shapes to a consistent pet object/    
+    function normalizePetResponse(res) {
+        const data = res?.data ?? res;
 
+        if (!data) return null;
+        if (data.activePet) return data.activePet;
+        if (data.pet) return data.pet;
+
+        // if backend returns pet directly as data
+        if (data.id || data._id || data.speciesCode || data.spriteKey) return data;
+
+        return null;
+    }
     // ── Fetch pet & inventory on mount ───────────────────────────────────────
+
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
@@ -86,7 +115,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                     getActivePet(token),
                     getInventory(token)
                 ]);
-                const activePet = petRes?.data?.activePet || petRes?.data?.pet || null;
+                const activePet = normalizePetResponse(petRes);
                 setPet(activePet);
                 if (onPetLoaded) onPetLoaded(activePet);
                 if (!activePet) setMessage('No active pet found.');
@@ -127,7 +156,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         setMessage('');
         try {
             const data = await feedPet(pet.id, itemCode, token);
-            const updatedPet = data?.data?.pet || data?.data?.activePet || null;
+            const updatedPet = normalizePetResponse(data);
             setPet(updatedPet);
             if (onPetLoaded) onPetLoaded(updatedPet);
             const inventoryRes = await getInventory(token);

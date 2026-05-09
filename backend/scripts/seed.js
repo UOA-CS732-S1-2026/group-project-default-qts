@@ -11,6 +11,10 @@ const speciesData = [
   {
     code: 'TAO_KIWI',
     displayName: 'Tao-Kiwi',
+    spriteKey: 'apteryx',
+    enabled: true,
+    starterEligible: true,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'tao_kiwi_egg' },
       { stage: 'KID', displayName: 'Kiwi Chick', assetKey: 'tao_kiwi_kid' },
@@ -21,6 +25,10 @@ const speciesData = [
   {
     code: 'TAO_PENGUIN',
     displayName: 'Tao-Penguin',
+    spriteKey: 'penguin',
+    enabled: true,
+    starterEligible: true,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'tao_penguin_egg' },
       { stage: 'KID', displayName: 'Little Blue Penguin Chick', assetKey: 'tao_penguin_kid' },
@@ -31,6 +39,10 @@ const speciesData = [
   {
     code: 'LEMUERA',
     displayName: 'Lemuera',
+    spriteKey: 'lemuera',
+    enabled: true,
+    starterEligible: false,
+    eggEligible: true,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'lemuera_egg' },
       { stage: 'KID', displayName: 'Ring-tailed Lemur', assetKey: 'lemuera_kid' },
@@ -41,6 +53,10 @@ const speciesData = [
   {
     code: 'APTERYX',
     displayName: 'Apteryx',
+    spriteKey: 'apteryx',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'apteryx_egg' },
       { stage: 'KID', displayName: 'Lil Brown Kiwi', assetKey: 'apteryx_kid' },
@@ -51,6 +67,10 @@ const speciesData = [
   {
     code: 'PYRO',
     displayName: 'Pyro',
+    spriteKey: 'pyro',
+    enabled: true,
+    starterEligible: false,
+    eggEligible: true,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'pyro_egg' },
       { stage: 'KID', displayName: 'Fry', assetKey: 'pyro_kid' },
@@ -61,6 +81,10 @@ const speciesData = [
   {
     code: 'ALAS',
     displayName: 'Alas',
+    spriteKey: 'alas',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'alas_egg' },
       { stage: 'KID', displayName: 'Larvae', assetKey: 'alas_kid' },
@@ -71,6 +95,10 @@ const speciesData = [
   {
     code: 'MANU_PUKEKO',
     displayName: 'Manu-Pukeko',
+    spriteKey: 'pukeko',
+    enabled: true,
+    starterEligible: false,
+    eggEligible: true,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'manu_pukeko_egg' },
       { stage: 'KID', displayName: 'Pukeko', assetKey: 'manu_pukeko_kid' },
@@ -81,6 +109,10 @@ const speciesData = [
   {
     code: 'MANU_PATEKE',
     displayName: 'Manu-Pateke',
+    spriteKey: 'pateke',
+    enabled: true,
+    starterEligible: true,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'manu_pateke_egg' },
       { stage: 'KID', displayName: 'Lil Pateke', assetKey: 'manu_pateke_kid' },
@@ -91,6 +123,10 @@ const speciesData = [
   {
     code: 'VINCENT_SEAL',
     displayName: 'Vincent-Seal',
+    spriteKey: 'seal',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'vincent_seal_egg' },
       { stage: 'KID', displayName: 'Seal Pup', assetKey: 'vincent_seal_kid' },
@@ -101,6 +137,10 @@ const speciesData = [
   {
     code: 'VINCENT_DOLPHIN',
     displayName: 'Vincent-Dolphin',
+    spriteKey: 'dolphin',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'vincent_dolphin_egg' },
       { stage: 'KID', displayName: 'Hector’s Dolphin (Baby)', assetKey: 'vincent_dolphin_kid' },
@@ -111,6 +151,10 @@ const speciesData = [
   {
     code: 'MARRY_SHEEP',
     displayName: 'MarrySheep',
+    spriteKey: 'sheep',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'marry_sheep_egg' },
       { stage: 'KID', displayName: 'Little Sheep', assetKey: 'marry_sheep_kid' },
@@ -121,6 +165,10 @@ const speciesData = [
   {
     code: 'BEN_DEER',
     displayName: 'BenDeer',
+    spriteKey: 'deer',
+    enabled: false,
+    starterEligible: false,
+    eggEligible: false,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'ben_deer_egg' },
       { stage: 'KID', displayName: 'Little Deer', assetKey: 'ben_deer_kid' },
@@ -142,13 +190,19 @@ const seedDB = async () => {
     await connectDB();
     console.log('Connected. Starting seed...');
 
+
     for (const species of speciesData) {
-      await PetSpecies.updateOne(
+      const result = await PetSpecies.updateOne(
         { code: species.code },
         { $set: species },
         { upsert: true }
       );
+
+      console.log(
+        `[PetSpecies] ${species.code}: matched=${result.matchedCount}, modified=${result.modifiedCount}, upserted=${result.upsertedCount}`
+      );
     }
+
 
     for (const item of storeItemsData) {
       await StoreItem.updateOne(

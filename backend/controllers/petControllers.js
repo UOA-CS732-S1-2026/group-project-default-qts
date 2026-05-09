@@ -5,6 +5,28 @@ const InventoryItem = require('../models/InventoryItem');
 const StoreItem = require('../models/StoreItem');
 const User = require('../models/User');
 
+const PET_SPECIES_SELECT = 'code displayName spriteKey enabled';
+
+function formatPetResponse(pet) {
+  return {
+    id: pet._id,
+    speciesId: pet.speciesId?._id || pet.speciesId || null,
+    speciesCode: pet.speciesId?.code || null,
+    speciesName: pet.speciesId?.displayName || null,
+
+    // key point: frontend should use this first
+    spriteKey: pet.speciesId?.spriteKey || 'apteryx',
+
+    nickname: pet.nickname,
+    stage: pet.stage,
+    level: pet.level,
+    growthPoints: pet.growthPoints,
+    evolutionReady: pet.evolutionReady,
+    isGrowthFrozen: pet.isGrowthFrozen,
+    status: pet.status
+  };
+}
+
 const getActivePet = async (req, res) => {
   try {
     const userId = req.userId;
@@ -24,7 +46,7 @@ const getActivePet = async (req, res) => {
     const activePet = await UserPet.findOne({
       userId,
       status: 'ACTIVE'
-    }).populate('speciesId', 'code displayName');
+    }).populate('speciesId', PET_SPECIES_SELECT);
 
     if (!activePet) {
       return res.status(404).json({
@@ -41,18 +63,19 @@ const getActivePet = async (req, res) => {
       success: true,
       message: 'Active pet loaded successfully',
       data: {
-        activePet: {
-          id: activePet._id,
-          speciesCode: activePet.speciesId?.code || null,
-          speciesName: activePet.speciesId?.displayName || null,
-          nickname: activePet.nickname,
-          stage: activePet.stage,
-          level: activePet.level,
-          growthPoints: activePet.growthPoints,
-          evolutionReady: activePet.evolutionReady,
-          isGrowthFrozen: activePet.isGrowthFrozen,
-          status: activePet.status
-        }
+        activePet: formatPetResponse(activePet)
+        // activePet: {
+        //   id: activePet._id,
+        //   speciesCode: activePet.speciesId?.code || null,
+        //   speciesName: activePet.speciesId?.displayName || null,
+        //   nickname: activePet.nickname,
+        //   stage: activePet.stage,
+        //   level: activePet.level,
+        //   growthPoints: activePet.growthPoints,
+        //   evolutionReady: activePet.evolutionReady,
+        //   isGrowthFrozen: activePet.isGrowthFrozen,
+        //   status: activePet.status
+        // }
       }
     });
   } catch (error) {
@@ -147,7 +170,7 @@ const feedPet = async (req, res) => {
     const pet = await UserPet.findOne({
       _id: id,
       userId
-    }).populate('speciesId', 'code displayName');
+    }).populate('speciesId', PET_SPECIES_SELECT);
 
     if (!pet) {
       return res.status(404).json({
@@ -234,18 +257,20 @@ const feedPet = async (req, res) => {
       success: true,
       message: 'Pet fed successfully',
       data: {
-        pet: {
-          id: pet._id,
-          speciesCode: pet.speciesId?.code || null,
-          speciesName: pet.speciesId?.displayName || null,
-          nickname: pet.nickname,
-          stage: pet.stage,
-          level: pet.level,
-          growthPoints: pet.growthPoints,
-          evolutionReady: pet.evolutionReady,
-          isGrowthFrozen: pet.isGrowthFrozen,
-          status: pet.status
-        },
+        // pet: {
+        //   id: pet._id,
+        //   speciesCode: pet.speciesId?.code || null,
+        //   speciesName: pet.speciesId?.displayName || null,
+        //   nickname: pet.nickname,
+        //   stage: pet.stage,
+        //   level: pet.level,
+        //   growthPoints: pet.growthPoints,
+        //   evolutionReady: pet.evolutionReady,
+        //   isGrowthFrozen: pet.isGrowthFrozen,
+        //   status: pet.status
+        // }
+        pet: formatPetResponse(pet)
+        ,
         inventoryItem: {
           id: inventoryItem._id,
           itemCode: inventoryItem.storeItemId?.code || null,
@@ -302,7 +327,7 @@ const evolvePet = async (req, res) => {
     const pet = await UserPet.findOne({
       _id: id,
       userId
-    }).populate('speciesId', 'code displayName');
+    }).populate('speciesId', PET_SPECIES_SELECT);
 
     if (!pet) {
       return res.status(404).json({
@@ -377,18 +402,19 @@ const evolvePet = async (req, res) => {
       success: true,
       message: 'Pet evolved successfully',
       data: {
-        pet: {
-          id: pet._id,
-          speciesCode: pet.speciesId?.code || null,
-          speciesName: pet.speciesId?.displayName || null,
-          nickname: pet.nickname,
-          stage: pet.stage,
-          level: pet.level,
-          growthPoints: pet.growthPoints,
-          evolutionReady: pet.evolutionReady,
-          isGrowthFrozen: pet.isGrowthFrozen,
-          status: pet.status
-        }
+        pet: formatPetResponse(pet)
+        // pet: {
+        //   id: pet._id,
+        //   speciesCode: pet.speciesId?.code || null,
+        //   speciesName: pet.speciesId?.displayName || null,
+        //   nickname: pet.nickname,
+        //   stage: pet.stage,
+        //   level: pet.level,
+        //   growthPoints: pet.growthPoints,
+        //   evolutionReady: pet.evolutionReady,
+        //   isGrowthFrozen: pet.isGrowthFrozen,
+        //   status: pet.status
+        // }
       }
     });
   } catch (error) {
