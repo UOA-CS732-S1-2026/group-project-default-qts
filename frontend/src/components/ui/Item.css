@@ -63,6 +63,29 @@
   border-radius: 8px;
 }
 
+.item-actions {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.item-buy {
+  font-family: var(--font-display);
+  font-size: 11px; /* Slightly reduced to fit x10 text */
+  padding: 6px 4px;
+  border: var(--border-pixel);
+  background: var(--color-btn-primary);
+  cursor: pointer;
+  flex: 1; /* Allows buttons to share space equally */
+  white-space: nowrap;
+}
+
+.item-buy--secondary {
+  background: #db9d5e; /* Matching your reference brown color */
+}
+
 .item-card--store {
   padding: 10px;
 }

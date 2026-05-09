@@ -1,4 +1,4 @@
-main{
+.dashboard-main {
     width: min(100%, 1400px);
     margin: 0 auto;
     padding: 0 1rem 1rem;
@@ -36,7 +36,7 @@ main{
 }
 
 @media (min-width: 1024px) {
-    main {
+    .dashboard-main {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: start;
@@ -60,7 +60,7 @@ main{
         margin: 0.2rem auto 0;
     }
 
-        .task-slider-section{
+    .task-slider-section{
         grid-column: 3;
         position: sticky;
         top: 0.4rem;

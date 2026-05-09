@@ -10,25 +10,43 @@ import editIcon from '/edit.png'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+// Normalize any backend species/sprite keys into asset-compatible ids
+function normalizeSpeciesKey(input) {
+    if (!input) return 'apteryx';
+    let key = String(input).trim().toLowerCase();
+    key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
+    key = key.replace(/[/\\]/g, '');
+    key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
+    key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
+
+    const map = {
+        tao_kiwi: 'apteryx',
+        tao_penguin: 'penguin',
+        lemuera: 'lemuera',
+        apteryx: 'apteryx',
+        pyro: 'pyro',
+        manu_pukeko: 'pukeko',
+        manu_pateke: 'pateke',
+        kiwi: 'apteryx',
+        penguin: 'penguin',
+        pukeko: 'pukeko',
+        pateke: 'pateke',
+    };
+
+    return map[key] || key;
+}
+
 // Backend returns speciesCode (e.g. "APTERYX") → map to lowercase image filename
 function getPetSpecies(pet) {
     if (!pet) return 'apteryx';
 
-    if (pet.spriteKey) return pet.spriteKey;
+    if (pet.spriteKey) {
+        const normalizedSprite = normalizeSpeciesKey(pet.spriteKey);
+        return normalizedSprite || 'apteryx';
+    }
 
-    const code = (pet.speciesCode || '').toUpperCase();
-
-    const speciesMap = {
-        TAO_KIWI: 'apteryx',
-        TAO_PENGUIN: 'penguin',
-        LEMUERA: 'lemuera',
-        APTERYX: 'apteryx',
-        PYRO: 'pyro',
-        MANU_PUKEKO: 'pukeko',
-        MANU_PATEKE: 'pateke',
-    };
-
-    return speciesMap[code] || 'apteryx';
+    const code = normalizeSpeciesKey(pet.speciesCode || '');
+    return code || 'apteryx';
 }
 
 // Backend returns stage in uppercase: 'EGG' | 'KID' | 'ADULT'
@@ -47,7 +65,6 @@ const MAX_LEVEL = 10;
 const MAX_GROWTH_POINTS = 99;
 const STATUS_POPUP_MS = 2000;
 const MAX_UNLOCK_MS = 3000;
-
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -386,7 +403,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             window.removeEventListener('gf-feed-pet', onFeedEvent);
             window.removeEventListener('gf-active-pet-changed', onActivePetChanged);
         };
-    }, [pet, token, pomoIsRunning]); // Add dependencies used in handleFeed
+    }, [pet, token, pomoIsRunning]);
 
     // ── Feed ─────────────────────────────────────────────────────────────────
     async function handleFeed(itemCode) {
@@ -480,7 +497,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     // ── Evolve ───────────────────────────────────────────────────────────────
     const handleEvolve = async () => {
         if (!pet) return;
-        // Show the evolution overlay (visual animation) first
         setShowEvolution(true);
     };
 
@@ -493,7 +509,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         }
     }, [evolveRequestId, pet?.evolutionReady, showEvolution]);
 
-    // Called by EvolutionOverlay when user confirms the evolution
     const handleEvolutionConfirm = async (chosenSpeciesId) => {
         setShowEvolution(false);
         setAnimState('evolving');
@@ -506,7 +521,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             setPet(updatedPet);
             if (onPetLoaded) onPetLoaded(updatedPet);
             showSuccessBubble('Evolved pet successfully!');
-            // Brief celebrating after evolve
             setTimeout(() => setAnimState('celebrating'), 200);
             setTimeout(() => restoreStableAnim(), 2500);
         } catch (error) {
@@ -517,12 +531,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         }
     };
 
-    // Called by EvolutionOverlay when user skips
     const handleEvolutionSkip = () => {
         setShowEvolution(false);
     };
 
-    // ── Pet click: single click = sleep, double click = awake ─────────────
+    // ── Pet click: single = sleep, double = wake ─────────────
     const handlePetClick = () => {
         if (!pet || loading) return;
 

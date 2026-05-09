@@ -91,6 +91,7 @@ export default function AdminDisputeList() {
                     <p className="admin-empty-sub">All clear for now. No disputes have been raised by players.</p>
                 </div>
             ) : (
+                <div className="admin-dispute-table-wrap">
                 <div className="admin-dispute-list">
                     <div className="admin-dispute-list-header">
                         <span className="admin-dispute-col admin-dispute-col--title">Task</span>
@@ -181,6 +182,7 @@ export default function AdminDisputeList() {
                             )}
                         </div>
                     ))}
+                </div>
                 </div>
             )}
         </div>
