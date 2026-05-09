@@ -32,4 +32,28 @@ describe('getDisplayStatus', () => {
     const task = { status: 'active', rejectedAt: '2026-05-01' }
     expect(getDisplayStatus(task, true)).toBe('rejected')
   })
+
+  it('returns the raw status when task is open and not accepted', () => {
+    expect(getDisplayStatus({ status: 'open' }, false, false)).toBe('open')
+  })
+
+  it('returns the raw status for pending_confirmation', () => {
+    expect(getDisplayStatus({ status: 'pending_confirmation' })).toBe('pending_confirmation')
+  })
+
+  it('does not return "rejected" in creator view when lastRejectedAt is absent', () => {
+    const task = { status: 'active', assignee: { id: 'u2' } }
+    expect(getDisplayStatus(task, false, true)).toBe('active')
+  })
+
+  it('ignores lastRejectedAt on non-active status in creator view', () => {
+    const task = { status: 'pending_confirmation', assignee: { id: 'u2' }, lastRejectedAt: '2026-05-01' }
+    expect(getDisplayStatus(task, false, true)).toBe('pending_confirmation')
+  })
+
+  it('ignores lastRejectedAt when assignee is absent in creator view', () => {
+    const task = { status: 'active', lastRejectedAt: '2026-05-01' }
+    expect(getDisplayStatus(task, false, true)).toBe('active')
+  })
+
 })

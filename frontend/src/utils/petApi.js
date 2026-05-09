@@ -28,7 +28,7 @@ export async function activatePet(petId, token) {
 
 export async function updateActivePetNickname(nickname, token) {
     try {
-        const res = await axios.patch(`${API_BASE}/active/nickname`, { nickname }, {
+        const res = await axios.patch(`${API_BASE}/api/pets/active/nickname`, { nickname }, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return res.data;
