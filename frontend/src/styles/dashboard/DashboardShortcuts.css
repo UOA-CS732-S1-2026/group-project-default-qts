@@ -1,5 +1,5 @@
 /* only style buttons inside the shortcuts area to avoid affecting global buttons */
-.dashboard-shortcuts button{
+.dashboard-shortcuts button {
     background-color: transparent;
     border: none;
 }
@@ -9,9 +9,8 @@
     cursor: pointer;
 }
 
-.shortcut-icon{
-    width: 4rem;
-    height: 4rem;
+.shortcut-icon {
+    width: clamp(2.4rem, 3.5vw, 4rem);
 }
 
 .dark-mode .shortcut-icon,
@@ -21,7 +20,7 @@
 
 .dashboard-shortcuts {
     display: flex;
-    gap: 1rem;
+    gap: clamp(0.5rem, 1.2vw, 1rem);
     padding: 1rem;
     justify-content: right;
 }
