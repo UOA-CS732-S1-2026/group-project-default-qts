@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SparkleParticles from './particles/SparkleParticles';
 import './EvolutionOverlay.css';
@@ -15,6 +15,81 @@ const DEFAULT_SPECIES = [
 
 const MotionDiv = motion.div;
 
+/* ── Asset map ─────────────────────────────────────── */
+const petImages = import.meta.glob('@/assets/pets/*.png', { eager: true, import: 'default' });
+
+function buildAssetMap() {
+  const map = {};
+  Object.entries(petImages).forEach(([path, src]) => {
+    const file = path.split('/').pop() || '';
+    const key = file.replace(/\.png$/i, '');
+    if (key) map[key] = src;
+  });
+  return map;
+}
+
+const ASSET_MAP = buildAssetMap();
+
+function normalizeSpeciesKey(input) {
+  if (!input) return 'apteryx';
+  let key = String(input).trim().toLowerCase();
+  key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
+  key = key.replace(/[/\\]/g, '');
+  key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
+  key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
+
+  const map = {
+    tao_kiwi: 'apteryx',
+    tao_penguin: 'penguin',
+    lemuera: 'lemuera',
+    apteryx: 'apteryx',
+    pyro: 'pyro',
+    manu_pukeko: 'pukeko',
+    manu_pateke: 'pateke',
+    kiwi: 'apteryx',
+    penguin: 'penguin',
+    pukeko: 'pukeko',
+    pateke: 'pateke',
+  };
+
+  return map[key] || key;
+}
+
+function normalizeStage(input) {
+  const raw = String(input || '').trim().toLowerCase();
+  if (raw === 'egg') return 'egg';
+  if (raw === 'kid') return 'kid';
+  if (raw === 'adult') return 'adult';
+  if (raw === 'egg_stage' || raw === 'stage0') return 'egg';
+  if (raw === 'stage1') return 'kid';
+  if (raw === 'stage2') return 'adult';
+  if (raw === 'eggs') return 'egg';
+  if (raw === 'kids') return 'kid';
+  if (raw === 'adults') return 'adult';
+  return 'kid';
+}
+
+function getImg(speciesId, stage) {
+  const normalizedSpecies = normalizeSpeciesKey(speciesId);
+  const normalizedStage = normalizeStage(stage);
+  const isEgg = normalizedStage === 'egg';
+
+  const baseKey = isEgg
+    ? 'egg'
+    : normalizedStage === 'kid'
+      ? `${normalizedSpecies}_1`
+      : `${normalizedSpecies}_2`;
+
+  if (ASSET_MAP[baseKey]) return ASSET_MAP[baseKey];
+
+  if (isEgg && ASSET_MAP.egg) return ASSET_MAP.egg;
+  if (normalizedStage === 'kid' && ASSET_MAP.apteryx_1) return ASSET_MAP.apteryx_1;
+  if (normalizedStage === 'adult' && ASSET_MAP.apteryx_2) return ASSET_MAP.apteryx_2;
+
+  const first = Object.values(ASSET_MAP)[0];
+  return first || null;
+}
+
 export default function EvolutionOverlay({
   currentSpecies,
   currentStage,
@@ -27,25 +102,25 @@ export default function EvolutionOverlay({
   const [chosenSpecies, setChosenSpecies] = useState(null);
   const [showSparkles, setShowSparkles] = useState(false);
 
-  /* What image to show for preview */
-  const petImages = import.meta.glob('@/assets/pets/*.png', { eager: true });
-  function getImg(speciesId, stage) {
-    const suffix = stage === 'egg' ? 'egg' : stage === 'kid' ? `${speciesId}_1` : `${speciesId}_2`;
-    const key = Object.keys(petImages).find((k) => k.includes(`/${suffix}.png`));
-    return key ? petImages[key].default : null;
-  }
+  const normalizedCurrentSpecies = useMemo(() => normalizeSpeciesKey(currentSpecies), [currentSpecies]);
+  const normalizedCurrentStage = useMemo(() => normalizeStage(currentStage), [currentStage]);
+  const normalizedTargetStage = useMemo(() => normalizeStage(targetStage), [targetStage]);
 
   const handleEvolve = (speciesId) => {
-    setChosenSpecies(speciesId);
+    const normalized = normalizeSpeciesKey(speciesId);
+    setChosenSpecies(normalized);
     setPhase('animating');
     setShowSparkles(true);
 
     // After animation, mark done
     setTimeout(() => {
       setPhase('done');
-      onEvolve(speciesId);
+      onEvolve(normalized);
     }, 2800);
   };
+
+  const currentImg = getImg(normalizedCurrentSpecies, normalizedCurrentStage);
+  const nextImg = getImg(chosenSpecies || normalizedCurrentSpecies, normalizedTargetStage);
 
   return (
     <MotionDiv
@@ -66,12 +141,12 @@ export default function EvolutionOverlay({
           >
             <h2 className="evolution-title">🎉 Your pet is ready to evolve!</h2>
             <p className="evolution-subtitle">
-              {currentStage === 'egg' ? 'A companion will be chosen for you!' : 'Your pet is growing stronger!'}
+              {normalizedCurrentStage === 'egg' ? 'A companion will be chosen for you!' : 'Your pet is growing stronger!'}
             </p>
 
             {/* Current pet */}
             <div className="evolution-current">
-              <img src={getImg(currentSpecies, currentStage)} alt="current" className="evolution-current-img" />
+              {currentImg && <img src={currentImg} alt="current" className="evolution-current-img" />}
               <span className="evolution-arrow">→</span>
               <div className="evolution-question">?</div>
             </div>
@@ -80,16 +155,16 @@ export default function EvolutionOverlay({
               <button
                 className="evolution-confirm-btn"
                 onClick={() => {
-                  const chosen = currentStage === 'egg'
+                  const chosen = normalizedCurrentStage === 'egg'
                     ? speciesList[Math.floor(Math.random() * speciesList.length)]?.id
-                    : currentSpecies;
-                  handleEvolve(chosen || currentSpecies);
+                    : normalizedCurrentSpecies;
+                  handleEvolve(chosen || normalizedCurrentSpecies);
                 }}
               >
                 Confirm evolve
               </button>
               <button className="evolution-decline-btn" onClick={onSkip}>
-                Not now. Stay as {currentStage}
+                Not now. Stay as {normalizedCurrentStage}
               </button>
             </div>
           </MotionDiv>
@@ -115,32 +190,36 @@ export default function EvolutionOverlay({
             />
 
             {/* Old form fading out */}
-            <motion.img
-              src={getImg(currentSpecies, currentStage)}
-              alt="old form"
-              className="evolution-morph-img"
-              initial={{ scale: 1, opacity: 1 }}
-              animate={{
-                scale: [1, 1.2, 0],
-                opacity: [1, 0.6, 0],
-                filter: ['brightness(1)', 'brightness(3)', 'brightness(5)'],
-              }}
-              transition={{ duration: 1.2, ease: 'easeIn' }}
-            />
+            {currentImg && (
+              <motion.img
+                src={currentImg}
+                alt="old form"
+                className="evolution-morph-img"
+                initial={{ scale: 1, opacity: 1 }}
+                animate={{
+                  scale: [1, 1.2, 0],
+                  opacity: [1, 0.6, 0],
+                  filter: ['brightness(1)', 'brightness(3)', 'brightness(5)'],
+                }}
+                transition={{ duration: 1.2, ease: 'easeIn' }}
+              />
+            )}
 
             {/* New form appearing */}
-            <motion.img
-              src={getImg(chosenSpecies, targetStage)}
-              alt="new form"
-              className="evolution-morph-img"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{
-                scale: [0, 1.3, 1],
-                opacity: [0, 0, 1],
-                filter: ['brightness(5)', 'brightness(2)', 'brightness(1)'],
-              }}
-              transition={{ duration: 1.5, delay: 1.2, ease: 'easeOut' }}
-            />
+            {nextImg && (
+              <motion.img
+                src={nextImg}
+                alt="new form"
+                className="evolution-morph-img"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{
+                  scale: [0, 1.3, 1],
+                  opacity: [0, 0, 1],
+                  filter: ['brightness(5)', 'brightness(2)', 'brightness(1)'],
+                }}
+                transition={{ duration: 1.5, delay: 1.2, ease: 'easeOut' }}
+              />
+            )}
 
             {/* Sparkle burst */}
             {showSparkles && (

@@ -7,11 +7,36 @@ import PetSprite from '../petAnimations/PetSprite';
 
 const MotionDiv = motion.div;
 
+function normalizeSpeciesKey(input) {
+    if (!input) return 'apteryx';
+    let key = String(input).trim().toLowerCase();
+    key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
+    key = key.replace(/[/\\]/g, '');
+    key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
+    key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
+
+    const map = {
+        tao_kiwi: 'apteryx',
+        tao_penguin: 'penguin',
+        lemuera: 'lemuera',
+        apteryx: 'apteryx',
+        pyro: 'pyro',
+        manu_pukeko: 'pukeko',
+        manu_pateke: 'pateke',
+        kiwi: 'apteryx',
+        penguin: 'penguin',
+        pukeko: 'pukeko',
+        pateke: 'pateke',
+    };
+
+    return map[key] || key;
+}
+
 export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete, activePet } = {}) {
     const { refreshCoins, updateCoins } = useApp();
     const onFocusRewardHandler = (coins) => {
-        if (typeof coins === 'number') updateCoins(coins);
-        else refreshCoins();
+        updateCoins(coins);
+        refreshCoins();
     };
     const {
         mode, timeLeft, isRunning, isPaused, petProgress,
@@ -22,45 +47,44 @@ export default function PomodoroModal({ onRequestClose, onRunningChange, onSessi
     } = usePomodoro({ onFocusReward: onFocusRewardHandler });
 
     const handleClose = async () => {
-        await reset();
-        if (typeof onRequestClose === 'function') onRequestClose();
+        if (isRunning) {
+            await reset();
+        }
+        onRequestClose?.();
     };
 
     useEffect(() => {
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prevOverflow; };
+        return () => {
+            if (isRunning) reset();
+        };
     }, []);
 
-	useEffect(() => {
-		if (typeof onRunningChange === 'function') {
-			onRunningChange(isRunning);
-		}
-	}, [isRunning, onRunningChange]);
+    useEffect(() => {
+        onRunningChange?.(isRunning);
+    }, [isRunning, onRunningChange]);
 
-	// Notify parent when a focus session completes so pet can celebrate
-	useEffect(() => {
-		if (showBubble && mode === 'focus' && typeof onSessionComplete === 'function') {
-			onSessionComplete();
-		}
-	}, [showBubble, mode, onSessionComplete]);
+    // Notify parent when a focus session completes so pet can celebrate
+    useEffect(() => {
+        if (showBubble && mode === 'focus') {
+            onSessionComplete?.();
+        }
+    }, [showBubble, mode, onSessionComplete]);
 
-
-	const modeKeys = ['focus', 'short', 'long'];
-	const modeLabels = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };
-	const tabLabels = {
-		focus: 'FOCUS',
-		short: <>SHORT<br />BREAK</>,
-		long: <>LONG<br />BREAK</>,
-	};
-   const modeText = {
+    const modeKeys = ['focus', 'short', 'long'];
+    const modeLabels = { focus: 'FOCUS', short: 'SHORT BREAK', long: 'LONG BREAK' };
+    const tabLabels = {
+        focus: 'FOCUS',
+        short: <>SHORT<br />BREAK</>,
+        long: <>LONG<br />BREAK</>,
+    };
+    const modeText = {
         focus: 'Focus',
         short: 'Short Break',
         long: 'Long Break',
     };
-	const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
+    const petLeft = `calc(${petProgress * 100}% - ${petProgress * 60}px)`;
 
-    const petSpecies = activePet ? (activePet.speciesCode || 'apteryx').toLowerCase() : 'apteryx';
+    const petSpecies = normalizeSpeciesKey(activePet?.speciesCode || activePet?.spriteKey || 'apteryx');
     const petStageRaw = activePet ? (activePet.stage || '').toUpperCase() : 'EGG';
     const petStage = petStageRaw === 'EGG' ? 'egg' : petStageRaw === 'KID' ? 'kid' : 'adult';
     const petAnimState = showBubble ? 'celebrating' : isRunning ? 'idle' : 'sleeping';
