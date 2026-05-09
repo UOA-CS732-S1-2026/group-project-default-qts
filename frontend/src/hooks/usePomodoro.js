@@ -64,12 +64,13 @@ export default function usePomodoro({ onFocusReward } = {}) {
                             : completeFocusSession(focusSessionId);
 
                         completeCall
-                            .then(() => {
+                            .then((res) => {
+                                const coins = res?.coins || res?.data?.coins;
                                 if (wasInterrupted) {
                                     setFocusMessage({ type: 'info', text: 'Session was interrupted. No reward issued.' });
                                 } else {
                                     setFocusMessage({ type: 'success', text: 'Focus completed! Reward issued.' });
-                                    onFocusReward && onFocusReward();
+                                    onFocusReward && onFocusReward(coins);
                                 }
                             })
                             .catch(() => {

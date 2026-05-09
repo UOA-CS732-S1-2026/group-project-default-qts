@@ -3,12 +3,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
 import ChangePasswordModal from './settingspanel/ChangePasswordModal';
 import ChangeUsernameModal from './settingspanel/ChangeUsernameModal';
-import ChangePetNameModal from './settingspanel/ChangePetNameModal';
 
 
 const SETTINGS = [
     { id: 'username', icon: '👤', label: 'Change Username', desc: 'Update your display name' },
-    { id: 'petname', icon: '🐾', label: 'Change Pet Name', desc: "Rename your buddy" },
     { id: 'password', icon: '🔒', label: 'Change Password', desc: 'Update your password' },
 ];
 
@@ -84,9 +82,6 @@ export default function SettingsPanel({ onClose }) {
             {/* Mini modals */}
             {activeModal === 'username' && (
                 <ChangeUsernameModal key="modal-username" onClose={() => setActiveModal(null)} />
-            )}
-            {activeModal === 'petname' && (
-                <ChangePetNameModal key="modal-petname" onClose={() => setActiveModal(null)} />
             )}
             {activeModal === 'password' && (
                 <ChangePasswordModal key="modal-password" onClose={() => setActiveModal(null)} />

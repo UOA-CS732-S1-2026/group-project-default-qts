@@ -13,7 +13,7 @@ function DashboardHeader({ coins = 0, activePet, onEvolveRequest }) {
                     <span className="evolve-tooltip">click to evolve</span>
                 </button>
             ) : (
-                <h1 className="app-title">GrowFriend</h1>
+                <h1 className="app-title">🐣 GrowFriend</h1>
             )}
             <nav className="dashboard-nav">
                 <div className="coin-display">
