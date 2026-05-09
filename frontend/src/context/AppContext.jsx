@@ -176,19 +176,6 @@ export function AppProvider({ children }) {
     }
   }
 
-  async function updatePetName(newPetName) {
-    try {
-      const res = await updateProfile({ petName: newPetName });
-      const nickname = res.data?.activePet?.nickname || newPetName;
-      const updatedUser = { ...(currentUser || {}), petName: nickname };
-      setCurrentUser(updatedUser);
-      localStorage.setItem('gf_current_user', JSON.stringify(updatedUser));
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err?.message || 'Failed to update pet name.' };
-    }
-  }
-
   async function updatePassword(currentPassword, newPassword) {
     try {
       await updatePasswordApi({ currentPassword, newPassword });
@@ -255,7 +242,6 @@ export function AppProvider({ children }) {
     findUserForReset,
     resetPassword,
     updateUsername,
-    updatePetName,
     updatePassword,
     updateAvatar,
     updateCoins,
