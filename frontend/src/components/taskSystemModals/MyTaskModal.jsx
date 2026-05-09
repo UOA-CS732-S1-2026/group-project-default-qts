@@ -383,7 +383,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     if (isLoadingQuest) return skeletonLoader;
 
     if (filteredQuest.length === 0) {
-      const hasFilter = questStatus !== null || questSource !== null || questCategory !== null;
+      const hasFilter = questStatus !== null || questSource !== null;
       if (hasFilter) {
         return (
           <div className="task-empty-state">
@@ -474,14 +474,28 @@ function MyTaskModal({ onNavigate, questTargetId }) {
       {showHelp && (
         <div className="task-modal-help-overlay" onClick={() => setShowHelp(false)}>
           <div className="task-modal-help-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="task-modal-help-title">How My Tasks Works</h3>
-            <ul className="task-modal-help-list">
-              <li>Create personal tasks to track your goals</li>
-              <li>Click Edit mode then hover a card to edit it</li>
-              <li>Click Delete mode then hover a card to delete it</li>
-              <li>Filter by status to find specific tasks</li>
-              <li>Sort tasks by reward, time limit, or expiry date</li>
-            </ul>
+            {activeSubTab === 'created' ? (
+              <>
+                <h3 className="task-modal-help-title">How Created Tasks Works</h3>
+                <ul className="task-modal-help-list">
+                  <li>Create P2P tasks and assign them to other players</li>
+                  <li>Click Edit mode then hover a card to edit it</li>
+                  <li>Click Delete mode then hover a card to delete it</li>
+                  <li>Confirm or reject submissions from your assignees</li>
+                  <li>Raise a dispute if you disagree with a submission</li>
+                </ul>
+              </>
+            ) : (
+              <>
+                <h3 className="task-modal-help-title">How Quest Works</h3>
+                <ul className="task-modal-help-list">
+                  <li>View all tasks you have accepted from P2P or System</li>
+                  <li>Submit a task once you have completed it</li>
+                  <li>Raise a dispute if your submission was rejected unfairly</li>
+                  <li>Filter by status or source to find specific quests</li>
+                </ul>
+              </>
+            )}
             <button className="task-modal-help-close" onClick={() => setShowHelp(false)}>
               Close
             </button>

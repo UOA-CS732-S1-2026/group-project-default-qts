@@ -3,7 +3,6 @@ import { useState, useMemo } from 'react';
 function useTaskManager(tasks) {
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
 
@@ -12,10 +11,6 @@ function useTaskManager(tasks) {
 
     if (filterStatus !== 'all') {
       result = result.filter((t) => t.status === filterStatus);
-    }
-
-    if (categoryFilter) {
-      result = result.filter((t) => t.category === categoryFilter);
     }
 
     switch (sortBy) {
@@ -29,7 +24,7 @@ function useTaskManager(tasks) {
     }
 
     return result;
-  }, [tasks, filterStatus, sortBy, categoryFilter]);
+  }, [tasks, filterStatus, sortBy]);
 
   const toggleEditMode = () => { setIsEditMode((prev) => !prev); setIsDeleteMode(false); };
   const toggleDeleteMode = () => { setIsDeleteMode((prev) => !prev); setIsEditMode(false); };
@@ -39,7 +34,6 @@ function useTaskManager(tasks) {
     filteredTasks,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,
-    categoryFilter, setCategoryFilter,
     isEditMode, toggleEditMode,
     isDeleteMode, toggleDeleteMode,
     resetModes,

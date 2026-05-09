@@ -22,28 +22,17 @@ export const getTasks = (params = {}) => {
 export const getTask = (id) =>
   api.get(`/tasks/${id}`);
 
-/** GET /api/tasks/:id/applications  (task creator / admin only) */
-export const getApplications = (id) =>
-  api.get(`/tasks/${id}/applications`);
-
 // ─── Write ───────────────────────────────────────────────────────────────────
 
 /** POST /api/tasks
- * body must be already mapped via adminCreateToBackend() or userCreateToBackend()
+ * body must be already mapped via userCreateToBackend()
  */
 export const createTask = (body) =>
   api.post('/tasks', body);
 
-/** POST /api/tasks/:id/apply
- * - SYSTEM (requiresApplication=false) → direct assignment
- * - SYSTEM (requiresApplication=true) / P2P → creates application (PENDING)
- */
+/** POST /api/tasks/:id/apply  — direct assignment */
 export const applyForTask = (id) =>
   api.post(`/tasks/${id}/apply`);
-
-/** DELETE /api/tasks/:id/apply  — withdraw a PENDING application */
-export const withdrawApplication = (id) =>
-  api.delete(`/tasks/${id}/apply`);
 
 /** DELETE /api/tasks/:id/assignment  — player withdraws from a SYSTEM task assignment */
 export const withdrawAssignment = (id) =>
@@ -52,12 +41,6 @@ export const withdrawAssignment = (id) =>
 /** POST /api/tasks/:id/abandon  — P2P assignee abandons an active task, reverts task to OPEN */
 export const abandonP2PTask = (id) =>
   api.post(`/tasks/${id}/abandon`);
-
-/** PATCH /api/tasks/:id/applications/:appId/decide
- * @param {string} action - 'ACCEPT' | 'REJECT'
- */
-export const decideApplication = (id, appId, action) =>
-  api.patch(`/tasks/${id}/applications/${appId}/decide`, { action });
 
 /** POST /api/tasks/:id/submit
  * - PERSONAL → auto-completes

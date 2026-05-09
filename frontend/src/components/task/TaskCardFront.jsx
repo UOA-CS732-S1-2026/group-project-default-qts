@@ -263,21 +263,26 @@ function TaskCardFront({
             renderCreatorButtons()
           ) : (
             <>
-              {!hideAccept && isAcceptable && (
-                <button
-                  className={`task-card-btn ${isAccepted ? 'task-card-btn--accepted' : 'task-card-btn--accept'}`}
-                  disabled={isAccepted || task.status !== 'open' || isOwnTask}
-                  style={(isAccepted || task.status !== 'open' || isOwnTask) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-                  title={
-                    isOwnTask ? "You can't accept your own task" :
-                    task.status !== 'open' ? 'This task has already been taken' :
-                    undefined
-                  }
-                  onClick={() => !isAccepted && task.status === 'open' && !isOwnTask && setShowAcceptConfirm(true)}
-                >
-                  {isAccepted ? 'Accepted!' : 'Accept'}
-                </button>
-              )}
+              {!hideAccept && isAcceptable && (() => {
+                const disabledMsg =
+                  isOwnTask ? "You can't accept your own task" :
+                  task.isAcceptedByMe && task.type === 'community' ? "You've already completed this task" :
+                  isAccepted ? "You've already accepted this task" :
+                  task.status !== 'open' ? 'This task has already been taken' :
+                  null;
+                return (
+                  <div className={disabledMsg ? 'task-card-btn-tooltip-wrapper' : undefined} data-tooltip={disabledMsg ?? undefined}>
+                    <button
+                      className={`task-card-btn ${isAccepted ? 'task-card-btn--accepted' : 'task-card-btn--accept'}`}
+                      disabled={isAccepted || task.status !== 'open' || isOwnTask}
+                      style={(isAccepted || task.status !== 'open' || isOwnTask) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                      onClick={() => !isAccepted && task.status === 'open' && !isOwnTask && setShowAcceptConfirm(true)}
+                    >
+                      {isAccepted ? 'Accepted!' : 'Accept'}
+                    </button>
+                  </div>
+                );
+              })()}
               {isAssigneeActive && (
                 <button
                   className="task-card-btn task-card-btn--cancel"
