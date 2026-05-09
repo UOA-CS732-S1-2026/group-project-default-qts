@@ -11,6 +11,24 @@ import {
   normalizePetCollection
 } from '../../utils/inventoryApi';
 
+function getPetSpecies(pet) {
+  if (pet?.spriteKey) return pet.spriteKey;
+
+  const code = String(pet?.speciesCode || '').toUpperCase();
+
+  const speciesMap = {
+    TAO_KIWI: 'apteryx',
+    TAO_PENGUIN: 'penguin',
+    LEMUERA: 'lemuera',
+    APTERYX: 'apteryx',
+    PYRO: 'pyro',
+    MANU_PUKEKO: 'pukeko',
+    MANU_PATEKE: 'pateke'
+  };
+
+  return speciesMap[code] || 'apteryx';
+}
+
 function getItemImage(item) {
   const code = item?.itemCode || item?.code;
 
@@ -38,7 +56,7 @@ function formatPetType(speciesCode, speciesName) {
 }
 
 function InventoryModal({ onClose }) {
-  const MAX_PET_SLOTS = 9;
+  const MIN_PET_SLOTS = 9;
   const CLOSE_ANIM_MS = 320;
   const [closing, setClosing] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -149,8 +167,8 @@ function InventoryModal({ onClose }) {
   };
 
   const inventoryListItems = inventoryItems.filter((item) => item.type === 'FOOD');
-  const filledPetSlots = petCollection.slice(0, MAX_PET_SLOTS);
-  const emptyPetSlots = Math.max(0, MAX_PET_SLOTS - filledPetSlots.length);
+  const filledPetSlots = petCollection;
+  const emptyPetSlots = Math.max(0, MIN_PET_SLOTS - filledPetSlots.length);
 
   return (
     <div className="inventory-overlay" onClick={handleClose}>
@@ -194,47 +212,43 @@ function InventoryModal({ onClose }) {
                 </div>
               )}
             </section>
-
+              
             <section className="pet-collection-section">
               <h4 className="section-title">Pet Collection</h4>
-              <div className="pets-grid">
-                {filledPetSlots.map((pet) => (
-                  <div
-                    key={pet.id}
-                    className="pet-slot"
-                    onDoubleClick={() => handlePetDoubleClick(pet)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handlePetDoubleClick(pet);
-                      }
-                    }}
-                    aria-label={`Inactive pet ${pet.nickname || pet.speciesName || 'pet'}. Double click to switch active pet.`}
-                  >
-                    <PetSprite
-                      species={(pet.speciesCode || 'apteryx').toLowerCase()}
-                      stage={getPetStage(pet.stage)}
-                      animState="idle"
-                      size={64}
-                      showShadow={false}
-                    />
-                    <div className="pet-slot-tooltip" role="tooltip">
-                      <div><strong>Nickname:</strong> {pet.nickname || 'Buddy'}</div>
-                      <div><strong>Level:</strong> {Number(pet.level || 0)}</div>
-                      {getPetStage(pet.stage) !== 'egg' && (
-                        <div><strong>Type:</strong> {formatPetType(pet.speciesCode, pet.speciesName)}</div>
-                      )}
-                    </div>
+                <div className="pets-scroll">
+                  <div className="pets-grid">
+                    {filledPetSlots.map((pet) => (
+                      <div
+                        key={pet.id}
+                        className="pet-slot"
+                        onDoubleClick={() => handlePetDoubleClick(pet)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handlePetDoubleClick(pet);
+                          }
+                        }}
+                        aria-label={`Inactive pet ${pet.nickname || pet.speciesName || 'pet'}. Double click to switch active pet.`}
+                      >
+                        <PetSprite
+                          species={getPetSpecies(pet)}
+                          stage={getPetStage(pet.stage)}
+                          animState="idle"
+                          size={64}
+                          showShadow={false}
+                        />
+                      </div>
+                    ))}
+
+                    {Array.from({ length: emptyPetSlots }).map((_, i) => (
+                      <div key={i} className="pet-slot">
+                        <div className="pet-slot-img" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {Array.from({ length: emptyPetSlots }).map((_, i) => (
-                  <div key={i} className="pet-slot">
-                    <div className="pet-slot-img" />
-                  </div>
-                ))}
-              </div>
+                </div>
             </section>
           </div>
         </div>

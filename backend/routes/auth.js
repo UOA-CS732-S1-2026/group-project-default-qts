@@ -102,7 +102,7 @@ router.post('/register', async (req, res) => {
           [{
             userId: createdUser._id,
             speciesId: defaultSpecies._id,
-            nickname: '',
+            nickname: "AGoodEgg",
             stage: 'EGG',
             level: 1,
             growthPoints: 0,
