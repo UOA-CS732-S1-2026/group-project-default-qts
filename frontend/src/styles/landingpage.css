@@ -242,3 +242,42 @@
         padding: 40px 24px;
     }
 }
+
+/* ---- Mobile Phone (max 480px) — login form only ---- */
+@media (max-width: 480px) {
+    .landing-left {
+        display: none;
+    }
+
+    .landing-right {
+        min-height: 100vh;
+        padding: 48px 20px;
+        justify-content: center;
+    }
+}
+
+/* ---- iPhone SE (max 375px) ---- */
+@media (max-width: 375px) {
+    .landing-right {
+        padding: 40px 16px;
+    }
+
+    .welcome-title {
+        font-size: 1.4rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 0.85rem;
+    }
+}
+
+/* ---- Minimum safe 320px ---- */
+@media (max-width: 320px) {
+    .landing-right {
+        padding: 32px 12px;
+    }
+
+    .welcome-title {
+        font-size: 1.2rem;
+    }
+}
