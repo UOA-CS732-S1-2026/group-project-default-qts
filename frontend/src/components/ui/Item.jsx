@@ -10,7 +10,10 @@ function Item({
     onBuy,
     onDoubleClick,
     disabled = false,
-    buyLabel = 'Buy'
+    buyLabel = 'Buy',
+    secondaryLabel,
+    onSecondary,
+    secondaryDisabled = false
 }) {
     const FOOD_TOOLTIP_META = {
         SNACK: {
@@ -69,13 +72,27 @@ function Item({
             </div>
             <h4 className="item-name">{name}</h4>
             <div className="item-cost">{cost} coins</div>
-            <button
-                className="item-buy"
-                onClick={onBuy}
-                disabled={disabled}
-            >
-                {buyLabel}
-            </button>
+            
+            {/* container for side-by-side buttons */}
+            <div className="item-actions">
+                <button
+                    className="item-buy"
+                    onClick={onBuy}
+                    disabled={disabled}
+                >
+                    {buyLabel}
+                </button>
+
+                {secondaryLabel && (
+                    <button
+                        className="item-buy item-buy--secondary"
+                        onClick={onSecondary}
+                        disabled={secondaryDisabled || disabled}
+                    >
+                        {secondaryLabel}
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
