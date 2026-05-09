@@ -7,6 +7,24 @@ const CoinTransaction = require('../models/CoinTransaction');
 const UserPet = require('../models/UserPet');
 const PetSpecies = require('../models/PetSpecies');
 
+async function getEggUnlockState(userId, session = null) {
+  let query = UserPet.findOne({
+    userId,
+    stage: 'ADULT',
+    level: { $gte: 10 }
+  }).select('_id stage level status createdAt');
+
+  if (session) query = query.session(session);
+
+  const maxPet = await query;
+
+  return {
+    eggUnlocked: !!maxPet,
+    eggLockedReason: maxPet ? null : 'NO_MAX_LEVEL_PET',
+    firstPet: maxPet
+  };
+}
+
 const getStoreItems = async (req, res) => {
   try {
     const userId = req.userId;
@@ -16,31 +34,15 @@ const getStoreItems = async (req, res) => {
       .sort({ price: 1 })
       .lean();
 
-    let eggUnlocked = false;
-    let eggLockedReason = 'ACTIVE_PET_NOT_MAX';
+  let eggUnlocked = false;
+  let eggLockedReason = 'FIRST_PET_NOT_MAX';
 
-    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-      const user = await User.findById(userId);
+  if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+    const unlockState = await getEggUnlockState(userId);
 
-      let activePet = null;
-
-      if (user?.activePetId) {
-        activePet = await UserPet.findById(user.activePetId);
-      }
-
-      if (!activePet) {
-        activePet = await UserPet.findOne({
-          userId,
-          status: 'ACTIVE'
-        });
-      }
-
-      eggUnlocked =
-        activePet?.stage === 'ADULT' &&
-        activePet?.level === 10;
-
-      eggLockedReason = eggUnlocked ? null : 'ACTIVE_PET_NOT_MAX';
-    }
+    eggUnlocked = unlockState.eggUnlocked;
+    eggLockedReason = unlockState.eggLockedReason;
+  }
 
     const itemsWithLock = items.map((item) => {
       if (item.code !== 'RANDOM_EGG') {
@@ -79,6 +81,7 @@ const getStoreItems = async (req, res) => {
       }
     });
   }
+  console.log('[getStoreItems] req.userId:', req.userId);
 };
 
 const purchaseStoreItem = async (req, res) => {
@@ -172,38 +175,24 @@ const purchaseStoreItem = async (req, res) => {
       };
     }
 
-    // RANDOM_EGG purchase requires max active pet
+    // RANDOM_EGG purchase requires the first pet to reach max level,
+    // no matter whether that pet is ACTIVE or in INVENTORY.
     if (item.code === 'RANDOM_EGG') {
-      let activePet = null;
+      const unlockState = await getEggUnlockState(user._id, session);
 
-      if (user.activePetId) {
-        activePet = await UserPet.findById(user.activePetId).session(session);
-      }
-
-      if (!activePet) {
-        activePet = await UserPet.findOne({
-          userId: user._id,
-          status: 'ACTIVE'
-        }).session(session);
-      }
-
-      if (!activePet) {
+      if (!unlockState.firstPet) {
         throw {
           status: 400,
-          code: 'ACTIVE_PET_NOT_FOUND',
-          message: 'Active pet is required before purchasing a random egg'
+          code: 'FIRST_PET_NOT_FOUND',
+          message: 'First pet is required before purchasing a random egg'
         };
       }
 
-      const eggUnlocked =
-        activePet.stage === 'ADULT' &&
-        activePet.level === 10;
-
-      if (!eggUnlocked) {
+      if (!unlockState.eggUnlocked) {
         throw {
           status: 400,
           code: 'STORE_ITEM_LOCKED',
-          message: 'Random Egg is locked until the active pet reaches max state'
+          message: 'Random Egg is locked until the first pet reaches max level'
         };
       }
     }
@@ -293,10 +282,10 @@ const purchaseStoreItem = async (req, res) => {
 
       const createdPets = await UserPet.create(
         [
-          {
+          { 
             userId: user._id,
             speciesId: randomSpecies._id,
-            nickname: randomSpecies.displayName,
+            nickname: "AGoodPet",
             stage: 'EGG',
             level: 1,
             growthPoints: 0,
