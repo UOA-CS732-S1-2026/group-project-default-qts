@@ -71,6 +71,7 @@
   height: 72px;
   justify-content: center;
   position: relative;
+  cursor: pointer;
 }
 
 .item-card--inventory .item-image-wrap {
