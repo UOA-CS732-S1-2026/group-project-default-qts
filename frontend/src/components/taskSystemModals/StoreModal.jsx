@@ -28,7 +28,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
     const [closing, setClosing] = useState(false);
     const [storeItems, setStoreItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [buyingCode, setBuyingCode] = useState(null);
+    const [buyingKey, setBuyingKey] = useState(null); // Tracks "CODE:QTY"
     const [successBubble, setSuccessBubble] = useState('');
     const [error, setError] = useState('');
     const timeoutRef = useRef(null);
@@ -54,9 +54,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
             setError('');
 
             const response = await getStoreItems(token);
-            const items = normalizeStoreItems(response);
-
-            setStoreItems(items);
+            setStoreItems(normalizeStoreItems(response));
         } catch (err) {
             setError(err.message || 'Failed to load store items');
         } finally {
@@ -64,31 +62,25 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
         }
     }
 
-    async function handleBuy(item) {
+    async function handleBuy(item, quantity = 1) {
         const token = localStorage.getItem('token');
-
-        if (!token) {
-            return;
-        }
+        if (!token) return;
 
         try {
-            setBuyingCode(item.code);
+            const key = `${item.code}:${quantity}`;
+            setBuyingKey(key);
             setSuccessBubble('');
             setError('');
 
-            const response = await purchaseItem(item.code, 1, token);
+            const response = await purchaseItem(item.code, quantity, token);
+            showSuccessBubble(response?.message || `${item.name} x${quantity} purchased successfully`);
 
-            showSuccessBubble(response?.message || `${item.name} purchased successfully`);
-
-            if (onPurchaseSuccess) {
-                await onPurchaseSuccess(response);
-            }
-
+            if (onPurchaseSuccess) await onPurchaseSuccess(response);
             await loadStoreItems();
         } catch (err) {
             setError(err.message || 'Purchase failed');
         } finally {
-            setBuyingCode(null);
+            setBuyingKey(null);
         }
     }
 
@@ -103,35 +95,18 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
 
     useEffect(() => {
         loadStoreItems();
-
-        function onKey(e) {
-            if (e.key === 'Escape') handleClose();
-        }
-
+        function onKey(e) { if (e.key === 'Escape') handleClose(); }
         window.addEventListener('keydown', onKey);
-
         return () => {
             window.removeEventListener('keydown', onKey);
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-            if (bubbleTimerRef.current) {
-                clearTimeout(bubbleTimerRef.current);
-                bubbleTimerRef.current = null;
-            }
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (bubbleTimerRef.current) clearTimeout(bubbleTimerRef.current);
         };
     }, []);
 
     return (
         <div className="store-overlay" onClick={handleClose}>
-            <aside
-                className={`store-panel ${closing ? 'store--closing' : 'store--open'}`}
-                onClick={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Store"
-            >
+            <aside className={`store-panel ${closing ? 'store--closing' : 'store--open'}`} onClick={(e) => e.stopPropagation()}>
                 <div className="store-modal">
                     {successBubble && (
                         <div className="store-bubble-overlay">
@@ -140,9 +115,7 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                     )}
                     <div className="store-header">
                         <h3 className="store-title">Store</h3>
-                        <button className="modal-close" aria-label="Close" onClick={handleClose}>
-                            ✕
-                        </button>
+                        <button className="modal-close" onClick={handleClose}>✕</button>
                     </div>
 
                     <p className="store-desc">Spend coins to buy items for your pet.</p>
@@ -153,16 +126,11 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                     ) : storeItems.length === 0 ? (
                         <p>No store items available.</p>
                     ) : (
-                        // Need to implement notification buying items in store
                         <div className="store-grid">
                             {storeItems.map((item) => {
-                                const disabled = item.locked || buyingCode === item.code;
-                                const buyLabel = item.locked
-                                    ? 'Locked'
-                                    : buyingCode === item.code
-                                        ? 'Buying...'
-                                        : 'Buy';
-
+                                const isEgg = item.code === 'RANDOM_EGG';
+                                const disabled = item.locked || !!buyingKey;
+                                
                                 return (
                                     <Item
                                         key={item.id || item._id || item.code}
@@ -172,8 +140,10 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
                                         cost={item.price}
                                         mode="store"
                                         disabled={disabled}
-                                        buyLabel={buyLabel}
-                                        onBuy={() => handleBuy(item)}
+                                        buyLabel={buyingKey === `${item.code}:1` ? '...' : 'Buy'}
+                                        onBuy={() => handleBuy(item, 1)}
+                                        secondaryLabel={isEgg ? null : (buyingKey === `${item.code}:10` ? '...' : 'Buy x10')}
+                                        onSecondary={() => handleBuy(item, 10)}
                                     />
                                 );
                             })}

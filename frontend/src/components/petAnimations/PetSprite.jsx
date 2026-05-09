@@ -1,29 +1,93 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './PetSprite.css';
 
 /* ── Asset map ─────────────────────────────────────── */
-const petImages = import.meta.glob('@/assets/pets/*.png', { eager: true });
+const petImages = import.meta.glob('@/assets/pets/*.png', { eager: true, import: 'default' });
+
+function buildAssetMap() {
+  const map = {};
+  Object.entries(petImages).forEach(([path, src]) => {
+    const file = path.split('/').pop() || '';
+    const key = file.replace(/\.png$/i, '');
+    if (key) map[key] = src;
+  });
+  return map;
+}
+
+const ASSET_MAP = buildAssetMap();
+
+function normalizeSpeciesKey(input) {
+  if (!input) return 'apteryx';
+  let key = String(input).trim().toLowerCase();
+  key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
+  key = key.replace(/[/\\]/g, '');
+  key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
+  key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
+
+  const map = {
+    tao_kiwi: 'apteryx',
+    tao_penguin: 'penguin',
+    lemuera: 'lemuera',
+    apteryx: 'apteryx',
+    pyro: 'pyro',
+    manu_pukeko: 'pukeko',
+    manu_pateke: 'pateke',
+    kiwi: 'apteryx',
+    penguin: 'penguin',
+    pukeko: 'pukeko',
+    pateke: 'pateke',
+  };
+
+  return map[key] || key;
+}
+
+function normalizeStage(input) {
+  const raw = String(input || '').trim().toLowerCase();
+  if (raw === 'egg') return 'egg';
+  if (raw === 'kid') return 'kid';
+  if (raw === 'adult') return 'adult';
+  if (raw === 'egg_stage' || raw === 'stage0') return 'egg';
+  if (raw === 'stage1') return 'kid';
+  if (raw === 'stage2') return 'adult';
+  if (raw === 'eggs') return 'egg';
+  if (raw === 'kids') return 'kid';
+  if (raw === 'adults') return 'adult';
+  return 'kid';
+}
 
 function getPetImage(species, stage, animState) {
-  let suffix = stage === 'egg' ? 'egg' : stage === 'kid' ? `${species}_1` : `${species}_2`;
-  
-  // Check for specific state images
-  if (animState === 'sad') {
-    suffix += '_sad';
-  } else if (animState === 'sleeping') {
-    suffix += '_sleeping';
+  const normalizedSpecies = normalizeSpeciesKey(species || 'apteryx');
+  const normalizedStage = normalizeStage(stage);
+  const isEgg = normalizedStage === 'egg';
+  const baseKey = isEgg
+    ? 'egg'
+    : normalizedStage === 'kid'
+      ? `${normalizedSpecies}_1`
+      : `${normalizedSpecies}_2`;
+
+  const animSuffix =
+    animState === 'sad' ? '_sad' :
+    animState === 'sleeping' ? '_sleeping' :
+    '';
+
+  const animatedKey = `${baseKey}${animSuffix}`;
+
+  if (ASSET_MAP[animatedKey]) return ASSET_MAP[animatedKey];
+
+  if (animState === 'sleeping' && !isEgg) {
+    const fallbackSleepKey = normalizedStage === 'kid' ? 'apteryx_1_sleeping' : 'apteryx_2_sleeping';
+    if (ASSET_MAP[fallbackSleepKey]) return ASSET_MAP[fallbackSleepKey];
   }
 
-  let key = Object.keys(petImages).find((k) => k.includes(`/${suffix}.png`));
-  
-  // Fallback to base image if state image not found
-  if (!key) {
-    suffix = stage === 'egg' ? 'egg' : stage === 'kid' ? `${species}_1` : `${species}_2`;
-    key = Object.keys(petImages).find((k) => k.includes(`/${suffix}.png`));
-  }
-  
-  return key ? petImages[key].default : null;
+  if (ASSET_MAP[baseKey]) return ASSET_MAP[baseKey];
+
+  if (isEgg && ASSET_MAP.egg) return ASSET_MAP.egg;
+  if (normalizedStage === 'kid' && ASSET_MAP.apteryx_1) return ASSET_MAP.apteryx_1;
+  if (normalizedStage === 'adult' && ASSET_MAP.apteryx_2) return ASSET_MAP.apteryx_2;
+
+  const first = Object.values(ASSET_MAP)[0];
+  return first || null;
 }
 
 /* ── Component ─────────────────────────────────────── */
@@ -43,11 +107,17 @@ export default function PetSprite({
     setInternalAnim(animState);
   }, [animState]);
 
-  const imgSrc = getPetImage(species, stage, internalAnim);
+  const normalizedStage = useMemo(() => normalizeStage(stage), [stage]);
+  const imgSrc = useMemo(
+    () => getPetImage(species, normalizedStage, internalAnim),
+    [species, normalizedStage, internalAnim]
+  );
 
   const handleClick = useCallback(() => {
     if (onClick) onClick();
   }, [onClick]);
+
+  if (!imgSrc) return null;
 
   return (
     <div
@@ -68,15 +138,15 @@ export default function PetSprite({
       )}
 
       {/* Egg shimmer overlay */}
-      {stage === 'egg' && internalAnim === 'idle' && <div className="egg-shimmer" />}
+      {normalizedStage === 'egg' && internalAnim === 'idle' && <div className="egg-shimmer" />}
 
       {/* Pet Image with CSS animation class */}
       <AnimatePresence mode="wait">
         <motion.img
-          key={`${species}-${stage}-${internalAnim}`}
+          key={`${species}-${normalizedStage}-${internalAnim}`}
           src={imgSrc}
-          alt={`${species} ${stage}`}
-          className={`pet-sprite-img stage-${stage} anim-${internalAnim}`}
+          alt={`${species} ${normalizedStage}`}
+          className={`pet-sprite-img stage-${normalizedStage} anim-${internalAnim}`}
           initial={false}
           draggable={false}
         />
