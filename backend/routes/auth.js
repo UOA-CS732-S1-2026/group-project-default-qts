@@ -72,9 +72,27 @@ router.post('/register', async (req, res) => {
         );
         createdUser = users[0];
 
-        const defaultSpecies =
-          await PetSpecies.findOne({ code: 'TAO_KIWI' }).session(session) ||
-          await PetSpecies.findOne({}).sort({ createdAt: 1 }).session(session);
+        const starterSpecies = await PetSpecies.find({
+          enabled: true,
+          starterEligible: true,
+          spriteKey: { $nin: [null, ''] }
+        }).session(session);
+
+        let defaultSpecies = null;
+
+        if (starterSpecies.length > 0) {
+          defaultSpecies = starterSpecies[Math.floor(Math.random() * starterSpecies.length)];
+        } else {
+          // fallback for safety
+          defaultSpecies =
+            await PetSpecies.findOne({ code: 'TAO_KIWI' }).session(session) ||
+            await PetSpecies.findOne({}).sort({ createdAt: 1 }).session(session);
+        }
+
+        if (!defaultSpecies) {
+          throw new Error('NO_PET_SPECIES');
+        }
+
 
         if (!defaultSpecies) {
           throw new Error('NO_PET_SPECIES');
@@ -89,6 +107,7 @@ router.post('/register', async (req, res) => {
             level: 1,
             growthPoints: 0,
             evolutionReady: false,
+            isGrowthFrozen: false,
             status: 'ACTIVE'
           }],
           { session }
