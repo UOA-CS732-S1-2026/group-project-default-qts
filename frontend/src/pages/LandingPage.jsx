@@ -2,7 +2,7 @@
 //   Landing Page – route: /landingpage
 // ============================================================
 import '../styles/landingpage.css';
-import dashboardPreview from '../assets/dashboard_preview_placeholder.png';
+import dashboardPreview from '../assets/dashboard_preview_placeholder.gif';
 import LoginForm from '../components/landingpage/LoginForm';
 
 export default function LandingPage() {
@@ -12,7 +12,7 @@ export default function LandingPage() {
       <div className="landing-left">
         {/* Logo */}
         <div className="landing-logo">
-          <span className="landing-logo-title">🐣 GROW FRIEND</span>
+          <span className="landing-logo-title">🐣 GROWFRIEND</span>
           <span className="landing-logo-sub">grow together!</span>
         </div>
 
