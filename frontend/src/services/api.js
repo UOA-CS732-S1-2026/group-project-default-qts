@@ -21,7 +21,7 @@ api.interceptors.response.use(
     // If there is no token the 401 is simply propagated to the caller.
     if (error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = '/landingpage';
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
