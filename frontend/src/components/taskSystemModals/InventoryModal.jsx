@@ -48,6 +48,13 @@ function getPetStage(stage) {
   return 'egg';
 }
 
+function formatPetType(speciesCode, speciesName) {
+  const fallback = String(speciesName || '').trim();
+  const raw = String(speciesCode || '').toLowerCase();
+  if (!raw) return fallback || 'Unknown';
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 function InventoryModal({ onClose }) {
   const MIN_PET_SLOTS = 9;
   const CLOSE_ANIM_MS = 320;
@@ -123,7 +130,6 @@ function InventoryModal({ onClose }) {
     if (confirmItem) {
       window.dispatchEvent(new CustomEvent('gf-feed-pet', { detail: { itemCode: confirmItem.itemCode } }));
       setConfirmItem(null);
-      handleClose();
     }
   };
 

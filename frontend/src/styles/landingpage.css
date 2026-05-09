@@ -43,16 +43,20 @@
     align-items: center;
     justify-content: center;
     padding: 32px 0;
+    width: 100%;
 }
+
 
 .landing-preview-img {
     width: 100%;
-    max-width: 480px;
+    /* max-width: 800px; */
+    max-width: none;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     object-fit: cover;
-    aspect-ratio: 16 / 10;
+    /* aspect-ratio: 16 / 10; */
+    aspect-ratio: auto;
 }
 
 .landing-tagline {
@@ -123,7 +127,7 @@
 }
 
 .login-form .gf-input.error {
-    border-color: #ff8a80;
+    border-color: var(--text-error);
     box-shadow: 0 0 0 3px rgba(255, 138, 128, 0.2);
 }
 
@@ -196,7 +200,7 @@
 
 .login-error {
     font-size: 12px;
-    color: #ff8a80;
+    color: var(--text-error);
     font-family: var(--font-code);
     text-align: center;
 }
@@ -225,7 +229,74 @@
     opacity: 0.8;
 }
 
+/* ---- Desktop large (min 1440px) — monitor umum ---- */
+@media (min-width: 1440px) {
+    .landing-left {
+        padding: 48px 64px;
+    }
+
+    .landing-logo-title {
+        font-size: 2.4rem;
+    }
+
+    .landing-preview-img {
+        max-width: 600px;
+    }
+
+    .landing-tagline {
+        font-size: 1.15rem;
+    }
+
+    .landing-right {
+        width: 500px;
+        padding: 56px 48px;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+    }
+}
+
+/* ---- Desktop Full HD (min 1920px) ---- */
+@media (min-width: 1920px) {
+    .landing-left {
+        padding: 56px 80px;
+    }
+
+    .landing-logo-title {
+        font-size: 2.8rem;
+    }
+
+    .landing-preview-img {
+        max-width: 720px;
+    }
+
+    .landing-tagline {
+        font-size: 1.25rem;
+    }
+
+    .landing-right {
+        width: 560px;
+        padding: 64px 56px;
+    }
+
+    .welcome-title {
+        font-size: 2.2rem;
+    }
+}
+
 /* ---- Responsive ---- */
+
+/* ---- Tablet (max 1024px) — iPad Pro / landscape ---- */
+@media (max-width: 1024px) {
+    .landing-right {
+        width: 380px;
+        min-width: 320px;
+        padding: 40px 32px;
+    }
+}
+
+/* ---- Tablet (max 860px) — iPad portrait / landscape phone ---- */
 @media (max-width: 860px) {
     .landing-page {
         flex-direction: column;
@@ -236,9 +307,73 @@
         min-height: auto;
     }
 
+    .landing-preview-img {
+        max-width: 320px;
+    }
+
     .landing-right {
         width: 100%;
         min-width: unset;
-        padding: 40px 24px;
+        padding: 40px 32px;
+    }
+}
+
+/* ---- Tablet kecil (481–767px) — preview disembunyikan ---- */
+@media (max-width: 767px) {
+    .landing-preview {
+        display: none;
+    }
+
+    .landing-left {
+        padding: 24px 20px;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .landing-tagline {
+        font-size: 0.95rem;
+    }
+
+    .landing-right {
+        padding: 32px 24px;
+    }
+}
+
+/* ---- Mobile Phone (max 480px) — login form only ---- */
+@media (max-width: 480px) {
+    .landing-left {
+        display: none;
+    }
+
+    .landing-right {
+        min-height: 100vh;
+        padding: 48px 20px;
+        justify-content: center;
+    }
+}
+
+/* ---- iPhone SE (max 375px) ---- */
+@media (max-width: 375px) {
+    .landing-right {
+        padding: 40px 16px;
+    }
+
+    .welcome-title {
+        font-size: 1.4rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 0.85rem;
+    }
+}
+
+/* ---- Minimum safe 320px ---- */
+@media (max-width: 320px) {
+    .landing-right {
+        padding: 32px 12px;
+    }
+
+    .welcome-title {
+        font-size: 1.2rem;
     }
 }

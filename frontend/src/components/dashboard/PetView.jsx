@@ -42,7 +42,7 @@ function getPetStage(pet) {
 }
 
 // One-shot animations that should not be interrupted
-const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving']);
+const ONE_SHOT_ANIMS = new Set(['feeding', 'clicked', 'celebrating', 'evolving', 'playing']);
 const MAX_LEVEL = 10;
 const MAX_GROWTH_POINTS = 99;
 const STATUS_POPUP_MS = 2000;
@@ -68,13 +68,67 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const [isEditingName, setIsEditingName] = useState(false);
     const [petNameDraft, setPetNameDraft] = useState('');
     const [savingPetName, setSavingPetName] = useState(false);
-    const clickCountRef = useRef(0); // track double-click for playing animation
+
+    const clickTimerRef = useRef(null);
+    const pendingDoubleRef = useRef(false);
+
     const evolveRequestRef = useRef(0);
     const bubbleTimerRef = useRef(null);
     const errorBubbleTimerRef = useRef(null);
     const statusPopupTimerRef = useRef(null);
     const maxUnlockTimerRef = useRef(null);
     const wasMaxRef = useRef(false);
+    const lastStableAnimRef = useRef('idle');
+
+    const forceWakeRef = useRef(false);
+    const prevUserKeyRef = useRef(null);
+
+    function getUserKey() {
+        return currentUser?.id || currentUser?.email || null;
+    }
+
+    function getAnimStorageKey() {
+        const userKey = getUserKey() || 'guest';
+        const petKey = pet?.id || pet?._id || 'active';
+        return `gf_pet_anim_${String(userKey).toLowerCase()}_${petKey}`;
+    }
+
+    function getSessionKey() {
+        const userKey = getUserKey() || 'guest';
+        return `gf_session_started_${String(userKey).toLowerCase()}`;
+    }
+
+    function readStoredAnim() {
+        try {
+            const key = getAnimStorageKey();
+            return localStorage.getItem(key);
+        } catch {
+            return null;
+        }
+    }
+
+    function writeStoredAnim(value) {
+        try {
+            const key = getAnimStorageKey();
+            localStorage.setItem(key, value);
+        } catch {
+            // ignore storage errors
+        }
+    }
+
+    function removeStoredAnim() {
+        try {
+            const key = getAnimStorageKey();
+            localStorage.removeItem(key);
+        } catch {
+            // ignore storage errors
+        }
+    }
+
+    function restoreStableAnim() {
+        const fallback = lastStableAnimRef.current || 'idle';
+        setAnimState(pomoIsRunning ? 'idle' : fallback);
+    }
 
     function showSuccessBubble(text) {
         setSuccessMessage(text);
@@ -138,12 +192,40 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         }
     }
 
+    // Detect login/logout by currentUser changes (not token)
+    useEffect(() => {
+        const prevUser = prevUserKeyRef.current;
+        const nextUser = getUserKey();
+
+        if (!prevUser && nextUser) {
+            // login → force wake
+            forceWakeRef.current = true;
+            try {
+                sessionStorage.setItem(getSessionKey(), '1');
+            } catch {
+                // ignore storage errors
+            }
+        }
+
+        if (prevUser && !nextUser) {
+            // logout → clear session + stored anim
+            try {
+                sessionStorage.removeItem(getSessionKey());
+            } catch {
+                // ignore storage errors
+            }
+            removeStoredAnim();
+        }
+
+        prevUserKeyRef.current = nextUser;
+    }, [currentUser?.id, currentUser?.email]);
 
     // ── Pomodoro sleeping / idle toggle ──────────────────────────────────────
     useEffect(() => {
         setAnimState(prev => {
             if (ONE_SHOT_ANIMS.has(prev)) return prev; // don't interrupt one-shots
-            return pomoIsRunning ? 'idle' : 'sleeping';
+            if (pomoIsRunning) return 'idle';
+            return prev || lastStableAnimRef.current || 'idle';
         });
     }, [pomoIsRunning]);
 
@@ -151,7 +233,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     useEffect(() => {
         if (!externalAnim) return;
         setAnimState(externalAnim);
-        const timer = setTimeout(() => setAnimState(pomoIsRunning ? 'idle' : 'sleeping'), 2000);
+        const timer = setTimeout(() => restoreStableAnim(), 2000);
         return () => clearTimeout(timer);
     }, [externalAnim, pomoIsRunning]);
 
@@ -161,11 +243,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         setAnimState(prev => {
             if (ONE_SHOT_ANIMS.has(prev)) return prev;
             if (pet.isGrowthFrozen) return 'sad';
-            return pomoIsRunning ? 'idle' : 'sleeping';
+            return pomoIsRunning ? 'idle' : (prev || lastStableAnimRef.current || 'idle');
         });
     }, [pet?.isGrowthFrozen, pomoIsRunning]);
-    
-    // Normalizes various backend response shapes to a consistent pet object/    
+
+    // Normalizes various backend response shapes to a consistent pet object/
     function normalizePetResponse(res) {
         const data = res?.data ?? res;
 
@@ -178,8 +260,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
 
         return null;
     }
-    // ── Fetch pet & inventory on mount ───────────────────────────────────────
 
+    // ── Fetch pet & inventory on mount ───────────────────────────────────────
     useEffect(() => {
         async function fetchPet() {
             if (!token) {
@@ -212,6 +294,57 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         fetchPet();
     }, [token]);
 
+    // ── Restore persisted anim on pet load ───────────────────────────────────
+    useEffect(() => {
+        if (!pet) return;
+
+        if (forceWakeRef.current) {
+            // Login transition: always wake
+            forceWakeRef.current = false;
+            setAnimState('idle');
+            lastStableAnimRef.current = 'idle';
+            removeStoredAnim();
+            writeStoredAnim('idle');
+            return;
+        }
+
+        const sessionKey = getSessionKey();
+        let hasSession = false;
+        try {
+            hasSession = sessionStorage.getItem(sessionKey) === '1';
+        } catch {
+            hasSession = false;
+        }
+
+        if (!hasSession) {
+            // Fresh session: start active
+            setAnimState('idle');
+            lastStableAnimRef.current = 'idle';
+            writeStoredAnim('idle');
+            try {
+                sessionStorage.setItem(sessionKey, '1');
+            } catch {
+                // ignore storage errors
+            }
+            return;
+        }
+
+        // Reload within session: restore last state
+        const stored = readStoredAnim();
+        const nextAnim = stored || 'idle';
+        setAnimState(nextAnim);
+        lastStableAnimRef.current = nextAnim;
+    }, [pet?.id, pet?._id, currentUser?.id, currentUser?.email]);
+
+    // ── Persist stable anim state ───────────────────────────────────────────
+    useEffect(() => {
+        if (!pet) return;
+        if (ONE_SHOT_ANIMS.has(animState)) return;
+        if (!animState) return;
+        lastStableAnimRef.current = animState;
+        writeStoredAnim(animState);
+    }, [animState, pet?.id, pet?._id]);
+
     useEffect(() => {
         if (!currentUser?.petName) return;
         setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
@@ -223,6 +356,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             if (errorBubbleTimerRef.current) window.clearTimeout(errorBubbleTimerRef.current);
             if (statusPopupTimerRef.current) window.clearTimeout(statusPopupTimerRef.current);
             if (maxUnlockTimerRef.current) window.clearTimeout(maxUnlockTimerRef.current);
+            if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current);
         };
     }, []);
 
@@ -241,7 +375,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 setPetNameDraft(nextActivePet.nickname || '');
                 setIsEditingName(false);
                 if (onPetLoaded) onPetLoaded(nextActivePet);
-                setAnimState(pomoIsRunning ? 'idle' : 'sleeping');
+                setAnimState('idle');
                 return;
             }
             await fetchPetData();
@@ -278,7 +412,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             const inventoryRes = await getInventory(token);
             setInventory(inventoryRes?.data?.items || []);
             setAnimState('feeding');
-            setTimeout(() => setAnimState(pomoIsRunning ? 'idle' : 'sleeping'), 1500);
+            setTimeout(() => restoreStableAnim(), 1500);
             showSuccessBubble('Fed pet successfully!');
         } catch {
             if (pet.evolutionReady) {
@@ -374,7 +508,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             showSuccessBubble('Evolved pet successfully!');
             // Brief celebrating after evolve
             setTimeout(() => setAnimState('celebrating'), 200);
-            setTimeout(() => setAnimState('idle'), 2500);
+            setTimeout(() => restoreStableAnim(), 2500);
         } catch (error) {
             setAnimState('idle');
             setErrorMessage('Failed to evolve pet.');
@@ -388,27 +522,23 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         setShowEvolution(false);
     };
 
-    // ── Pet click: single = clicked anim, double = playing anim ─────────────
+    // ── Pet click: single click = sleep, double click = awake ─────────────
     const handlePetClick = () => {
         if (!pet || loading) return;
 
-        clickCountRef.current += 1;
-        if (clickCountRef.current === 1) {
-            // Single click: clicked animation ONLY
-            setAnimState('clicked');
-            setTimeout(() => {
-                setAnimState(pomoIsRunning ? 'idle' : 'sleeping');
-                clickCountRef.current = 0;
-            }, 800);
-        } else if (clickCountRef.current === 2) {
-            // Double click: playing animation (no feed)
-            clearTimeout(clickCountRef.timeout);
-            setAnimState('playing');
-            setTimeout(() => {
-                setAnimState(pomoIsRunning ? 'idle' : 'sleeping');
-                clickCountRef.current = 0;
-            }, 1500);
+        if (pendingDoubleRef.current) {
+            pendingDoubleRef.current = false;
+            if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            setAnimState('idle');
+            return;
         }
+
+        pendingDoubleRef.current = true;
+        setAnimState('sleeping');
+
+        clickTimerRef.current = setTimeout(() => {
+            pendingDoubleRef.current = false;
+        }, 260);
     };
 
     const { level, growthPoints } = pet || {};
@@ -487,62 +617,61 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 )}
             </div>
 
-                <div className="pet-sprite-wrap" style={{ opacity: loading ? 0.6 : 1 }}>
-                    <PetSprite
-                        species={displaySpecies}
-                        stage={displayStage}
-                        animState={displayAnim}
-                        onClick={handlePetClick}
-                        size={280}
-                    />
-                    {statusPopupMessage && (
-                        <div className="pet-status-pop">{statusPopupMessage}</div>
-                    )}
-                </div>
-
-                {pet && (
-                    <div className="pet-exp">
-                        <div className="exp-row">
-                            <div className="exp-label">{isMax ? '' : 'Exp.'}</div>
-                            <div className="pet-level">{isMax ? 'MAX' : `Lv.${level}`}</div>
-                        </div>
-                        <div className="exp-bar" aria-hidden>
-                            <div className="exp-fill" style={{ width: `${percent}%` }} />
-                        </div>
-                    </div>
+            <div className="pet-sprite-wrap" style={{ opacity: loading ? 0.6 : 1 }}>
+                <PetSprite
+                    species={displaySpecies}
+                    stage={displayStage}
+                    animState={displayAnim}
+                    onClick={handlePetClick}
+                    size={280}
+                />
+                {statusPopupMessage && (
+                    <div className="pet-status-pop">{statusPopupMessage}</div>
                 )}
-
-                {errorMessage && <div style={{ marginTop: 8, color: 'red' }}>{errorMessage}</div>}
-                {successMessage && (
-                    <div className="pet-bubble-overlay">
-                        <div className="pet-bubble">{successMessage}</div>
-                    </div>
-                )}
-                {maxUnlockMessage && (
-                    <div className="pet-bubble-overlay">
-                        <div className="pet-bubble">{maxUnlockMessage}</div>
-                    </div>
-                )}
-                {errorBubbleMessage && (
-                    <div className="pet-bubble-overlay">
-                        <div className="pet-bubble pet-bubble-error">{errorBubbleMessage}</div>
-                    </div>
-                )}
-
-                {/* Evolution overlay — full-screen animation */}
-                <AnimatePresence>
-                    {showEvolution && (
-                        <EvolutionOverlay
-                            currentSpecies={getPetSpecies(pet)}
-                            currentStage={getPetStage(pet)}
-                            targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
-                            onEvolve={handleEvolutionConfirm}
-                            onSkip={handleEvolutionSkip}
-                        />
-                    )}
-                </AnimatePresence>
             </div>
-        )
-    }
 
-    export default PetView;
+            {pet && (
+                <div className="pet-exp">
+                    <div className="exp-row">
+                        <div className="exp-label">{isMax ? '' : 'Exp.'}</div>
+                        <div className="pet-level">{isMax ? 'MAX' : `Lv.${level}`}</div>
+                    </div>
+                    <div className="exp-bar" aria-hidden>
+                        <div className="exp-fill" style={{ width: `${percent}%` }} />
+                    </div>
+                </div>
+            )}
+
+            {errorMessage && <div style={{ marginTop: 8, color: 'red' }}>{errorMessage}</div>}
+            {successMessage && (
+                <div className="pet-bubble-overlay">
+                    <div className="pet-bubble">{successMessage}</div>
+                </div>
+            )}
+            {maxUnlockMessage && (
+                <div className="pet-bubble-overlay">
+                    <div className="pet-bubble">{maxUnlockMessage}</div>
+                </div>
+            )}
+            {errorBubbleMessage && (
+                <div className="pet-bubble-overlay">
+                    <div className="pet-bubble pet-bubble-error">{errorBubbleMessage}</div>
+                </div>
+            )}
+
+            <AnimatePresence>
+                {showEvolution && (
+                    <EvolutionOverlay
+                        currentSpecies={getPetSpecies(pet)}
+                        currentStage={getPetStage(pet)}
+                        targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
+                        onEvolve={handleEvolutionConfirm}
+                        onSkip={handleEvolutionSkip}
+                    />
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+export default PetView;

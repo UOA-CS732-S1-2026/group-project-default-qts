@@ -1,10 +1,13 @@
 main{
-    margin: auto;
+    width: min(100%, 1400px);
+    margin: 0 auto;
+    padding: 0 1rem 1rem;
 }
 
 .main-content{
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .main-content button{
@@ -27,11 +30,49 @@ main{
     overflow: hidden;
 }
 
-/* Position the aside in the middle-right of the viewport */
 .task-slider-section{
-    position: fixed;
-    right: 1.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 50;
+    margin: 0.75rem auto 0;
+    width: fit-content;
+}
+
+@media (min-width: 1024px) {
+    main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: start;
+        gap: 1.25rem;
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        flex: 1;
+        padding: 0 1.5rem;
+    }
+
+    .main-content {
+        grid-column: 2;
+        height: 100%;
+        justify-content: center;
+        gap: 0.65rem;
+        justify-self: center;
+    }
+
+    .main-content button {
+        margin: 0.2rem auto 0;
+    }
+
+        .task-slider-section{
+        grid-column: 3;
+        position: sticky;
+        top: 0.4rem;
+        margin: 0;
+        align-self: center;
+        justify-self: end;
+    }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .main-content button{
+        font-size: 1.875rem;
+        padding: 0.875rem 1.25rem;
+    }
 }

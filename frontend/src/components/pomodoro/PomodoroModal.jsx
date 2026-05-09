@@ -8,14 +8,18 @@ import PetSprite from '../petAnimations/PetSprite';
 const MotionDiv = motion.div;
 
 export default function PomodoroModal({ onRequestClose, onRunningChange, onSessionComplete, activePet } = {}) {
-    const { refreshCoins } = useApp();
+    const { refreshCoins, updateCoins } = useApp();
+    const onFocusRewardHandler = (coins) => {
+        if (typeof coins === 'number') updateCoins(coins);
+        else refreshCoins();
+    };
     const {
         mode, timeLeft, isRunning, isPaused, petProgress,
         showBubble, bubbleMessage, start, pause, resume, reset, dismissBubble,
         switchMode, formatTime, MODES: modes, focusMessage,
         showPauseWarning, requestPause, confirmPause, cancelPauseWarning,
         requestSwitchMode, showModeResetConfirm, confirmModeReset, cancelModeReset, pendingMode,
-    } = usePomodoro({ onFocusReward: refreshCoins });
+    } = usePomodoro({ onFocusReward: onFocusRewardHandler });
 
     const handleClose = async () => {
         await reset();
