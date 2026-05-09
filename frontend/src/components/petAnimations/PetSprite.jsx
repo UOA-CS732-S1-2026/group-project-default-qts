@@ -37,7 +37,6 @@ export default function PetSprite({
   className = '',
 }) {
   const [internalAnim, setInternalAnim] = useState(animState);
-  const [clickCount, setClickCount] = useState(0);
 
   // Sync with external animState
   useEffect(() => {
@@ -47,24 +46,8 @@ export default function PetSprite({
   const imgSrc = getPetImage(species, stage, internalAnim);
 
   const handleClick = useCallback(() => {
-    // Trigger click animation
-    setInternalAnim('clicked');
-    setClickCount((c) => c + 1);
-    
-    // Revert to idle after animation
-    setTimeout(() => {
-      setInternalAnim(animState === 'idle' ? 'idle' : animState);
-    }, stage === 'egg' ? 600 : stage === 'kid' ? 700 : 800);
-
     if (onClick) onClick();
-  }, [animState, onClick, stage]);
-
-  // When anim finishes and it's a one-shot, revert to idle
-  const handleAnimationEnd = useCallback(() => {
-    if (['clicked', 'feeding', 'playing', 'celebrating'].includes(internalAnim)) {
-      // One-shots auto-revert is handled by setTimeout, but this is a fallback
-    }
-  }, [internalAnim]);
+  }, [onClick]);
 
   return (
     <div
@@ -90,13 +73,12 @@ export default function PetSprite({
       {/* Pet Image with CSS animation class */}
       <AnimatePresence mode="wait">
         <motion.img
-          key={`${species}-${stage}-${clickCount}`}
+          key={`${species}-${stage}-${internalAnim}`}
           src={imgSrc}
           alt={`${species} ${stage}`}
           className={`pet-sprite-img stage-${stage} anim-${internalAnim}`}
           initial={false}
           draggable={false}
-          onAnimationEnd={handleAnimationEnd}
         />
       </AnimatePresence>
     </div>
