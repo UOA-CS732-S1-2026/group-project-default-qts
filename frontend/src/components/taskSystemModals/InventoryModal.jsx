@@ -14,19 +14,16 @@ import {
 function getPetSpecies(pet) {
   if (pet?.spriteKey) return pet.spriteKey;
 
-  const code = String(pet?.speciesCode || '').toUpperCase();
-
-  const speciesMap = {
-    TAO_KIWI: 'apteryx',
-    TAO_PENGUIN: 'penguin',
-    LEMUERA: 'lemuera',
-    APTERYX: 'apteryx',
-    PYRO: 'pyro',
-    MANU_PUKEKO: 'pukeko',
-    MANU_PATEKE: 'pateke'
-  };
-
-  return speciesMap[code] || 'apteryx';
+  let key = String(pet?.speciesCode || '').toLowerCase();
+  
+  if (key.match(/kiwi|apteryx/)) return 'apteryx';
+  if (key.match(/penguin/)) return 'penguin';
+  if (key.match(/lemur|lemuera/)) return 'lemuera';
+  if (key.match(/pukeko/)) return 'pukeko';
+  if (key.match(/pateke/)) return 'pateke';
+  if (key.match(/pyro/)) return 'pyro';
+  
+  return 'apteryx';
 }
 
 function getItemImage(item) {
@@ -102,6 +99,23 @@ function InventoryModal({ onClose }) {
       timeoutRef.current = null;
     }, CLOSE_ANIM_MS);
   }
+
+  useEffect(() => {
+    const handleInventoryUpdate = (e) => {
+      const updatedItem = e.detail?.inventoryItem;
+      if (!updatedItem) return;
+      setInventoryItems(prevItems => 
+        prevItems.map(item => {
+          // Match by itemCode (e.g., 'SNACK') and update quantity
+          const isMatch = String(item.itemCode).toUpperCase() === String(updatedItem.itemCode).toUpperCase();
+          return isMatch ? { ...item, quantity: updatedItem.quantity } : item;
+        })
+      );
+    };
+    
+    window.addEventListener('gf-inventory-updated', handleInventoryUpdate);
+    return () => window.removeEventListener('gf-inventory-updated', handleInventoryUpdate);
+  }, []);
 
   useEffect(() => {
     loadInventory();

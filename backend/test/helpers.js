@@ -9,16 +9,17 @@ const DEFAULT_PASSWORD = 'Password1234';
 
 async function seedSpecies() {
   return PetSpecies.findOneAndUpdate(
-    { code: 'TAO_KIWI' },
+    { code: 'KIWI' },
     {
-      code: 'TAO_KIWI',
-      displayName: 'Tao-Kiwi',
+      code: 'KIWI',
+      displayName: 'Kiwi',
+      spriteKey: 'apteryx',
       stages: [
         { stage: 'EGG', displayName: 'Kiwi Egg', assetKey: 'kiwi_egg' },
         { stage: 'KID', displayName: 'Kiwi Kid', assetKey: 'kiwi_kid' },
         { stage: 'ADULT', displayName: 'Kiwi Adult', assetKey: 'kiwi_adult' }
       ],
-      rarity: 'COMMON'
+      rarity: 'RARE'
     },
     { upsert: true, new: true }
   );

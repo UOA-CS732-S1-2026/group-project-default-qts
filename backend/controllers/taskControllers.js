@@ -1324,6 +1324,7 @@ const abandonP2PTask = async (req, res) => {
       throw { status: 404, code: 'ASSIGNMENT_NOT_FOUND', message: 'No active assignment found for this task' };
     }
 
+    // Mark task and assignment as cancelled
     assignment.status = 'CANCELLED';
     await assignment.save({ session: dbSession });
 
@@ -1331,12 +1332,36 @@ const abandonP2PTask = async (req, res) => {
     task.assignee = null;
     await task.save({ session: dbSession });
 
+    // Refund Escrow to Creator
+    const escrow = await TaskEscrow.findOne({ taskId: id, status: 'HELD' }).session(dbSession);
+    if (escrow) {
+      escrow.status = 'REFUNDED';
+      escrow.refundedAt = new Date();
+      await escrow.save({ session: dbSession });
+
+      const creator = await User.findByIdAndUpdate(
+        task.createdBy,
+        { $inc: { coins: escrow.amount } },
+        { new: true, session: dbSession }
+      );
+
+      await CoinTransaction.create([{
+        userId: task.createdBy,
+        amount: escrow.amount,
+        balanceAfter: creator.coins,
+        type: 'ESCROW_REFUND',
+        relatedModel: 'Task',
+        relatedId: task._id,
+        note: `Escrow refunded: Assignee abandoned task ${task.title}`
+      }], { session: dbSession });
+    }
+
     await dbSession.commitTransaction();
     dbSession.endSession();
 
     return res.status(200).json({
       success: true,
-      message: 'Task abandoned — marked as cancelled',
+      message: 'Task abandoned — marked as cancelled and creator refunded',
       data: { task: formatTask(task) }
     });
   } catch (error) {

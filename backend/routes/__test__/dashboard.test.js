@@ -24,7 +24,7 @@ describe('GET /api/dashboard', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.activePetSummary.stage).toBe('EGG');
     expect(res.body.data.activePetSummary.level).toBe(1);
-    expect(res.body.data.activePetSummary.speciesCode).toBe('TAO_KIWI');
+    expect(res.body.data.activePetSummary.speciesCode).toBe('KIWI');
   });
 
   it('reports eggUnlocked=false when active pet is not ADULT level 10', async () => {

@@ -119,6 +119,15 @@
     cursor: pointer;
     text-transform: none;
     animation: evolve-shake 1.6s ease-in-out infinite;
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    background: var(--text-warning);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 99;
 }
 
 .evolve-header-btn:focus-visible {
@@ -174,4 +183,15 @@
     60% { transform: translateX(-1px); }
     80% { transform: translateX(1px); }
     100% { transform: translateX(0); }
+}
+
+@media (min-width: 481px) {
+    .evolve-header-btn {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        background: transparent;
+        color: var(--text-warning);
+        box-shadow: none;
+    }
 }
