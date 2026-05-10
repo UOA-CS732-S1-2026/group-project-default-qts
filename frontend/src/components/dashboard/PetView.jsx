@@ -14,26 +14,17 @@ import editIcon from '/edit.png'
 function normalizeSpeciesKey(input) {
     if (!input) return 'apteryx';
     let key = String(input).trim().toLowerCase();
-    key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
-    key = key.replace(/[/\\]/g, '');
-    key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
-    key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
+    const valid = ['apteryx', 'penguin', 'lemuera', 'pyro', 'pukeko', 'pateke'];
+    
+    // Map specific legacy or backend codes to the 6 folders
+    if (key.match(/kiwi|apteryx/)) return 'apteryx';
+    if (key.match(/penguin/)) return 'penguin';
+    if (key.match(/lemur|lemuera/)) return 'lemuera';
+    if (key.match(/pukeko/)) return 'pukeko';
+    if (key.match(/pateke/)) return 'pateke';
+    if (key.match(/pyro/)) return 'pyro';
 
-    const map = {
-        tao_kiwi: 'apteryx',
-        tao_penguin: 'penguin',
-        lemuera: 'lemuera',
-        apteryx: 'apteryx',
-        pyro: 'pyro',
-        manu_pukeko: 'pukeko',
-        manu_pateke: 'pateke',
-        kiwi: 'apteryx',
-        penguin: 'penguin',
-        pukeko: 'pukeko',
-        pateke: 'pateke',
-    };
-
-    return map[key] || key;
+    return valid.includes(key) ? key : 'apteryx';
 }
 
 // Backend returns speciesCode (e.g. "APTERYX") → map to lowercase image filename
@@ -112,6 +103,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const statusPopupTimerRef = useRef(null);
     const maxUnlockTimerRef = useRef(null);
     const wasMaxRef = useRef(false);
+    const initialLoadRef = useRef(true);
     const lastStableAnimRef = useRef('idle');
 
     const forceWakeRef = useRef(false);
@@ -405,6 +397,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         const onActivePetChanged = async (e) => {
             const nextActivePet = e.detail?.activePet || null;
             if (nextActivePet) {
+                initialLoadRef.current = true; 
                 setPet(nextActivePet);
                 setPetNameDraft(nextActivePet.nickname || '');
                 setIsEditingName(false);
@@ -439,16 +432,22 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         setErrorMessage('');
         setSuccessMessage('');
         try {
-            const data = await feedPet(pet.id, itemCode, token);
-            const updatedPet = normalizePetResponse(data);
+            const result = await feedPet(pet.id, itemCode, token); 
+            const updatedPet = normalizePetResponse(result);
             setPet(updatedPet);
             if (onPetLoaded) onPetLoaded(updatedPet);
+            if (result?.data?.inventoryItem) {
+                window.dispatchEvent(new CustomEvent('gf-inventory-updated', {
+                    detail: { inventoryItem: result.data.inventoryItem }
+                }));
+            }
             const inventoryRes = await getInventory(token);
             setInventory(inventoryRes?.data?.items || []);
             setAnimState('feeding');
             setTimeout(() => restoreStableAnim(), 1500);
             showSuccessBubble('Fed pet successfully!');
-        } catch {
+        } catch (error) {
+            console.error('Error feeding pet:', error);
             if (pet.evolutionReady) {
                 showStatusPopup("No more food! I'm ready to evolve already!");
                 return;
@@ -505,6 +504,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
             setIsEditingName(false);
             showSuccessBubble('Pet name updated!');
         } catch (error) {
+            console.error('Error updating pet name:', error);
             setErrorMessage(error.message || 'Failed to update pet name.');
         } finally {
             setSavingPetName(false);
@@ -564,11 +564,12 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         }
 
         pendingDoubleRef.current = true;
-        setAnimState('sleeping');
+        setAnimState('clicked'); // Triggers jiggle/jump animation
 
         clickTimerRef.current = setTimeout(() => {
             pendingDoubleRef.current = false;
-        }, 260);
+            setAnimState('sleeping'); // Settle into sleep
+        }, 600);
     };
 
     const { level, growthPoints } = pet || {};
@@ -580,11 +581,20 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
 
     useEffect(() => {
         if (!pet) return;
-        if (isMax && !wasMaxRef.current) {
+        
+        const isMaxNow = Number(pet.level || 0) >= MAX_LEVEL && Number(pet.growthPoints || 0) >= MAX_GROWTH_POINTS;
+
+        if (initialLoadRef.current) {
+            wasMaxRef.current = isMaxNow;
+            initialLoadRef.current = false;
+            return;
+        }
+
+        if (isMaxNow && !wasMaxRef.current) {
             showMaxUnlockBubble();
         }
-        wasMaxRef.current = isMax;
-    }, [isMax, pet]);
+        wasMaxRef.current = isMaxNow;
+    }, [pet?.level, pet?.growthPoints]);
 
     const displaySpecies = getPetSpecies(pet);
     const displayStage = getPetStage(pet);

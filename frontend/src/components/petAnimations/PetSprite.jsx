@@ -18,28 +18,15 @@ function buildAssetMap() {
 const ASSET_MAP = buildAssetMap();
 
 function normalizeSpeciesKey(input) {
-  if (!input) return 'apteryx';
-  let key = String(input).trim().toLowerCase();
-  key = key.replace(/\.(png|gif|jpg|jpeg|webp)$/i, '');
-  key = key.replace(/[/\\]/g, '');
-  key = key.replace(/\s+/g, '_').replace(/-+/g, '_');
-  key = key.replace(/_(egg|kid|adult|stage\d+|1|2)$/i, '');
-
-  const map = {
-    tao_kiwi: 'apteryx',
-    tao_penguin: 'penguin',
-    lemuera: 'lemuera',
-    apteryx: 'apteryx',
-    pyro: 'pyro',
-    manu_pukeko: 'pukeko',
-    manu_pateke: 'pateke',
-    kiwi: 'apteryx',
-    penguin: 'penguin',
-    pukeko: 'pukeko',
-    pateke: 'pateke',
-  };
-
-  return map[key] || key;
+    if (!input) return 'apteryx';
+    let key = String(input).trim().toLowerCase();
+    if (key.match(/kiwi|apteryx/)) return 'apteryx';
+    if (key.match(/penguin/)) return 'penguin';
+    if (key.match(/lemur|lemuera/)) return 'lemuera';
+    if (key.match(/pukeko/)) return 'pukeko';
+    if (key.match(/pateke/)) return 'pateke';
+    if (key.match(/pyro/)) return 'pyro';
+    return 'apteryx';
 }
 
 function normalizeStage(input) {

@@ -13,7 +13,7 @@ describe('GET /api/pets/active', () => {
     expect(res.body.data.activePet.stage).toBe('EGG');
     expect(res.body.data.activePet.level).toBe(1);
     expect(res.body.data.activePet.status).toBe('ACTIVE');
-    expect(res.body.data.activePet.speciesCode).toBe('TAO_KIWI');
+    expect(res.body.data.activePet.speciesCode).toBe('KIWI');
   });
 
   it('returns 401 without a token', async () => {

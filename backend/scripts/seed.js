@@ -9,58 +9,44 @@ const StoreItem = require('../models/StoreItem');
 
 const speciesData = [
   {
-    code: 'TAO_KIWI',
-    displayName: 'Tao-Kiwi',
+    code: 'KIWI',
+    displayName: 'Kiwi',
     spriteKey: 'apteryx',
     enabled: true,
     starterEligible: true,
-    eggEligible: false,
+    eggEligible: true,
     stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'tao_kiwi_egg' },
-      { stage: 'KID', displayName: 'Kiwi Chick', assetKey: 'tao_kiwi_kid' },
-      { stage: 'ADULT', displayName: 'Great Spotted Kiwi', assetKey: 'tao_kiwi_adult' }
+      { stage: 'EGG', displayName: 'Egg', assetKey: 'apteryx_egg' },
+      { stage: 'KID', displayName: 'Lil Brown Kiwi', assetKey: 'apteryx_1' },
+      { stage: 'ADULT', displayName: 'Great Spotted Kiwi (White Feather)', assetKey: 'apteryx_2' }
     ],
-    rarity: 'COMMON'
+    rarity: 'RARE'
   },
   {
-    code: 'TAO_PENGUIN',
-    displayName: 'Tao-Penguin',
+    code: 'PENGUIN',
+    displayName: 'Penguin',
     spriteKey: 'penguin',
     enabled: true,
     starterEligible: true,
-    eggEligible: false,
+    eggEligible: true,
     stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'tao_penguin_egg' },
-      { stage: 'KID', displayName: 'Little Blue Penguin Chick', assetKey: 'tao_penguin_kid' },
-      { stage: 'ADULT', displayName: 'Adult Little Blue Penguin', assetKey: 'tao_penguin_adult' }
+      { stage: 'EGG', displayName: 'Egg', assetKey: 'penguin_egg' },
+      { stage: 'KID', displayName: 'Blue Penguin Chick', assetKey: 'penguin_1' },
+      { stage: 'ADULT', displayName: 'Adult Blue Penguin', assetKey: 'penguin_2' }
     ],
     rarity: 'COMMON'
   },
   {
     code: 'LEMUERA',
-    displayName: 'Lemuera',
+    displayName: 'Lemur',
     spriteKey: 'lemuera',
     enabled: true,
     starterEligible: false,
     eggEligible: true,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'lemuera_egg' },
-      { stage: 'KID', displayName: 'Ring-tailed Lemur', assetKey: 'lemuera_kid' },
-      { stage: 'ADULT', displayName: 'Red Ruffed Lemur', assetKey: 'lemuera_adult' }
-    ],
-    rarity: 'RARE'
-  },
-  {
-    code: 'APTERYX',
-    displayName: 'Apteryx',
-    spriteKey: 'apteryx',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'apteryx_egg' },
-      { stage: 'KID', displayName: 'Lil Brown Kiwi', assetKey: 'apteryx_kid' },
-      { stage: 'ADULT', displayName: 'Great Spotted Kiwi (White Feather)', assetKey: 'apteryx_adult' }
+      { stage: 'KID', displayName: 'Ring-tailed Lemur', assetKey: 'lemuera_1' },
+      { stage: 'ADULT', displayName: 'Red Ruffed Lemur', assetKey: 'lemuera_2' }
     ],
     rarity: 'RARE'
   },
@@ -73,106 +59,36 @@ const speciesData = [
     eggEligible: true,
     stages: [
       { stage: 'EGG', displayName: 'Egg', assetKey: 'pyro_egg' },
-      { stage: 'KID', displayName: 'Fry', assetKey: 'pyro_kid' },
-      { stage: 'ADULT', displayName: 'Flaming Seahorse', assetKey: 'pyro_adult' }
+      { stage: 'KID', displayName: 'Fry', assetKey: 'pyro_1' },
+      { stage: 'ADULT', displayName: 'Flaming Seahorse', assetKey: 'pyro_2' }
     ],
     rarity: 'EPIC'
   },
   {
-    code: 'ALAS',
-    displayName: 'Alas',
-    spriteKey: 'alas',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'alas_egg' },
-      { stage: 'KID', displayName: 'Larvae', assetKey: 'alas_kid' },
-      { stage: 'ADULT', displayName: 'Rhino Beetle', assetKey: 'alas_adult' }
-    ],
-    rarity: 'COMMON'
-  },
-  {
-    code: 'MANU_PUKEKO',
-    displayName: 'Manu-Pukeko',
+    code: 'PUKEKO',
+    displayName: 'Pukeko',
     spriteKey: 'pukeko',
     enabled: true,
     starterEligible: false,
     eggEligible: true,
     stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'manu_pukeko_egg' },
-      { stage: 'KID', displayName: 'Pukeko', assetKey: 'manu_pukeko_kid' },
-      { stage: 'ADULT', displayName: 'Takahe', assetKey: 'manu_pukeko_adult' }
+      { stage: 'EGG', displayName: 'Egg', assetKey: 'pukeko_egg' },
+      { stage: 'KID', displayName: 'Pukeko Chick', assetKey: 'pukeko_1' },
+      { stage: 'ADULT', displayName: 'Adult Takahe', assetKey: 'pukeko_2' }
     ],
     rarity: 'COMMON'
   },
   {
-    code: 'MANU_PATEKE',
-    displayName: 'Manu-Pateke',
+    code: 'PATEKE',
+    displayName: 'Pateke',
     spriteKey: 'pateke',
     enabled: true,
     starterEligible: true,
-    eggEligible: false,
+    eggEligible: true,
     stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'manu_pateke_egg' },
-      { stage: 'KID', displayName: 'Lil Pateke', assetKey: 'manu_pateke_kid' },
-      { stage: 'ADULT', displayName: 'Pateke', assetKey: 'manu_pateke_adult' }
-    ],
-    rarity: 'COMMON'
-  },
-  {
-    code: 'VINCENT_SEAL',
-    displayName: 'Vincent-Seal',
-    spriteKey: 'seal',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'vincent_seal_egg' },
-      { stage: 'KID', displayName: 'Seal Pup', assetKey: 'vincent_seal_kid' },
-      { stage: 'ADULT', displayName: 'Adult Seal', assetKey: 'vincent_seal_adult' }
-    ],
-    rarity: 'RARE'
-  },
-  {
-    code: 'VINCENT_DOLPHIN',
-    displayName: 'Vincent-Dolphin',
-    spriteKey: 'dolphin',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'vincent_dolphin_egg' },
-      { stage: 'KID', displayName: 'Hector’s Dolphin (Baby)', assetKey: 'vincent_dolphin_kid' },
-      { stage: 'ADULT', displayName: 'Adult Hector’s Dolphin', assetKey: 'vincent_dolphin_adult' }
-    ],
-    rarity: 'RARE'
-  },
-  {
-    code: 'MARRY_SHEEP',
-    displayName: 'MarrySheep',
-    spriteKey: 'sheep',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'marry_sheep_egg' },
-      { stage: 'KID', displayName: 'Little Sheep', assetKey: 'marry_sheep_kid' },
-      { stage: 'ADULT', displayName: 'Sheep', assetKey: 'marry_sheep_adult' }
-    ],
-    rarity: 'COMMON'
-  },
-  {
-    code: 'BEN_DEER',
-    displayName: 'BenDeer',
-    spriteKey: 'deer',
-    enabled: false,
-    starterEligible: false,
-    eggEligible: false,
-    stages: [
-      { stage: 'EGG', displayName: 'Egg', assetKey: 'ben_deer_egg' },
-      { stage: 'KID', displayName: 'Little Deer', assetKey: 'ben_deer_kid' },
-      { stage: 'ADULT', displayName: 'NZ Fallow Deer', assetKey: 'ben_deer_adult' }
+      { stage: 'EGG', displayName: 'Egg', assetKey: 'pateke_egg' },
+      { stage: 'KID', displayName: 'Pateke Duckling', assetKey: 'pateke_1' },
+      { stage: 'ADULT', displayName: 'Adult Pateke', assetKey: 'pateke_2' }
     ],
     rarity: 'COMMON'
   }
@@ -189,8 +105,8 @@ const seedDB = async () => {
   try {
     await connectDB();
     console.log('Connected. Starting seed...');
-
-
+    // Wipe old data - if Required
+    //await PetSpecies.deleteMany({});
     for (const species of speciesData) {
       const result = await PetSpecies.updateOne(
         { code: species.code },

@@ -85,7 +85,7 @@ router.post('/register', async (req, res) => {
         } else {
           // fallback for safety
           defaultSpecies =
-            await PetSpecies.findOne({ code: 'TAO_KIWI' }).session(session) ||
+            await PetSpecies.findOne({ code: 'KIWI' }).session(session) ||
             await PetSpecies.findOne({}).sort({ createdAt: 1 }).session(session);
         }
 
