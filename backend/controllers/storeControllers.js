@@ -6,6 +6,24 @@ const InventoryItem = require('../models/InventoryItem');
 const CoinTransaction = require('../models/CoinTransaction');
 const UserPet = require('../models/UserPet');
 const PetSpecies = require('../models/PetSpecies');
+const {
+  buildUserCacheKey,
+  getCachedJson,
+  setCachedJson,
+  deleteCacheKeys,
+  deleteCacheByPrefix
+} = require('../utils/cache');
+
+function userCacheKeys(userId) {
+  return [
+    buildUserCacheKey(userId, 'dashboard', 'v1'),
+    buildUserCacheKey(userId, 'store-items', 'v1'),
+    buildUserCacheKey(userId, 'inventory', 'v1'),
+    buildUserCacheKey(userId, 'pet-active', 'v1'),
+    buildUserCacheKey(userId, 'pet-collection', 'v1'),
+    buildUserCacheKey(userId, 'coins-balance', 'v1')
+  ];
+}
 
 async function getEggUnlockState(userId, session = null) {
   let query = UserPet.findOne({
@@ -28,6 +46,11 @@ async function getEggUnlockState(userId, session = null) {
 const getStoreItems = async (req, res) => {
   try {
     const userId = req.userId;
+    const cacheKey = buildUserCacheKey(userId, 'store-items', 'v1');
+    const cached = await getCachedJson(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
 
     const items = await StoreItem.find({})
       .select('code name type price growthValue meta createdAt updatedAt')
@@ -60,7 +83,7 @@ const getStoreItems = async (req, res) => {
       };
     });
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: 'Store items loaded successfully',
       data: {
@@ -68,7 +91,9 @@ const getStoreItems = async (req, res) => {
         eggUnlocked,
         eggLockedReason
       }
-    });
+    };
+    await setCachedJson(cacheKey, payload, 60);
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('getStoreItems error:', error);
 
@@ -237,6 +262,8 @@ const purchaseStoreItem = async (req, res) => {
 
       await session.commitTransaction();
       session.endSession();
+      await deleteCacheKeys(userCacheKeys(user._id));
+      await deleteCacheByPrefix(buildUserCacheKey(user._id, 'coins-history', ''));
 
       return res.status(200).json({
         success: true,
@@ -305,6 +332,8 @@ const purchaseStoreItem = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+    await deleteCacheKeys(userCacheKeys(user._id));
+    await deleteCacheByPrefix(buildUserCacheKey(user._id, 'coins-history', ''));
 
     return res.status(200).json({
       success: true,
