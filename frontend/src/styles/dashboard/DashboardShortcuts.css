@@ -95,3 +95,20 @@
 .dashboard-shortcuts .shortcut-btn:last-child:focus-visible .shortcut-tooltip {
     transform: translateX(0) translateY(0);
 }
+
+@media (max-width: 1023px) {
+    .dashboard-shortcuts {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-shortcuts {
+        padding: 0.4rem 0.5rem;
+        gap: 0.2rem;
+    }
+
+    .shortcut-icon {
+        width: clamp(1.8rem, 7vw, 2.2rem);
+    }
+}
