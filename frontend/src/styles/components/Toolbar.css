@@ -16,6 +16,8 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .toolbar-select {
@@ -27,6 +29,12 @@
   color: var(--color-text-dark);
   cursor: pointer;
   box-shadow: var(--shadow-pixel);
+}
+
+.toolbar-select option,
+.toolbar-select optgroup {
+  font-size: 12px;
+  font-family: var(--font-display);
 }
 
 .toolbar-select:focus {
@@ -174,4 +182,78 @@
 .toolbar-btn--comm-active {
   opacity: 1;
   box-shadow: 0 0 10px 3px #6d28d9;
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablet: kurangi margin kanan, cegah overflow */
+@media (max-width: 1024px) {
+  .toolbar {
+    margin-right: 24px;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .toolbar-controls {
+    max-width: 100%;
+  }
+
+  .toolbar-row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 100%;
+  }
+
+  .toolbar-select {
+    font-size: 11px;
+    width: auto;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toolbar-select option,
+  .toolbar-select optgroup {
+    font-size: 11px;
+  }
+}
+
+/* Mobile: toolbar rata kiri, tombol lebih kecil */
+@media (max-width: 480px) {
+  .toolbar {
+    justify-content: flex-start;
+    margin-right: 0;
+    margin-bottom: 12px;
+    max-width: 100%;
+  }
+
+  .toolbar-controls {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .toolbar-row {
+    justify-content: flex-start;
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .toolbar-select,
+  .toolbar-btn {
+    font-size: 13px;
+    padding: 5px 7px;
+  }
+
+  .toolbar-select {
+    width: auto;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toolbar-select option,
+  .toolbar-select optgroup {
+    font-size: 13px;
+  }
 }

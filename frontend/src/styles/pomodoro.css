@@ -355,3 +355,107 @@
 .pomo-status-message.error {
     color: var(--border-error);
 }
+
+/* ── Responsive Mobile ── */
+@media (max-width: 600px) {
+    .pomo-modal {
+        width: 95vw;
+        height: auto;
+        min-height: unset;
+        max-height: 95vh;
+        padding: 20px 16px 24px;
+        overflow-y: auto;
+        justify-content: flex-start;
+    }
+
+    .pomo-exit-btn {
+        top: 12px;
+        left: 12px;
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .pomo-tabs {
+        gap: 8px;
+        margin-bottom: 20px;
+        margin-top: 40px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .pomo-tab {
+        width: auto;
+        min-width: 90px;
+        padding: 8px 10px;
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+
+    .pomo-time-display {
+        font-size: clamp(3.5rem, 18vw, 5rem);
+        letter-spacing: 6px;
+    }
+
+    .pomo-timer-wrapper {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .pomo-start-btn {
+        padding: 14px 40px;
+        font-size: 1.1rem;
+    }
+
+    .pomo-pause-btn {
+        padding: 10px 24px;
+        font-size: 0.85rem;
+    }
+
+    .pomo-progress-section {
+        padding: 0 8px;
+    }
+
+    .pomo-track-wrapper {
+        height: 60px;
+    }
+
+    .pomo-bubble {
+        padding: 24px 20px;
+        max-width: 300px;
+    }
+
+    .pomo-confirm-buttons .pomo-pause-btn,
+    .pomo-confirm-buttons .pomo-start-btn {
+        width: 180px;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 959px) {
+    .pomo-modal {
+        width: 88vw;
+        height: auto;
+        min-height: unset;
+        max-height: 90vh;
+        padding: 24px 20px;
+        overflow-y: auto;
+    }
+
+    .pomo-tabs {
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .pomo-tab {
+        width: 130px;
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+
+    .pomo-time-display {
+        font-size: clamp(4rem, 12vw, 6rem);
+    }
+
+    .pomo-start-btn {
+        padding: 16px 56px;
+    }
+}

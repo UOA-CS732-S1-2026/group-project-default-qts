@@ -71,6 +71,23 @@ const MAX_UNLOCK_MS = 3000;
 function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evolveRequestId = 0 }) {
     const token = localStorage.getItem('token');
     const { currentUser } = useApp();
+    const spriteWrapRef = useRef(null);
+    const [spriteSize, setSpriteSize] = useState(280);
+
+    useEffect(() => {
+        const el = spriteWrapRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(([entry]) => {
+            if (window.innerWidth < 960) {
+                setSpriteSize(280);
+                return;
+            }
+            const { width, height } = entry.contentRect;
+            setSpriteSize(Math.max(120, Math.floor(Math.min(width, height * 0.9))));
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -574,7 +591,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const displayAnim = animState;
 
     return (
-        <div className="pet-container">
+        <>
             {loading && !pet ? <div>Loading...</div> : null}
             <div className="pet-name-row">
                 {isEditingName ? (
@@ -630,17 +647,43 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 )}
             </div>
 
-            <div className="pet-sprite-wrap" style={{ opacity: loading ? 0.6 : 1 }}>
+            <div className="pet-sprite-wrap" ref={spriteWrapRef} style={{ opacity: loading ? 0.6 : 1 }}>
                 <PetSprite
                     species={displaySpecies}
                     stage={displayStage}
                     animState={displayAnim}
                     onClick={handlePetClick}
-                    size={280}
+                    size={spriteSize}
                 />
                 {statusPopupMessage && (
                     <div className="pet-status-pop">{statusPopupMessage}</div>
                 )}
+                {successMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble">{successMessage}</div>
+                    </div>
+                )}
+                {maxUnlockMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble">{maxUnlockMessage}</div>
+                    </div>
+                )}
+                {errorBubbleMessage && (
+                    <div className="pet-bubble-overlay">
+                        <div className="pet-bubble pet-bubble-error">{errorBubbleMessage}</div>
+                    </div>
+                )}
+                <AnimatePresence>
+                    {showEvolution && (
+                        <EvolutionOverlay
+                            currentSpecies={getPetSpecies(pet)}
+                            currentStage={getPetStage(pet)}
+                            targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
+                            onEvolve={handleEvolutionConfirm}
+                            onSkip={handleEvolutionSkip}
+                        />
+                    )}
+                </AnimatePresence>
             </div>
 
             {pet && (
@@ -655,35 +698,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 </div>
             )}
 
-            {errorMessage && <div style={{ marginTop: 8, color: 'red' }}>{errorMessage}</div>}
-            {successMessage && (
-                <div className="pet-bubble-overlay">
-                    <div className="pet-bubble">{successMessage}</div>
-                </div>
-            )}
-            {maxUnlockMessage && (
-                <div className="pet-bubble-overlay">
-                    <div className="pet-bubble">{maxUnlockMessage}</div>
-                </div>
-            )}
-            {errorBubbleMessage && (
-                <div className="pet-bubble-overlay">
-                    <div className="pet-bubble pet-bubble-error">{errorBubbleMessage}</div>
-                </div>
-            )}
-
-            <AnimatePresence>
-                {showEvolution && (
-                    <EvolutionOverlay
-                        currentSpecies={getPetSpecies(pet)}
-                        currentStage={getPetStage(pet)}
-                        targetStage={getPetStage(pet) === 'egg' ? 'kid' : 'adult'}
-                        onEvolve={handleEvolutionConfirm}
-                        onSkip={handleEvolutionSkip}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
+            {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+        </>
     )
 }
 
