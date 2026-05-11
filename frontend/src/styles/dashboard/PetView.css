@@ -234,6 +234,48 @@ div.pet-name-row button.pet-name-edit-btn{
   gap:8px;
 }
 
+.pet-evolve-cta {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+  display: flex;
+  justify-content: center;
+}
+
+.pet-evolve-btn {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  background: var(--text-warning);
+  color: #fff;
+  font-family: var(--font-pixel);
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  box-shadow: var(--shadow-md);
+  animation: evolve-shake 1.6s ease-in-out infinite;
+}
+
+.pet-evolve-btn:focus-visible {
+  outline: 2px solid var(--text-warning);
+  outline-offset: 4px;
+}
+
+.pet-evolve-title {
+  font-size: 1.15rem;
+  text-transform: none;
+}
+
+.pet-evolve-sub {
+  font-family: var(--font-hand);
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
 .exp-row{
   display:flex;
   justify-content:space-between;
@@ -314,6 +356,12 @@ div.pet-name-row button.pet-name-edit-btn{
     max-width: 260px;
   }
 
+  .pet-evolve-cta {
+    width: 260px;
+    min-width: unset;
+    max-width: 260px;
+  }
+
   .exp-bar {
     height: 1.5rem;
   }
@@ -325,6 +373,10 @@ div.pet-name-row button.pet-name-edit-btn{
   .pet-level {
     font-size: 1rem;
   }
+
+  .pet-evolve-title {
+    font-size: 1rem;
+  }
 }
 
 @media (min-width: 481px) and (max-width: 959px) {
@@ -333,6 +385,12 @@ div.pet-name-row button.pet-name-edit-btn{
   }
 
   .pet-exp {
+    width: clamp(280px, 75vw, 320px);
+    min-width: unset;
+    max-width: clamp(280px, 75vw, 320px);
+  }
+
+  .pet-evolve-cta {
     width: clamp(280px, 75vw, 320px);
     min-width: unset;
     max-width: clamp(280px, 75vw, 320px);
@@ -355,6 +413,12 @@ div.pet-name-row button.pet-name-edit-btn{
     max-width: min(90vw, 300px);
   }
 
+  .pet-evolve-cta {
+    width: min(90vw, 300px);
+    min-width: unset;
+    max-width: min(90vw, 300px);
+  }
+
   .pet-name-row {
     gap: 8px;
   }
@@ -362,6 +426,15 @@ div.pet-name-row button.pet-name-edit-btn{
   .pet-name-input {
     min-width: clamp(160px, 55vw, 220px);
   }
+}
+
+@keyframes evolve-shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
 }
 
 

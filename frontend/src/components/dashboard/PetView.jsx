@@ -59,7 +59,7 @@ const MAX_UNLOCK_MS = 3000;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evolveRequestId = 0 }) {
+function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const token = localStorage.getItem('token');
     const { currentUser } = useApp();
     const spriteWrapRef = useRef(null);
@@ -97,7 +97,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
     const clickTimerRef = useRef(null);
     const pendingDoubleRef = useRef(false);
 
-    const evolveRequestRef = useRef(0);
     const bubbleTimerRef = useRef(null);
     const errorBubbleTimerRef = useRef(null);
     const statusPopupTimerRef = useRef(null);
@@ -517,15 +516,6 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
         setShowEvolution(true);
     };
 
-    useEffect(() => {
-        if (!pet?.evolutionReady) return;
-        if (evolveRequestId === evolveRequestRef.current) return;
-        evolveRequestRef.current = evolveRequestId;
-        if (!showEvolution) {
-            handleEvolve();
-        }
-    }, [evolveRequestId, pet?.evolutionReady, showEvolution]);
-
     const handleEvolutionConfirm = async (chosenSpeciesId) => {
         setShowEvolution(false);
         setAnimState('evolving');
@@ -696,7 +686,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                 </AnimatePresence>
             </div>
 
-            {pet && (
+            {pet && (pet.evolutionReady ? (
+                <div className="pet-evolve-cta">
+                    <button className="pet-evolve-btn" onClick={handleEvolve} type="button">
+                        <span className="pet-evolve-title">Ready to EVOLVE</span>
+                        <span className="pet-evolve-sub">Click to evolve</span>
+                    </button>
+                </div>
+            ) : (
                 <div className="pet-exp">
                     <div className="exp-row">
                         <div className="exp-label">{isMax ? '' : 'Exp.'}</div>
@@ -706,7 +703,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded, evol
                         <div className="exp-fill" style={{ width: `${percent}%` }} />
                     </div>
                 </div>
-            )}
+            ))}
 
             {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
         </>

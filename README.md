@@ -1,9 +1,11 @@
 # CS732 project - Team Default QTs
 
+
 # 🐣 GrowFriend - Grow Together!
 
 **GrowFriend** is a full-stack gamified productivity application developed by **Defaul QTs**. It transforms the mundane nature of task management into an engaging journey of nurturing virtual pets. By completing personal tasks, participating in community quests, and utilizing a Pomodoro-style Focus Mode, users earn currency to evolve their digital companions through multiple life stages.
 
+![](frontend/src/assets/team-logo1.png)
 ---
 
 ## 👥 The Team: DefaultQTs
@@ -124,6 +126,6 @@ npm run dev
 ```
 
 ---
-
+![](./Default%20QTs.png)
 ---
 

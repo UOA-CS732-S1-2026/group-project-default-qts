@@ -443,18 +443,6 @@ const feedPet = async (req, res) => {
       success: true,
       message: 'Pet fed successfully',
       data: {
-        // pet: {
-        //   id: pet._id,
-        //   speciesCode: pet.speciesId?.code || null,
-        //   speciesName: pet.speciesId?.displayName || null,
-        //   nickname: pet.nickname,
-        //   stage: pet.stage,
-        //   level: pet.level,
-        //   growthPoints: pet.growthPoints,
-        //   evolutionReady: pet.evolutionReady,
-        //   isGrowthFrozen: pet.isGrowthFrozen,
-        //   status: pet.status
-        // }
         pet: formatPetResponse(pet)
         ,
         inventoryItem: {
@@ -590,18 +578,6 @@ const evolvePet = async (req, res) => {
       message: 'Pet evolved successfully',
       data: {
         pet: formatPetResponse(pet)
-        // pet: {
-        //   id: pet._id,
-        //   speciesCode: pet.speciesId?.code || null,
-        //   speciesName: pet.speciesId?.displayName || null,
-        //   nickname: pet.nickname,
-        //   stage: pet.stage,
-        //   level: pet.level,
-        //   growthPoints: pet.growthPoints,
-        //   evolutionReady: pet.evolutionReady,
-        //   isGrowthFrozen: pet.isGrowthFrozen,
-        //   status: pet.status
-        // }
       }
     });
   } catch (error) {

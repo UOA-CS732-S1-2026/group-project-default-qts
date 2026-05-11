@@ -26,7 +26,6 @@ function Dashboard() {
   const [questTargetId, setQuestTargetId] = useState(null);
   const [coins, setCoins] = useState(0);
   const [activePet, setActivePet] = useState(null);
-  const [evolveRequestId, setEvolveRequestId] = useState(0);
 
   async function loadDashboardCoins() {
     const token = localStorage.getItem('token');
@@ -72,17 +71,12 @@ function Dashboard() {
 
   return (
     <div className="app-container">
-      <DashboardHeader
-        coins={coins}
-        activePet={activePet}
-        onEvolveRequest={() => setEvolveRequestId((prev) => prev + 1)}
-      />
+      <DashboardHeader coins={coins} />
 
       <DasboardMain
         onQuestDetails={openQuestDetail}
         activePet={activePet}
         onPetLoaded={setActivePet}
-        evolveRequestId={evolveRequestId}
       ></DasboardMain>
 
       {/* <button className="btn-open-board" onClick={() => openModal('mytask')}>
