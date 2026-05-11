@@ -5,6 +5,11 @@ const { sendSuccess, sendError } = require('../utils/apiResponse');
 const User = require('../models/User');
 const UserPet = require('../models/UserPet');
 const StoreItem = require('../models/StoreItem');
+const {
+  buildUserCacheKey,
+  getCachedJson,
+  setCachedJson
+} = require('../utils/cache');
 
 const router = express.Router();
 
@@ -31,6 +36,12 @@ function computeEggUnlocked({ activePet, canAfford, unlockRule }) {
 
 router.get('/', requireAuth, async (req, res) => {
   try {
+    const cacheKey = buildUserCacheKey(req.userId, 'dashboard', 'v1');
+    const cached = await getCachedJson(cacheKey);
+    if (cached) {
+      return sendSuccess(res, cached, 'Dashboard loaded');
+    }
+
     const user = await User.findById(req.userId).lean();
     if (!user) return sendError(res, 'User not found', 404);
 
@@ -56,42 +67,41 @@ router.get('/', requireAuth, async (req, res) => {
     const unlockRule = process.env.EGG_UNLOCK_RULE || 'PET_ADULT';
     const eggUnlocked = computeEggUnlocked({ activePet, canAfford, unlockRule });
 
-    return sendSuccess(
-      res,
-      {
-        userSummary: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          coins: user.coins,
-          roles: user.roles
-        },
-        activePetSummary: activePet
-          ? {
-              id: activePet._id,
-              speciesId: activePet.speciesId?._id || activePet.speciesId,
-              speciesCode: activePet.speciesId?.code || null,
-              speciesName: activePet.speciesId?.displayName || null,
-              nickname: activePet.nickname,
-              stage: activePet.stage,
-              level: activePet.level,
-              growthPoints: activePet.growthPoints,
-              evolutionReady: activePet.evolutionReady,
-              status: activePet.status
-            }
-          : null,
-        storeFlags: {
-          randomEgg: {
-            listed: Boolean(randomEggItem),
-            price: eggPrice,
-            canAfford,
-            unlockRule,
-            eggUnlocked
-          }
-        }
+    const payload = {
+      userSummary: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        coins: user.coins,
+        roles: user.roles
       },
-      'Dashboard loaded'
-    );
+      activePetSummary: activePet
+        ? {
+            id: activePet._id,
+            speciesId: activePet.speciesId?._id || activePet.speciesId,
+            speciesCode: activePet.speciesId?.code || null,
+            speciesName: activePet.speciesId?.displayName || null,
+            nickname: activePet.nickname,
+            stage: activePet.stage,
+            level: activePet.level,
+            growthPoints: activePet.growthPoints,
+            evolutionReady: activePet.evolutionReady,
+            status: activePet.status
+          }
+        : null,
+      storeFlags: {
+        randomEgg: {
+          listed: Boolean(randomEggItem),
+          price: eggPrice,
+          canAfford,
+          unlockRule,
+          eggUnlocked
+        }
+      }
+    };
+
+    await setCachedJson(cacheKey, payload, 30);
+    return sendSuccess(res, payload, 'Dashboard loaded');
   } catch (err) {
     return sendError(res, 'Failed to load dashboard', 500, { detail: err.message });
   }

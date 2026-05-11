@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Token key must match what the auth integration stores after login
 const TOKEN_KEY = 'token';
+const CURRENT_USER_KEY = 'gf_current_user';
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5001'}/api`,
@@ -21,7 +22,8 @@ api.interceptors.response.use(
     // If there is no token the 401 is simply propagated to the caller.
     if (error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = '/landingpage';
+      localStorage.removeItem(CURRENT_USER_KEY);
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }

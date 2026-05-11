@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const CoinTransaction = require('../models/CoinTransaction');
+const { invalidateCoinMutationCaches } = require('../utils/cache');
 
 const listUsers = async (req, res) => {
   try {
@@ -123,6 +124,7 @@ const adjustCoins = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+    await invalidateCoinMutationCaches(user._id);
 
     return res.status(200).json({
       success: true,

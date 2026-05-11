@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import ProfileModal from './ProfileModal';
 import SettingsPanel from './SettingsPanel';
@@ -7,14 +8,15 @@ import avatarPlaceholder from '../../assets/avatar_placeholder.png';
 
 export default function UserMenu() {
     const { currentUser, logout } = useApp();
+    const navigate = useNavigate();
     const [open, setOpen] = useState(false);
     const wrapperRef = useRef(null);
     const [showProfile, setShowProfile] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
 
-    function handleLogout() {
-        logout();
-        window.location.href = '/landingpage';
+    async function handleLogout() {
+        await logout();
+        navigate('/landingpage', { replace: true });
     }
 
     useEffect(() => {

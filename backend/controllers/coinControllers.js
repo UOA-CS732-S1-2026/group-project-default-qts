@@ -1,6 +1,11 @@
 const CoinTransaction = require('../models/CoinTransaction');
 const User = require('../models/User');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const {
+  buildUserCacheKey,
+  getCachedJson,
+  setCachedJson
+} = require('../utils/cache');
 
 // GET /api/coins/history
 // Query: limit (default 20, max 100), skip (default 0), type
@@ -55,10 +60,16 @@ const getCoinHistory = async (req, res) => {
 const getCoinBalance = async (req, res) => {
   try {
     const userId = req.userId;
+    const cacheKey = buildUserCacheKey(userId, 'coins-balance', 'v1');
+    const cached = await getCachedJson(cacheKey);
+    if (cached) return sendSuccess(res, cached, 'Balance loaded');
+
     const user = await User.findById(userId).select('coins').lean();
     if (!user) return sendError(res, 'User not found', 404);
 
-    return sendSuccess(res, { coins: user.coins }, 'Balance loaded');
+    const payload = { coins: user.coins };
+    await setCachedJson(cacheKey, payload, 15);
+    return sendSuccess(res, payload, 'Balance loaded');
   } catch (err) {
     console.error('getCoinBalance error:', err);
     return sendError(res, 'Failed to load balance', 500);

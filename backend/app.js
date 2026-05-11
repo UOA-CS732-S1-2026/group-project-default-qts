@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 
 const { isRedisReady } = require('./config/redis');
+const { isCacheEnabled } = require('./utils/cache');
 const { sendError } = require('./utils/apiResponse');
 
 const authRoutes = require('./routes/auth');
@@ -34,6 +35,7 @@ app.get('/', (_req, res) => {
 app.get('/api/health', (_req, res) => {
   const mongoReady = mongoose.connection.readyState === 1;
   const redisReady = isRedisReady();
+  const cacheEnabled = isCacheEnabled();
   const statusCode = mongoReady ? 200 : 503;
   return res.status(statusCode).json({
     success: mongoReady,
@@ -41,6 +43,7 @@ app.get('/api/health', (_req, res) => {
     data: {
       mongo: { ready: mongoReady, state: mongoose.connection.readyState },
       redis: { ready: redisReady },
+      cache: { enabled: cacheEnabled },
       uptimeSec: Math.floor(process.uptime())
     }
   });

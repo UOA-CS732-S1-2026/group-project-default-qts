@@ -4,6 +4,12 @@ const PetSpecies = require('../models/PetSpecies');
 const InventoryItem = require('../models/InventoryItem');
 const StoreItem = require('../models/StoreItem');
 const User = require('../models/User');
+const {
+  buildUserCacheKey,
+  getCachedJson,
+  setCachedJson,
+  deleteCacheKeys
+} = require('../utils/cache');
 
 const PET_SPECIES_SELECT = 'code displayName spriteKey enabled';
 
@@ -27,9 +33,23 @@ function formatPetResponse(pet) {
   };
 }
 
+function userCacheKeys(userId) {
+  return [
+    buildUserCacheKey(userId, 'dashboard', 'v1'),
+    buildUserCacheKey(userId, 'store-items', 'v1'),
+    buildUserCacheKey(userId, 'inventory', 'v1'),
+    buildUserCacheKey(userId, 'pet-active', 'v1'),
+    buildUserCacheKey(userId, 'pet-collection', 'v1'),
+    buildUserCacheKey(userId, 'coins-balance', 'v1')
+  ];
+}
+
 const getActivePet = async (req, res) => {
   try {
     const userId = req.userId;
+    const cacheKey = buildUserCacheKey(userId, 'pet-active', 'v1');
+    const cached = await getCachedJson(cacheKey);
+    if (cached) return res.status(200).json(cached);
 
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -59,7 +79,7 @@ const getActivePet = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: 'Active pet loaded successfully',
       data: {
@@ -77,7 +97,10 @@ const getActivePet = async (req, res) => {
         //   status: activePet.status
         // }
       }
-    });
+    };
+
+    await setCachedJson(cacheKey, payload, 30);
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('getActivePet error:', error);
 
@@ -95,6 +118,9 @@ const getActivePet = async (req, res) => {
 const getInactivePets = async (req, res) => {
   try {
     const userId = req.userId;
+    const cacheKey = buildUserCacheKey(userId, 'pet-collection', 'v1');
+    const cached = await getCachedJson(cacheKey);
+    if (cached) return res.status(200).json(cached);
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(401).json({
@@ -114,7 +140,7 @@ const getInactivePets = async (req, res) => {
       .populate('speciesId', 'code displayName')
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       message: 'Inactive pets loaded successfully',
       data: {
@@ -131,7 +157,10 @@ const getInactivePets = async (req, res) => {
           status: pet.status
         }))
       }
-    });
+    };
+
+    await setCachedJson(cacheKey, payload, 30);
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('getInactivePets error:', error);
 
@@ -214,6 +243,7 @@ const updateActivePetNickname = async (req, res) => {
 
     activePet.nickname = trimmedNickname;
     await activePet.save();
+    await deleteCacheKeys(userCacheKeys(userId));
 
     return res.status(200).json({
       success: true,
@@ -407,6 +437,7 @@ const feedPet = async (req, res) => {
 
     applyGrowthToPet(pet, storeItem.growthValue || 0);
     await pet.save();
+    await deleteCacheKeys(userCacheKeys(userId));
 
     return res.status(200).json({
       success: true,
@@ -552,6 +583,7 @@ const evolvePet = async (req, res) => {
     pet.isGrowthFrozen = false;
 
     await pet.save();
+    await deleteCacheKeys(userCacheKeys(userId));
 
     return res.status(200).json({
       success: true,
@@ -662,6 +694,7 @@ const activatePet = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+    await deleteCacheKeys(userCacheKeys(userId));
 
     return res.status(200).json({
       success: true,

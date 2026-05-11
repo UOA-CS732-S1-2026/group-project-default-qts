@@ -12,38 +12,95 @@ import NotFound from './components/404page/NotFound';
 
 import './App.css';
 
+const TOKEN_KEYS = ['token'];
+
 function getAuthToken() {
   return localStorage.getItem('token');
 }
 
-function RequireAuth({ children }) {
-  const [token, setToken] = useState(() => getAuthToken());
+function clearAuthStorage() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('gf_current_user');
+}
+
+function isAdminUser(user) {
+  if (!user) return false;
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  const role = String(user.role || '').toLowerCase();
+  return roles.some((r) => String(r).toLowerCase() === 'admin') || role === 'admin';
+}
+
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem('gf_current_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function LandingGate() {
+  const [status, setStatus] = useState(() => {
+    const token = getAuthToken();
+    if (!token) return 'guest';
+    return isAdminUser(getStoredUser()) ? 'admin' : 'authenticated';
+  });
 
   useEffect(() => {
-    const syncToken = () => setToken(getAuthToken());
-
     function handleStorage(event) {
-      if (!event || TOKEN_KEYS.includes(event.key)) {
-        syncToken();
+      const isLocalStorageEvent = !event || event.storageArea === localStorage;
+      const isAuthEvent = !event || event.key === null || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user';
+      if (isLocalStorageEvent && isAuthEvent) {
+        const token = getAuthToken();
+        if (!token) {
+          clearAuthStorage();
+          setStatus('guest');
+          return;
+        }
+        setStatus(isAdminUser(getStoredUser()) ? 'admin' : 'authenticated');
       }
     }
 
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', syncToken);
-    document.addEventListener('visibilitychange', syncToken);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
-    // Poll to detect token removal in the same tab (e.g. manual localStorage clear).
-    const intervalId = window.setInterval(syncToken, 1000);
+  if (status === 'admin') return <Navigate to="/admin" replace />;
+  if (status === 'authenticated') return <Navigate to="/dashboard" replace />;
+  return <LandingPage />;
+}
+
+function RequireAuth({ children }) {
+  const [authState, setAuthState] = useState('checking');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function runLocalAuthCheck() {
+      const token = getAuthToken();
+      if (cancelled) return;
+      setAuthState(token ? 'valid' : 'invalid');
+    }
+
+    function handleStorage(event) {
+      const isLocalStorageEvent = !event || event.storageArea === localStorage;
+      const isAuthEvent = !event || event.key === null || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user';
+      if (isLocalStorageEvent && isAuthEvent) {
+        runLocalAuthCheck();
+      }
+    }
+
+    window.addEventListener('storage', handleStorage);
+    runLocalAuthCheck();
 
     return () => {
+      cancelled = true;
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', syncToken);
-      document.removeEventListener('visibilitychange', syncToken);
-      window.clearInterval(intervalId);
     };
   }, []);
 
-  if (!token) return <Navigate to="/landingpage" replace />;
+  if (authState === 'checking') return null;
+  if (authState !== 'valid') return <Navigate to="/landingpage" replace />;
   return children;
 }
 
@@ -52,7 +109,7 @@ function AppRoutes() {
     <AnimatePresence mode="wait">
       <Routes>
         <Route path="/" element={<Navigate to="/landingpage" replace />} />
-        <Route path="/landingpage" element={<LandingPage />} />
+        <Route path="/landingpage" element={<LandingGate />} />
         <Route
           path="/dashboard"
           element={(

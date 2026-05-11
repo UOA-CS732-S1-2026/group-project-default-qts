@@ -46,4 +46,5 @@ export async function getCurrentUser() {
 export function logout(setCurrentUser) {
   setCurrentUser(null);
   localStorage.removeItem('token');
+  localStorage.removeItem('gf_current_user');
 }

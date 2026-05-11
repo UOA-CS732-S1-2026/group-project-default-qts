@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 const { connectRedis, closeRedis } = require('./config/redis');
+const { isCacheEnabled } = require('./utils/cache');
 const app = require('./app');
 
 const PORT = process.env.PORT || 5000;
@@ -27,10 +28,14 @@ process.on('SIGTERM', () => shutdown('SIGTERM'));
     await connectDB();
 
     // Redis is optional: do not hard-fail app startup if Redis is unavailable
-    try {
-      await connectRedis();
-    } catch (redisErr) {
-      console.warn('Redis startup skipped:', redisErr.message);
+    if (isCacheEnabled()) {
+      try {
+        await connectRedis();
+      } catch (redisErr) {
+        console.warn('Redis startup skipped:', redisErr.message);
+      }
+    } else {
+      console.log('CACHE_ENABLED is false. Redis connection skipped.');
     }
 
     app.listen(PORT, () => {

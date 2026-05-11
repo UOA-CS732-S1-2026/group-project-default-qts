@@ -3,6 +3,7 @@ const FocusSession = require('../models/FocusSession');
 const CoinTransaction = require('../models/CoinTransaction');
 const User = require('../models/User');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const { invalidateCoinMutationCaches } = require('../utils/cache');
 
 const FOCUS_REWARD_COINS = 10;
 
@@ -98,6 +99,7 @@ exports.completeFocusSession = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    await invalidateCoinMutationCaches(userId);
 
     return sendSuccess(res, { session: focusSession, coins: user.coins }, 'Focus session completed');
   } catch (err) {
