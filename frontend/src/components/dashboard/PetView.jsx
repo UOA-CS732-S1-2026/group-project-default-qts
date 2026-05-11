@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { getActivePet, feedPet, evolvePet, updateActivePetNickname } from '@/utils/petApi'
 import { getInventory } from '@/utils/inventoryApi'
 import PetSprite from '../petAnimations/PetSprite'
+import HeartParticles from '../petAnimations/particles/HeartParticles'
 import EvolutionOverlay from '../petAnimations/EvolutionOverlay'
 import { useApp } from '../../context/AppContext'
 import editIcon from '/edit.png'
@@ -93,9 +94,11 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const [isEditingName, setIsEditingName] = useState(false);
     const [petNameDraft, setPetNameDraft] = useState('');
     const [savingPetName, setSavingPetName] = useState(false);
+    const [heartBurst, setHeartBurst] = useState(null);
 
     const clickTimerRef = useRef(null);
     const pendingDoubleRef = useRef(false);
+    const heartTimerRef = useRef(null);
 
     const bubbleTimerRef = useRef(null);
     const errorBubbleTimerRef = useRef(null);
@@ -186,6 +189,27 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             setMaxUnlockMessage('');
         }, MAX_UNLOCK_MS);
     }
+
+    function triggerHeartBurst() {
+        const el = spriteWrapRef.current;
+        if (!el) return;
+        const { width, height } = el.getBoundingClientRect();
+        const originX = Math.max(0, Math.floor(width / 2 - 16));
+        const originY = Math.max(0, Math.floor(height / 2 - 16));
+
+        setHeartBurst({
+            id: Date.now(),
+            originX,
+            originY,
+        });
+
+        if (heartTimerRef.current) window.clearTimeout(heartTimerRef.current);
+        heartTimerRef.current = window.setTimeout(() => {
+            setHeartBurst(null);
+            heartTimerRef.current = null;
+        }, 1700);
+    }
+
 
     async function fetchPetData() {
         if (!token) {
@@ -555,6 +579,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
 
         pendingDoubleRef.current = true;
         setAnimState('clicked'); // Triggers jiggle/jump animation
+        triggerHeartBurst();
 
         clickTimerRef.current = setTimeout(() => {
             pendingDoubleRef.current = false;
@@ -585,6 +610,17 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         }
         wasMaxRef.current = isMaxNow;
     }, [pet?.level, pet?.growthPoints]);
+
+    useEffect(() => {
+        return () => {
+            if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current);
+            if (heartTimerRef.current) window.clearTimeout(heartTimerRef.current);
+            if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+            if (errorBubbleTimerRef.current) window.clearTimeout(errorBubbleTimerRef.current);
+            if (statusPopupTimerRef.current) window.clearTimeout(statusPopupTimerRef.current);
+            if (maxUnlockTimerRef.current) window.clearTimeout(maxUnlockTimerRef.current);
+        };
+    }, []);
 
     const displaySpecies = getPetSpecies(pet);
     const displayStage = getPetStage(pet);
@@ -648,6 +684,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             </div>
 
             <div className="pet-sprite-wrap" ref={spriteWrapRef} style={{ opacity: loading ? 0.6 : 1 }}>
+                {heartBurst && (
+                    <HeartParticles
+                        key={heartBurst.id}
+                        count={6}
+                        originX={heartBurst.originX}
+                        originY={heartBurst.originY}
+                    />
+                )}
                 <PetSprite
                     species={displaySpecies}
                     stage={displayStage}
