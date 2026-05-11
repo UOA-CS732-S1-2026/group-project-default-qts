@@ -11,7 +11,7 @@ const createTask = async (req, res) => {
     const roles = req.auth?.roles || [];
     const {
       type, title, description = '', objectives = [], timeLimit = null,
-      rewardCoins = 0, requiresApplication = false, location, startAt, endAt, category
+      rewardCoins = 0, requiresApplication = false, location, startAt, category
     } = req.body;
 
     if (!['SYSTEM', 'P2P', 'PERSONAL'].includes(type)) {
