@@ -12,7 +12,6 @@ import NotFound from './components/404page/NotFound';
 
 import './App.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5001';
 const TOKEN_KEYS = ['token'];
 
 function getAuthToken() {
@@ -24,21 +23,6 @@ function clearAuthStorage() {
   localStorage.removeItem('gf_current_user');
 }
 
-async function validateToken(token) {
-  if (!token) return { valid: false, user: null };
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/users/me`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return { valid: false, user: null };
-    const data = await res.json();
-    return { valid: true, user: data?.data || data?.user || data || null };
-  } catch {
-    return { valid: false, user: null };
-  }
-}
-
 function isAdminUser(user) {
   if (!user) return false;
   const roles = Array.isArray(user.roles) ? user.roles : [];
@@ -46,36 +30,39 @@ function isAdminUser(user) {
   return roles.some((r) => String(r).toLowerCase() === 'admin') || role === 'admin';
 }
 
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem('gf_current_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function LandingGate() {
-  const [status, setStatus] = useState('checking');
+  const [status, setStatus] = useState(() => {
+    const token = getAuthToken();
+    if (!token) return 'guest';
+    return isAdminUser(getStoredUser()) ? 'admin' : 'authenticated';
+  });
 
   useEffect(() => {
-    let cancelled = false;
-
-    const runCheck = async () => {
-      const token = getAuthToken();
-      if (!token) {
-        if (!cancelled) setStatus('guest');
-        return;
+    function handleStorage(event) {
+      if (!event || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user') {
+        const token = getAuthToken();
+        if (!token) {
+          clearAuthStorage();
+          setStatus('guest');
+          return;
+        }
+        setStatus(isAdminUser(getStoredUser()) ? 'admin' : 'authenticated');
       }
+    }
 
-      const { valid, user } = await validateToken(token);
-      if (cancelled) return;
-
-      if (valid) setStatus(isAdminUser(user) ? 'admin' : 'authenticated');
-      else {
-        clearAuthStorage();
-        setStatus('guest');
-      }
-    };
-
-    runCheck();
-    return () => {
-      cancelled = true;
-    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  if (status === 'checking') return null;
   if (status === 'admin') return <Navigate to="/admin" replace />;
   if (status === 'authenticated') return <Navigate to="/dashboard" replace />;
   return <LandingPage />;
@@ -87,40 +74,24 @@ function RequireAuth({ children }) {
   useEffect(() => {
     let cancelled = false;
 
-    const runValidation = async () => {
+    function runLocalAuthCheck() {
       const token = getAuthToken();
-      if (!token) {
-        if (!cancelled) setAuthState('invalid');
-        return;
-      }
-
-      if (!cancelled) setAuthState('checking');
-      const { valid } = await validateToken(token);
       if (cancelled) return;
-
-      if (valid) setAuthState('valid');
-      else {
-        clearAuthStorage();
-        setAuthState('invalid');
-      }
-    };
+      setAuthState(token ? 'valid' : 'invalid');
+    }
 
     function handleStorage(event) {
       if (!event || TOKEN_KEYS.includes(event.key)) {
-        runValidation();
+        runLocalAuthCheck();
       }
     }
 
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('focus', runValidation);
-    document.addEventListener('visibilitychange', runValidation);
-    runValidation();
+    runLocalAuthCheck();
 
     return () => {
       cancelled = true;
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('focus', runValidation);
-      document.removeEventListener('visibilitychange', runValidation);
     };
   }, []);
 
