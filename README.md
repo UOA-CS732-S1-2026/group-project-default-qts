@@ -65,8 +65,12 @@ We utilized **Mongoose Sessions and Transactions** for critical operations like 
 
 ### **Server-Side Optimization with Redis**
 To demonstrate research into large-scale systems, we integrated **Redis Cloud**. 
-*   **Current implementation:** Experimental caching of the Dashboard Aggregation API.
-*   **Impact:** Performance benchmarks using Docker-deployed local Redis showed a significant reduction in response latency for heavy aggregation queries.
+*   **Cached Endpoints:** Dashboard Aggregation API, User Pets (Active), Store Items, and Inventory.
+*   **Load Test Results:**
+    - No cache (bare database): 837 requests, 1.16MB read
+    - Local Docker Redis: 76k requests, 109MB read
+    - Redis Cloud: 2k requests, 2.5MB read
+*   **Impact:** Significant reduction in response latency and database load for heavy aggregation queries.
 
 ### **Robust Testing Environment**
 Unlike standard prototypes, GrowFriend includes a professional-grade testing suite:
@@ -103,7 +107,8 @@ npm run dev
 cd frontend
 npm install
 # Create a .env file with:
-# VITE_API_BASE_URL=http://localhost:5001
+# VITE_API_BASE_URL=http://localhost:5001 # For local development
+# VITE_API_BASE_URL=https://growfriend-api.onrender.com  # For production
 npm run dev
 ```
 
@@ -112,17 +117,31 @@ npm run dev
 ## 📂 Project Structure
 ```text
 ├── backend
-│   ├── config          # Database & Redis configurations
-│   ├── controllers     # Business logic (Escrow, Pet growth, Store)
-│   ├── models          # Mongoose Schemas (User, UserPet, TaskEscrow)
-│   ├── routes          # Express API endpoints
-│   └── middleware      # JWT Auth & Admin protection
+│   ├── config/         # Database & Redis configurations
+│   ├── controllers/    # Business logic (Escrow, Pet growth, Store)
+│   ├── models/         # Mongoose Schemas (User, UserPet, TaskEscrow)
+│   │   └── __test__/   # Model unit tests
+│   ├── routes/         # Express API endpoints
+│   │   └── __test__/   # Route integration tests
+│   ├── middleware/     # JWT Auth & Admin protection
+│   ├── utils/          # Helpers (JWT, API Response, Caching)
+│   ├── scripts/        # Seeding scripts
+│   ├── test/           # Test setup & helpers
+│   └── app.js          # Express app configuration
 ├── frontend
-│   ├── src
-│   │   ├── components  # Modular UI (Modals, TaskCards, PetView)
-│   │   ├── context     # Global State (Auth, Tasks, Pomodoro)
-│   │   ├── hooks       # Custom logic (useTaskManager, useModal)
-│   │   └── utils       # API wrappers & Data mappers
+│   ├── src/
+│   │   ├── components/ # Modular UI (Modals, TaskCards, PetView)
+│   │   ├── context/    # Global State (Auth, Tasks, Pomodoro)
+│   │   ├── hooks/      # Custom logic (useTaskManager, useModal)
+│   │   ├── pages/      # Page components
+│   │   ├── services/   # API wrappers
+│   │   ├── utils/      # Data mappers & helpers
+│   │   ├── styles/     # Global & component styles
+│   │   ├── data/       # Static data (itemAssets, etc.)
+│   │   └── assets/     # Images & media
+│   ├── public/         # Static assets
+│   ├── vite.config.js  # Vite configuration
+│   └── vitest.config.js # Test configuration
 ```
 
 ---
