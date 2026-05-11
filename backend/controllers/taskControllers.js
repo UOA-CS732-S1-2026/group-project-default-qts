@@ -1151,6 +1151,34 @@ const reopenTask = async (req, res) => {
       { session: dbSession }
     );
 
+    // Re-lock escrow using the current rewardCoins (may have been edited while CANCELLED).
+    if (task.type === 'P2P' && task.rewardCoins > 0) {
+      const creator = await User.findById(String(task.createdBy._id)).session(dbSession);
+      if (creator.coins < task.rewardCoins) {
+        throw { status: 400, code: 'INSUFFICIENT_COINS', message: 'Not enough coins to re-open this task' };
+      }
+      creator.coins -= task.rewardCoins;
+      await creator.save({ session: dbSession });
+
+      await CoinTransaction.create([{
+        userId: String(task.createdBy._id),
+        amount: -task.rewardCoins,
+        balanceAfter: creator.coins,
+        type: 'ESCROW_HOLD',
+        relatedModel: 'Task',
+        relatedId: task._id,
+        note: `Escrow held for re-opened P2P task: ${task.title}`
+      }], { session: dbSession });
+
+      await TaskEscrow.create([{
+        taskId: task._id,
+        payerUserId: String(task.createdBy._id),
+        amount: task.rewardCoins,
+        status: 'HELD',
+        heldAt: new Date()
+      }], { session: dbSession });
+    }
+
     await dbSession.commitTransaction();
     dbSession.endSession();
 
@@ -1395,23 +1423,29 @@ const abandonP2PTask = async (req, res) => {
 // body: { title?, description?, rewardCoins? }
 // Auth: creator or admin. SYSTEM tasks: admin only.
 // Only editable when OPEN (P2P/SYSTEM) or IN_PROGRESS (PERSONAL).
-// P2P rewardCoins cannot be changed (escrow already held at create time).
 // endAt is fixed at creation (createdAt + 5 days) and cannot be changed.
 const updateTask = async (req, res) => {
+  const dbSession = await mongoose.startSession();
   try {
+    dbSession.startTransaction();
+
     const { id } = req.params;
     const userId = req.userId;
     const roles = req.auth?.roles || [];
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_TASK_ID', message: 'Task id is not a valid ObjectId', details: {} }
       });
     }
 
-    const task = await Task.findById(id).populate('createdBy', 'name email');
+    const task = await Task.findById(id).populate('createdBy', 'name email').session(dbSession);
     if (!task) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(404).json({
         success: false,
         error: { code: 'TASK_NOT_FOUND', message: 'Task not found', details: {} }
@@ -1422,12 +1456,16 @@ const updateTask = async (req, res) => {
     const isAdmin = roles.includes('ADMIN');
 
     if (!isCreator && !isAdmin) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(403).json({
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only the task creator or admin can edit this task', details: {} }
       });
     }
     if (task.type === 'SYSTEM' && !isAdmin) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(403).json({
         success: false,
         error: { code: 'FORBIDDEN', message: 'Only admins can edit SYSTEM tasks', details: {} }
@@ -1436,6 +1474,8 @@ const updateTask = async (req, res) => {
 
     const editableStatuses = task.type === 'PERSONAL' ? ['IN_PROGRESS'] : ['OPEN', 'CANCELLED'];
     if (!editableStatuses.includes(task.status)) {
+      await dbSession.abortTransaction();
+      dbSession.endSession();
       return res.status(400).json({
         success: false,
         error: { code: 'TASK_NOT_EDITABLE', message: `Task can only be edited when ${editableStatuses.join(' or ')}`, details: {} }
@@ -1454,6 +1494,8 @@ const updateTask = async (req, res) => {
       if (task.type === 'SYSTEM') {
         if (category === 'organization' || category === 'activity') task.category = category;
         else {
+          await dbSession.abortTransaction();
+          dbSession.endSession();
           return res.status(400).json({ success: false, error: { code: 'INVALID_CATEGORY', message: 'category must be organization or activity for SYSTEM tasks', details: {} } });
         }
       } else {
@@ -1461,18 +1503,70 @@ const updateTask = async (req, res) => {
       }
     }
 
-    if (rewardCoins !== undefined && task.type !== 'P2P') {
+    if (rewardCoins !== undefined) {
       const coins = Number(rewardCoins);
       if (!Number.isFinite(coins) || coins < 0 || !Number.isInteger(coins)) {
+        await dbSession.abortTransaction();
+        dbSession.endSession();
         return res.status(400).json({
           success: false,
           error: { code: 'INVALID_REWARD_COINS', message: 'rewardCoins must be a non-negative integer', details: {} }
         });
       }
+
+      // Only adjust escrow when task is OPEN — when CANCELLED the escrow is already
+      // REFUNDED, so coin locking happens later when the task is reopened.
+      if (task.type === 'P2P' && task.status === 'OPEN') {
+        const escrow = await TaskEscrow.findOne({ taskId: id, status: 'HELD' }).session(dbSession);
+        const oldAmount = escrow ? escrow.amount : 0;
+        const diff = coins - oldAmount;
+
+        if (diff !== 0) {
+          const creator = await User.findById(userId).session(dbSession);
+
+          if (diff > 0 && creator.coins < diff) {
+            await dbSession.abortTransaction();
+            dbSession.endSession();
+            return res.status(400).json({
+              success: false,
+              error: { code: 'INSUFFICIENT_COINS', message: 'Not enough coins to increase the reward', details: {} }
+            });
+          }
+
+          creator.coins -= diff;
+          await creator.save({ session: dbSession });
+
+          await CoinTransaction.create([{
+            userId,
+            amount: -diff,
+            balanceAfter: creator.coins,
+            type: diff > 0 ? 'ESCROW_HOLD' : 'ESCROW_REFUND',
+            relatedModel: 'Task',
+            relatedId: task._id,
+            note: `Escrow adjusted for P2P task edit: ${task.title}`
+          }], { session: dbSession });
+
+          if (escrow) {
+            escrow.amount = coins;
+            await escrow.save({ session: dbSession });
+          } else if (coins > 0) {
+            await TaskEscrow.create([{
+              taskId: task._id,
+              payerUserId: userId,
+              amount: coins,
+              status: 'HELD',
+              heldAt: new Date()
+            }], { session: dbSession });
+          }
+        }
+      }
+
       task.rewardCoins = task.type === 'PERSONAL' ? 0 : coins;
     }
 
-    await task.save();
+    await task.save({ session: dbSession });
+    await dbSession.commitTransaction();
+    dbSession.endSession();
 
     return res.status(200).json({
       success: true,
@@ -1480,6 +1574,8 @@ const updateTask = async (req, res) => {
       data: { task: formatTask(task) }
     });
   } catch (error) {
+    try { await dbSession.abortTransaction(); } catch (_) {}
+    dbSession.endSession();
     console.error('updateTask error:', error);
     return res.status(500).json({
       success: false,
