@@ -662,8 +662,8 @@ const decideApplication = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
-    if (rewardCoins > 0) {
-      await invalidateCoinMutationCachesForUsers([assigneeId]);
+    if (task.rewardCoins > 0) {
+      await invalidateCoinMutationCachesForUsers([application.userId]);
     }
 
     return res.status(200).json({
