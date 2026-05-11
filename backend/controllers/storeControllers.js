@@ -10,8 +10,7 @@ const {
   buildUserCacheKey,
   getCachedJson,
   setCachedJson,
-  deleteCacheKeys,
-  deleteCacheByPrefix
+  deleteCacheKeys
 } = require('../utils/cache');
 
 function userCacheKeys(userId) {
@@ -263,7 +262,6 @@ const purchaseStoreItem = async (req, res) => {
       await session.commitTransaction();
       session.endSession();
       await deleteCacheKeys(userCacheKeys(user._id));
-      await deleteCacheByPrefix(buildUserCacheKey(user._id, 'coins-history', ''));
 
       return res.status(200).json({
         success: true,
@@ -333,7 +331,6 @@ const purchaseStoreItem = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
     await deleteCacheKeys(userCacheKeys(user._id));
-    await deleteCacheByPrefix(buildUserCacheKey(user._id, 'coins-history', ''));
 
     return res.status(200).json({
       success: true,

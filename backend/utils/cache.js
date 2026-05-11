@@ -63,6 +63,25 @@ async function deleteCacheByPrefix(prefix) {
   }
 }
 
+function buildCoinMutationCacheKeys(userId) {
+  return [
+    buildUserCacheKey(userId, 'dashboard', 'v1'),
+    buildUserCacheKey(userId, 'coins-balance', 'v1')
+  ];
+}
+
+async function invalidateCoinMutationCaches(userId) {
+  if (!userId) return 0;
+  return deleteCacheKeys(buildCoinMutationCacheKeys(userId));
+}
+
+async function invalidateCoinMutationCachesForUsers(userIds = []) {
+  const unique = [...new Set((Array.isArray(userIds) ? userIds : []).filter(Boolean).map((id) => String(id)))];
+  if (unique.length === 0) return 0;
+  const keys = unique.flatMap((id) => buildCoinMutationCacheKeys(id));
+  return deleteCacheKeys(keys);
+}
+
 module.exports = {
   DEFAULT_TTL_SECONDS,
   isCacheEnabled,
@@ -70,5 +89,8 @@ module.exports = {
   getCachedJson,
   setCachedJson,
   deleteCacheKeys,
-  deleteCacheByPrefix
+  deleteCacheByPrefix,
+  buildCoinMutationCacheKeys,
+  invalidateCoinMutationCaches,
+  invalidateCoinMutationCachesForUsers
 };

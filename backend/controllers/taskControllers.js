@@ -5,6 +5,7 @@ const TaskAssignment = require('../models/TaskAssignment');
 const TaskEscrow = require('../models/TaskEscrow');
 const CoinTransaction = require('../models/CoinTransaction');
 const User = require('../models/User');
+const { invalidateCoinMutationCachesForUsers } = require('../utils/cache');
 
 function formatTask(t) {
   // Handle createdBy: can be ObjectId string or populated user object
@@ -315,6 +316,9 @@ const createTask = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    if (type === 'P2P' && finalRewardCoins > 0) {
+      await invalidateCoinMutationCachesForUsers([userId]);
+    }
 
     const responseData = { task: formatTask(task) };
     if (type === 'P2P' && finalRewardCoins > 0) {
@@ -390,6 +394,9 @@ const applyForTask = async (req, res) => {
 
       await dbSession.commitTransaction();
       dbSession.endSession();
+      if (task.rewardCoins > 0) {
+        await invalidateCoinMutationCachesForUsers([userId]);
+      }
 
       return res.status(200).json({
         success: true,
@@ -655,6 +662,9 @@ const decideApplication = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    if (rewardCoins > 0) {
+      await invalidateCoinMutationCachesForUsers([assigneeId]);
+    }
 
     return res.status(200).json({
       success: true,
@@ -785,6 +795,9 @@ const submitTask = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    if (task.type === 'P2P') {
+      await invalidateCoinMutationCachesForUsers([task.createdBy?._id || task.createdBy]);
+    }
 
     return res.status(200).json({
       success: true,
@@ -909,6 +922,9 @@ const confirmTask = async (req, res) => {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    if (task.type === 'P2P') {
+      await invalidateCoinMutationCachesForUsers([task.createdBy?._id || task.createdBy]);
+    }
 
     return res.status(200).json({
       success: true,

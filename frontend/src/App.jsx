@@ -48,7 +48,9 @@ function LandingGate() {
 
   useEffect(() => {
     function handleStorage(event) {
-      if (!event || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user') {
+      const isLocalStorageEvent = !event || event.storageArea === localStorage;
+      const isAuthEvent = !event || event.key === null || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user';
+      if (isLocalStorageEvent && isAuthEvent) {
         const token = getAuthToken();
         if (!token) {
           clearAuthStorage();
@@ -81,7 +83,9 @@ function RequireAuth({ children }) {
     }
 
     function handleStorage(event) {
-      if (!event || TOKEN_KEYS.includes(event.key)) {
+      const isLocalStorageEvent = !event || event.storageArea === localStorage;
+      const isAuthEvent = !event || event.key === null || TOKEN_KEYS.includes(event.key) || event.key === 'gf_current_user';
+      if (isLocalStorageEvent && isAuthEvent) {
         runLocalAuthCheck();
       }
     }
