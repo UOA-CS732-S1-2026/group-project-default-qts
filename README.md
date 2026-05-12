@@ -100,7 +100,9 @@ docker run --name growfriend-redis -p 6379:6379 -d redis:7-alpine
 ```
 2. Add this variable (if does not exist) to backend .env
 ```bash
-REDIS_URL=redis://localhost:6379 || redis://localhost:(YOUR_REDIS_PORT)
+REDIS_URL=redis://localhost:6379 
+# OR
+REDIS_URL=redis://localhost:(YOUR_REDIS_PORT)
 ```
 
 ### 3. Backend Setup
