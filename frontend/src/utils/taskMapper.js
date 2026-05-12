@@ -74,6 +74,7 @@ export function toFrontend(task) {
     category: task.category ?? null,
     acceptedCount: task.acceptedCount ?? 0,
     isAcceptedByMe: task.isAcceptedByMe ?? false,
+    isCompletedByMe: task.isCompletedByMe ?? false,
     rejectedAt: task.rejectedAt ?? null,
     lastRejectedAt: task.lastRejectedAt ?? null,
     disputeRaisedBy: task.disputeRaisedBy ?? null,
