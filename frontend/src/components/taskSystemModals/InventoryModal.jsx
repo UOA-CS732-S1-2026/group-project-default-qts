@@ -124,7 +124,6 @@ function InventoryModal({ onClose }) {
       if (!updatedItem) return;
       setInventoryItems(prevItems =>
         prevItems.map(item => {
-          // Match by itemCode (e.g., 'SNACK') and update quantity
           const isMatch = String(item.itemCode).toUpperCase() === String(updatedItem.itemCode).toUpperCase();
           return isMatch ? { ...item, quantity: updatedItem.quantity } : item;
         })
