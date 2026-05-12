@@ -124,7 +124,6 @@ function InventoryModal({ onClose }) {
       if (!updatedItem) return;
       setInventoryItems(prevItems =>
         prevItems.map(item => {
-          // Match by itemCode (e.g., 'SNACK') and update quantity
           const isMatch = String(item.itemCode).toUpperCase() === String(updatedItem.itemCode).toUpperCase();
           return isMatch ? { ...item, quantity: updatedItem.quantity } : item;
         })
@@ -174,6 +173,12 @@ function InventoryModal({ onClose }) {
 
   const handlePetDoubleClick = (pet) => {
     setConfirmSwitchPet(pet);
+  };
+
+  const handlePetClick = (pet) => {
+    if (isTouchDevice) {
+      setConfirmSwitchPet(pet);
+    }
   };
 
   const handleConfirmSwitchPet = async () => {
@@ -290,6 +295,7 @@ function InventoryModal({ onClose }) {
                     <div
                       key={pet.id}
                       className="pet-slot"
+                      onClick={() => handlePetClick(pet)}
                       onDoubleClick={() => handlePetDoubleClick(pet)}
                       onMouseEnter={(e) => showPetTooltip(e, pet)}
                       onMouseMove={movePetTooltip}

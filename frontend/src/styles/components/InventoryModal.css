@@ -192,7 +192,7 @@
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  z-index: 2000;
+  z-index: 3000;
   text-align: center;
 }
 
@@ -221,7 +221,7 @@
   font-size: 0.72rem;
   line-height: 1.35;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
-  z-index: 9999;
+  z-index: 1200;
   pointer-events: none;
 }
 
