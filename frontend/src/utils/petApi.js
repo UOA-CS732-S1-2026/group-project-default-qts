@@ -50,9 +50,15 @@ export async function feedPet(petId, itemCode, token) {
             { headers: { 'Authorization': `Bearer ${token}` } }
         );
         return res.data;
-    } catch (error) {
-        throw new Error('failed to feed pet');
-    }
+        } catch (error) {
+            const message =
+                error.response?.data?.error?.message ||
+                error.response?.data?.message ||
+                error.message ||
+                'failed to feed pet';
+
+            throw new Error(message);
+        }
 }
 
 // Evolve pet

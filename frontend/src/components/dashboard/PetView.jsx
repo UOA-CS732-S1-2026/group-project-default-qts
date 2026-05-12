@@ -480,7 +480,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
                 showStatusPopup("I've already grown up. No more feeding! Get a new buddy from the store!");
                 return;
             }
-            showErrorBubble('Failed to feed pet.');
+            showErrorBubble(error.message || 'Failed to feed pet.');
         } finally {
             setLoading(false);
         }
@@ -540,7 +540,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         setShowEvolution(true);
     };
 
-    const handleEvolutionConfirm = async (chosenSpeciesId) => {
+    const handleEvolutionConfirm = async () => {
         setShowEvolution(false);
         setAnimState('evolving');
         setLoading(true);
@@ -548,7 +548,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         setSuccessMessage('');
         try {
             const data = await evolvePet(pet.id, token);
-            const updatedPet = data?.data?.pet || data?.data?.activePet || null;
+            const updatedPet = normalizePetResponse(data);
             setPet(updatedPet);
             if (onPetLoaded) onPetLoaded(updatedPet);
             showSuccessBubble('Evolved pet successfully!');

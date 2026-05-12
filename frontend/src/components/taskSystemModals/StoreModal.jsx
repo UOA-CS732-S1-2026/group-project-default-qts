@@ -29,17 +29,24 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
     const [storeItems, setStoreItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [buyingKey, setBuyingKey] = useState(null); // Tracks "CODE:QTY"
-    const [successBubble, setSuccessBubble] = useState('');
+    const [messageBubble, setMessageBubble] = useState({
+        text: '',
+        type: 'success'
+    });
     const [error, setError] = useState('');
     const timeoutRef = useRef(null);
     const bubbleTimerRef = useRef(null);
 
-    function showSuccessBubble(text) {
-        setSuccessBubble(text);
-        if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
+    function showMessageBubble(text, type = 'success', duration = 1400) {
+        setMessageBubble({ text, type });
+
+        if (bubbleTimerRef.current) {
+            window.clearTimeout(bubbleTimerRef.current);
+        }
+
         bubbleTimerRef.current = window.setTimeout(() => {
-            setSuccessBubble('');
-        }, 500);
+            setMessageBubble({ text: '', type: 'success' });
+        }, duration);
     }
 
     async function loadStoreItems() {
@@ -69,16 +76,19 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
         try {
             const key = `${item.code}:${quantity}`;
             setBuyingKey(key);
-            setSuccessBubble('');
+            setMessageBubble({ text: '', type: 'success' });
             setError('');
 
             const response = await purchaseItem(item.code, quantity, token);
-            showSuccessBubble(response?.message || `${item.name} x${quantity} purchased successfully`);
+            showMessageBubble(
+                response?.message || `${item.name} x${quantity} purchased successfully`,
+                'success'
+            );
 
             if (onPurchaseSuccess) await onPurchaseSuccess(response);
             await loadStoreItems();
         } catch (err) {
-            setError(err.message || 'Purchase failed');
+            showMessageBubble(err.message || 'Purchase failed', 'error', 1800);
         } finally {
             setBuyingKey(null);
         }
@@ -108,9 +118,15 @@ function StoreModal({ onClose, onPurchaseSuccess }) {
         <div className="store-overlay" onClick={handleClose}>
             <aside className={`store-panel ${closing ? 'store--closing' : 'store--open'}`} onClick={(e) => e.stopPropagation()}>
                 <div className="store-modal">
-                    {successBubble && (
+                    {messageBubble.text && (
                         <div className="store-bubble-overlay">
-                            <div className="store-bubble">{successBubble}</div>
+                            <div
+                                className={`store-bubble ${
+                                    messageBubble.type === 'error' ? 'store-bubble-error' : ''
+                                }`}
+                            >
+                                {messageBubble.text}
+                            </div>
                         </div>
                     )}
                     <div className="store-header">
