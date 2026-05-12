@@ -4,7 +4,7 @@ import PomodoroModal from '../pomodoro/PomodoroModal';
 import QuestSlider from './QuestSlider';
 import '@/styles/dashboard/DashboardMain.css'
 
-function DashboardMain({ onQuestDetails, activePet, onPetLoaded, evolveRequestId }) {
+function DashboardMain({ onQuestDetails, activePet, onPetLoaded }) {
     const [showPomo, setShowPomo] = useState(false);
     const [pomoIsRunning, setPomoIsRunning] = useState(false);
     const [petExternalAnim, setPetExternalAnim] = useState(null); // null = let PetView decide
@@ -22,9 +22,8 @@ function DashboardMain({ onQuestDetails, activePet, onPetLoaded, evolveRequestId
                     pomoIsRunning={pomoIsRunning}
                     externalAnim={petExternalAnim}
                     onPetLoaded={onPetLoaded}
-                    evolveRequestId={evolveRequestId}
                 />
-                <button onClick={() => setShowPomo(true)}>POMODORO</button>
+                <button className="pomodoro-btn" onClick={() => setShowPomo(true)} type="button">POMODORO</button>
             </div>
             <aside className="task-slider-section">
                 <QuestSlider onDetails={onQuestDetails} />

@@ -2,19 +2,10 @@ import '@/styles/dashboard/DashboardHeader.css';
 import CoinBadge from "../ui/CoinBadge";
 import UserMenu from "../userconfig/UserMenu";
 
-function DashboardHeader({ coins = 0, activePet, onEvolveRequest }) {
-    const showEvolve = Boolean(activePet?.evolutionReady);
-
+function DashboardHeader({ coins = 0 }) {
     return (
         <header className="dashboard-header">
-            {showEvolve ? (
-                <button className="evolve-header-btn" onClick={onEvolveRequest} type="button">
-                    Ready to EVOLVE
-                    <span className="evolve-tooltip">click to evolve</span>
-                </button>
-            ) : (
-                <h1 className="app-title">🐣 GrowFriend</h1>
-            )}
+            <h1 className="app-title">🐣 GrowFriend</h1>
             <nav className="dashboard-nav">
                 <div className="coin-display">
                     <CoinBadge amount={coins} />

@@ -199,7 +199,7 @@ function InventoryModal({ onClose }) {
             <button className="modal-close" onClick={handleClose}>✕</button>
           </div>
 
-          <p className="inventory-desc">Your items and collected pets. Double click to interact with the items</p>
+          <p className="inventory-desc">Your items and collected pets. Double click to interact with the items or change active pet.</p>
 
           <div className="inventory-wrapper">
             <section className="inventory-section">
