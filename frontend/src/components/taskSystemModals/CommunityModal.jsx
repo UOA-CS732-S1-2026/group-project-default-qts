@@ -11,7 +11,7 @@ function CommunityModal() {
   const { tasks, isLoading, error, refetch } = useTasks();
 
   const communityData = useMemo(
-    () => tasks.filter((t) => t.type === 'community' && t.status !== 'expired'),
+    () => tasks.filter((t) => t.type === 'community' && t.status !== 'expired' && !t.isCompletedByMe),
     [tasks]
   );
 

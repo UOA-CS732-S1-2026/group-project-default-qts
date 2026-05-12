@@ -84,10 +84,9 @@ export default function EvolutionOverlay({
     setPhase('animating');
     setShowSparkles(true);
 
-    // After animation, mark done
     setTimeout(() => {
       setPhase('done');
-      onEvolve(normalized);
+      onEvolve();
     }, 2800);
   };
 

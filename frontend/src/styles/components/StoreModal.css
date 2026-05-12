@@ -90,6 +90,12 @@
   letter-spacing: 0.2px;
 }
 
+.store-bubble-error {
+  background: #fff2f2;
+  color: #8a1f1f;
+  border-color: #d66;
+}
+
 /* overlay + sliding behaviour for Store (kept in store css) */
 .store-overlay {
   position: fixed;

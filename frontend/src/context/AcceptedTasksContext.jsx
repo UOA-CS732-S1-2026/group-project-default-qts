@@ -8,11 +8,16 @@ export function AcceptedTasksProvider({ children }) {
   const [submittedIds, setSubmittedIds] = useState(new Set());
 
   // Called by TasksContext after fetch to hydrate acceptedIds from backend data.
+  // Always replaces the set so stale IDs from a previous session don't carry over.
   const initAcceptedIds = useCallback((tasks) => {
     const ids = tasks.filter((t) => t.isAcceptedByMe).map((t) => t.id);
-    if (ids.length > 0) {
-      setAcceptedIds((prev) => new Set([...prev, ...ids]));
-    }
+    setAcceptedIds(new Set(ids));
+    setSubmittedIds(new Set());
+  }, []);
+
+  const resetAcceptedState = useCallback(() => {
+    setAcceptedIds(new Set());
+    setSubmittedIds(new Set());
   }, []);
 
   // Optimistic: add to set immediately, rollback on API failure.
@@ -82,7 +87,7 @@ export function AcceptedTasksProvider({ children }) {
   };
 
   return (
-    <AcceptedTasksContext.Provider value={{ acceptedIds, acceptTask, cancelTask, withdrawTask, cleanupCancelledTask, submittedIds, submitTask, initAcceptedIds }}>
+    <AcceptedTasksContext.Provider value={{ acceptedIds, acceptTask, cancelTask, withdrawTask, cleanupCancelledTask, submittedIds, submitTask, initAcceptedIds, resetAcceptedState }}>
       {children}
     </AcceptedTasksContext.Provider>
   );

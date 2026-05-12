@@ -63,7 +63,24 @@ function InventoryModal({ onClose }) {
   const [confirmItem, setConfirmItem] = useState(null);
   const [confirmSwitchPet, setConfirmSwitchPet] = useState(null);
   const [error, setError] = useState('');
+  const [feedMessage, setFeedMessage] = useState('');
   const timeoutRef = useRef(null);
+
+  const isTouchDevice = typeof window !== 'undefined' &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  function showFeedMessage(text) {
+    setFeedMessage(text);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setFeedMessage('');
+      timeoutRef.current = null;
+    }, 1600);
+  }
 
   async function loadInventory() {
     const token = localStorage.getItem('token');
@@ -104,7 +121,7 @@ function InventoryModal({ onClose }) {
     const handleInventoryUpdate = (e) => {
       const updatedItem = e.detail?.inventoryItem;
       if (!updatedItem) return;
-      setInventoryItems(prevItems => 
+      setInventoryItems(prevItems =>
         prevItems.map(item => {
           // Match by itemCode (e.g., 'SNACK') and update quantity
           const isMatch = String(item.itemCode).toUpperCase() === String(updatedItem.itemCode).toUpperCase();
@@ -134,9 +151,16 @@ function InventoryModal({ onClose }) {
     };
   }, []);
 
-  const handleDoubleClick = (item) => {
-    // Only food can be fed (prevent eggs from being fed)
+  const handleItemInteract = (item) => {
     if (item.type !== 'FOOD') return;
+
+    const quantity = Number(item.quantity || 0);
+
+    if (quantity < 1) {
+      showFeedMessage(`Can't feed: you don't have any ${item.itemName || item.name || item.itemCode} left.`);
+      return;
+    }
+
     setConfirmItem(item);
   };
 
@@ -213,15 +237,19 @@ function InventoryModal({ onClose }) {
               ) : (
                 <div className="inventory-grid">
                   {inventoryListItems.map((item) => (
-                    <Item
+                    <div
                       key={item.id || item.storeItemId || item.itemCode}
-                      image={getItemImage(item)}
-                      name={item.itemName || item.name || 'Unknown item'}
-                      itemCode={item.itemCode || item.code}
-                      quantity={item.quantity ?? 0}
-                      mode="inventory"
-                      onDoubleClick={() => handleDoubleClick(item)}
-                    />
+                      onClick={() => isTouchDevice && handleItemInteract(item)}
+                      onDoubleClick={() => handleItemInteract(item)}
+                    >
+                      <Item
+                        image={getItemImage(item)}
+                        name={item.itemName || item.name || 'Unknown item'}
+                        itemCode={item.itemCode || item.code}
+                        quantity={item.quantity ?? 0}
+                        mode="inventory"
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -268,6 +296,22 @@ function InventoryModal({ onClose }) {
         </div>
       </aside>
 
+
+      {feedMessage && (
+        <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
+          <div className="feed-confirm-content">
+            <p>{feedMessage}</p>
+            <div className="feed-confirm-actions">
+              <button
+                className="gf-btn gf-btn-primary"
+                onClick={() => setFeedMessage('')}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Confirmation Bubble 
           Need to create message handling. currently using generic response.
       */}

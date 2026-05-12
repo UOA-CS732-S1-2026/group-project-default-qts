@@ -310,7 +310,7 @@ const purchaseStoreItem = async (req, res) => {
           { 
             userId: user._id,
             speciesId: randomSpecies._id,
-            nickname: "AGoodPet",
+            nickname: randomSpecies.displayName,
             stage: 'EGG',
             level: 1,
             growthPoints: 0,

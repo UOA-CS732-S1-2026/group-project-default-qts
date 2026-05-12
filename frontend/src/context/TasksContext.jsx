@@ -8,7 +8,7 @@ const TasksContext = createContext();
 
 export function TasksProvider({ children }) {
     const { currentUser } = useApp();
-    const { initAcceptedIds } = useAcceptedTasks();
+    const { initAcceptedIds, resetAcceptedState } = useAcceptedTasks();
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -52,7 +52,13 @@ export function TasksProvider({ children }) {
     }, []);
 
     // Re-fetch whenever the logged-in user changes (login / logout).
+    // Reset accepted state first so stale IDs from a previous session don't carry over.
     useEffect(() => {
+        if (!currentUser?.id) {
+            resetAcceptedState();
+            setTasks([]);
+            return;
+        }
         fetchTasks();
     }, [currentUser?.id]);
 
