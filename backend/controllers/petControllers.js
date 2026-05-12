@@ -84,18 +84,6 @@ const getActivePet = async (req, res) => {
       message: 'Active pet loaded successfully',
       data: {
         activePet: formatPetResponse(activePet)
-        // activePet: {
-        //   id: activePet._id,
-        //   speciesCode: activePet.speciesId?.code || null,
-        //   speciesName: activePet.speciesId?.displayName || null,
-        //   nickname: activePet.nickname,
-        //   stage: activePet.stage,
-        //   level: activePet.level,
-        //   growthPoints: activePet.growthPoints,
-        //   evolutionReady: activePet.evolutionReady,
-        //   isGrowthFrozen: activePet.isGrowthFrozen,
-        //   status: activePet.status
-        // }
       }
     };
 
@@ -473,6 +461,7 @@ const feedPet = async (req, res) => {
 const evolvePet = async (req, res) => {
   try {
     const { id } = req.params;
+    const { speciesId } = req.body;
     const userId = req.userId;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -486,13 +475,24 @@ const evolvePet = async (req, res) => {
       });
     }
 
-
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_AUTH_USER',
           message: 'Authenticated user id is missing or invalid',
+          details: {}
+        }
+      });
+    }
+
+    // Validate speciesId if provided
+    if (speciesId && !mongoose.Types.ObjectId.isValid(speciesId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_SPECIES_ID',
+          message: 'Species id is not a valid ObjectId',
           details: {}
         }
       });
@@ -536,6 +536,7 @@ const evolvePet = async (req, res) => {
       });
     }
 
+    // For EGG -> KID: validate and set speciesId if provided
     if (pet.stage === 'EGG') {
       if (pet.level !== 4) {
         return res.status(400).json({
@@ -546,6 +547,22 @@ const evolvePet = async (req, res) => {
             details: {}
           }
         });
+      }
+
+      if (speciesId) {
+        // Verify the species exists
+        const species = await PetSpecies.findById(speciesId);
+        if (!species) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              code: 'INVALID_SPECIES_ID',
+              message: 'Specified species does not exist',
+              details: {}
+            }
+          });
+        }
+        pet.speciesId = speciesId;
       }
 
       pet.stage = 'KID';

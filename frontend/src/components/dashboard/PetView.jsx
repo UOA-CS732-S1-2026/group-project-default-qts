@@ -58,6 +58,10 @@ const MAX_GROWTH_POINTS = 99;
 const STATUS_POPUP_MS = 2000;
 const MAX_UNLOCK_MS = 3000;
 
+// Inactivity thresholds
+const INACTIVITY_SAD_MS   = 30 * 60 * 1000; // 30 min idle → sad
+const INACTIVITY_SLEEP_MS = 30 * 60 * 1000; // 30 min sad  → sleeping
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
@@ -108,7 +112,9 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const initialLoadRef = useRef(true);
     const lastStableAnimRef = useRef('idle');
 
-    const forceWakeRef = useRef(false);
+    const sadTimerRef   = useRef(null);
+    const sleepTimerRef = useRef(null);
+
     const prevUserKeyRef = useRef(null);
 
     function getUserKey() {
@@ -121,9 +127,17 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         return `gf_pet_anim_${String(userKey).toLowerCase()}_${petKey}`;
     }
 
-    function getSessionKey() {
+    function getActivityKey() {
         const userKey = getUserKey() || 'guest';
-        return `gf_session_started_${String(userKey).toLowerCase()}`;
+        return `gf_last_activity_${String(userKey).toLowerCase()}`;
+    }
+
+    function readLastActivity() {
+        try { return Number(localStorage.getItem(getActivityKey())) || 0; } catch { return 0; }
+    }
+
+    function writeLastActivity(ts) {
+        try { localStorage.setItem(getActivityKey(), String(ts)); } catch { /* ignore */ }
     }
 
     function readStoredAnim() {
@@ -156,6 +170,40 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     function restoreStableAnim() {
         const fallback = lastStableAnimRef.current || 'idle';
         setAnimState(pomoIsRunning ? 'idle' : fallback);
+    }
+
+    // ── Inactivity timers ────────────────────────────────────────────────────
+    // resetInactivityTimers: cancels pending timers, records activity,
+    // then schedules sad (30 min) → sleeping (another 30 min) automatically.
+    // Does NOT forcibly change the current anim — only the timers fire changes.
+    function resetInactivityTimers() {
+        if (sadTimerRef.current)   clearTimeout(sadTimerRef.current);
+        if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+        writeLastActivity(Date.now());
+
+        sadTimerRef.current = setTimeout(() => {
+            // Only go sad if pet is in a non-one-shot stable state
+            setAnimState(prev => {
+                if (ONE_SHOT_ANIMS.has(prev)) return prev;
+                if (prev === 'sleeping') return prev; // already asleep, leave it
+                const next = 'sad';
+                lastStableAnimRef.current = next;
+                writeStoredAnim(next);
+                writeLastActivity(Date.now());
+                // Chain: after another 30 min, go sleeping
+                if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+                sleepTimerRef.current = setTimeout(() => {
+                    setAnimState(p => {
+                        if (ONE_SHOT_ANIMS.has(p)) return p;
+                        const s = 'sleeping';
+                        lastStableAnimRef.current = s;
+                        writeStoredAnim(s);
+                        return s;
+                    });
+                }, INACTIVITY_SLEEP_MS);
+                return next;
+            });
+        }, INACTIVITY_SAD_MS);
     }
 
     function showSuccessBubble(text) {
@@ -241,32 +289,10 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         }
     }
 
-    // Detect login/logout by currentUser changes (not token)
+    // Detect login/logout — just track user key changes;
+    // state persistence is handled by readStoredAnim on pet load.
     useEffect(() => {
-        const prevUser = prevUserKeyRef.current;
-        const nextUser = getUserKey();
-
-        if (!prevUser && nextUser) {
-            // login → force wake
-            forceWakeRef.current = true;
-            try {
-                sessionStorage.setItem(getSessionKey(), '1');
-            } catch {
-                // ignore storage errors
-            }
-        }
-
-        if (prevUser && !nextUser) {
-            // logout → clear session + stored anim
-            try {
-                sessionStorage.removeItem(getSessionKey());
-            } catch {
-                // ignore storage errors
-            }
-            removeStoredAnim();
-        }
-
-        prevUserKeyRef.current = nextUser;
+        prevUserKeyRef.current = getUserKey();
     }, [currentUser?.id, currentUser?.email]);
 
     // ── Pomodoro sleeping / idle toggle ──────────────────────────────────────
@@ -286,15 +312,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         return () => clearTimeout(timer);
     }, [externalAnim, pomoIsRunning]);
 
-    // ── Sad state: pet has been frozen (needs to evolve) ────────────────────
-    useEffect(() => {
-        if (!pet) return;
-        setAnimState(prev => {
-            if (ONE_SHOT_ANIMS.has(prev)) return prev;
-            if (pet.isGrowthFrozen) return 'sad';
-            return pomoIsRunning ? 'idle' : (prev || lastStableAnimRef.current || 'idle');
-        });
-    }, [pet?.isGrowthFrozen, pomoIsRunning]);
+    // NOTE: sad / sleeping are now triggered by inactivity timers only, not by isGrowthFrozen.
 
     // Normalizes various backend response shapes to a consistent pet object/
     function normalizePetResponse(res) {
@@ -343,46 +361,79 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         fetchPet();
     }, [token]);
 
-    // ── Restore persisted anim on pet load ───────────────────────────────────
+    // ── Restore persisted anim on pet load & start inactivity timers ────────
     useEffect(() => {
         if (!pet) return;
 
-        if (forceWakeRef.current) {
-            // Login transition: always wake
-            forceWakeRef.current = false;
-            setAnimState('idle');
-            lastStableAnimRef.current = 'idle';
-            removeStoredAnim();
-            writeStoredAnim('idle');
-            return;
-        }
-
-        const sessionKey = getSessionKey();
-        let hasSession = false;
-        try {
-            hasSession = sessionStorage.getItem(sessionKey) === '1';
-        } catch {
-            hasSession = false;
-        }
-
-        if (!hasSession) {
-            // Fresh session: start active
-            setAnimState('idle');
-            lastStableAnimRef.current = 'idle';
-            writeStoredAnim('idle');
-            try {
-                sessionStorage.setItem(sessionKey, '1');
-            } catch {
-                // ignore storage errors
-            }
-            return;
-        }
-
-        // Reload within session: restore last state
+        const now = Date.now();
+        const lastActivity = readLastActivity();
         const stored = readStoredAnim();
-        const nextAnim = stored || 'idle';
+        const elapsed = lastActivity ? now - lastActivity : 0;
+
+        let nextAnim;
+        if (!stored) {
+            // Brand-new user / no history → start idle
+            nextAnim = 'idle';
+            writeLastActivity(now);
+        } else if (elapsed >= INACTIVITY_SAD_MS + INACTIVITY_SLEEP_MS) {
+            // Enough time has passed for both transitions
+            nextAnim = 'sleeping';
+        } else if (elapsed >= INACTIVITY_SAD_MS) {
+            // Enough for sad but not yet sleeping
+            nextAnim = 'sad';
+        } else {
+            // Restore exact state from before logout/reload
+            nextAnim = stored;
+        }
+
         setAnimState(nextAnim);
         lastStableAnimRef.current = nextAnim;
+        writeStoredAnim(nextAnim);
+
+        // Start remaining inactivity timers so they continue from where we left off
+        if (sadTimerRef.current)   clearTimeout(sadTimerRef.current);
+        if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+
+        if (nextAnim === 'sleeping') {
+            // Already at max inactivity — no timers needed until user acts
+        } else if (nextAnim === 'sad') {
+            // Start the sleeping countdown from where sad began
+            const sadElapsed = elapsed - INACTIVITY_SAD_MS;
+            const remainingSleep = Math.max(0, INACTIVITY_SLEEP_MS - sadElapsed);
+            sleepTimerRef.current = setTimeout(() => {
+                setAnimState(p => {
+                    if (ONE_SHOT_ANIMS.has(p)) return p;
+                    const s = 'sleeping';
+                    lastStableAnimRef.current = s;
+                    writeStoredAnim(s);
+                    return s;
+                });
+            }, remainingSleep);
+        } else {
+            // Normal / idle — schedule sad after remaining idle time
+            const remainingSad = Math.max(0, INACTIVITY_SAD_MS - elapsed);
+            sadTimerRef.current = setTimeout(() => {
+                setAnimState(prev => {
+                    if (ONE_SHOT_ANIMS.has(prev)) return prev;
+                    if (prev === 'sleeping') return prev;
+                    const next = 'sad';
+                    lastStableAnimRef.current = next;
+                    writeStoredAnim(next);
+                    writeLastActivity(Date.now());
+                    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+                    sleepTimerRef.current = setTimeout(() => {
+                        setAnimState(p => {
+                            if (ONE_SHOT_ANIMS.has(p)) return p;
+                            const s = 'sleeping';
+                            lastStableAnimRef.current = s;
+                            writeStoredAnim(s);
+                            return s;
+                        });
+                    }, INACTIVITY_SLEEP_MS);
+                    return next;
+                });
+            }, remainingSad);
+        }
     }, [pet?.id, pet?._id, currentUser?.id, currentUser?.email]);
 
     // ── Persist stable anim state ───────────────────────────────────────────
@@ -399,6 +450,20 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
         setPet((prev) => (prev ? { ...prev, nickname: currentUser.petName } : prev));
     }, [currentUser?.petName]);
 
+    // ── Document-level activity listener → reset inactivity timers ──────────
+    useEffect(() => {
+        if (!pet) return;
+        const onActivity = () => resetInactivityTimers();
+        document.addEventListener('mousedown', onActivity);
+        document.addEventListener('keydown',   onActivity);
+        document.addEventListener('touchstart', onActivity, { passive: true });
+        return () => {
+            document.removeEventListener('mousedown', onActivity);
+            document.removeEventListener('keydown',   onActivity);
+            document.removeEventListener('touchstart', onActivity);
+        };
+    }, [pet?.id, pet?._id]);
+
     useEffect(() => {
         return () => {
             if (bubbleTimerRef.current) window.clearTimeout(bubbleTimerRef.current);
@@ -406,6 +471,8 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             if (statusPopupTimerRef.current) window.clearTimeout(statusPopupTimerRef.current);
             if (maxUnlockTimerRef.current) window.clearTimeout(maxUnlockTimerRef.current);
             if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current);
+            if (sadTimerRef.current) window.clearTimeout(sadTimerRef.current);
+            if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current);
         };
     }, []);
 
@@ -468,6 +535,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             setInventory(inventoryRes?.data?.items || []);
             setAnimState('feeding');
             setTimeout(() => restoreStableAnim(), 1500);
+            resetInactivityTimers();
             showSuccessBubble('Fed pet successfully!');
         } catch (error) {
             console.error('Error feeding pet:', error);
@@ -507,6 +575,7 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             return;
         }
 
+        resetInactivityTimers();
         try {
             setSavingPetName(true);
             setErrorMessage('');
@@ -553,7 +622,13 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
             if (onPetLoaded) onPetLoaded(updatedPet);
             showSuccessBubble('Evolved pet successfully!');
             setTimeout(() => setAnimState('celebrating'), 200);
-            setTimeout(() => restoreStableAnim(), 2500);
+            setTimeout(() => {
+                // After evolving, always return to idle (normal image)
+                lastStableAnimRef.current = 'idle';
+                writeStoredAnim('idle');
+                setAnimState('idle');
+                resetInactivityTimers();
+            }, 2500);
         } catch (error) {
             setAnimState('idle');
             setErrorMessage('Failed to evolve pet.');
@@ -570,9 +645,14 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
     const handlePetClick = () => {
         if (!pet || loading) return;
 
+        resetInactivityTimers(); // Any click counts as activity
+
         if (pendingDoubleRef.current) {
+            // Double-click → wake to idle
             pendingDoubleRef.current = false;
             if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+            lastStableAnimRef.current = 'idle';
+            writeStoredAnim('idle');
             setAnimState('idle');
             return;
         }
@@ -583,7 +663,10 @@ function PetView({ pomoIsRunning = false, externalAnim = null, onPetLoaded }) {
 
         clickTimerRef.current = setTimeout(() => {
             pendingDoubleRef.current = false;
-            setAnimState('sleeping'); // Settle into sleep
+            // Single-click → sleep
+            lastStableAnimRef.current = 'sleeping';
+            writeStoredAnim('sleeping');
+            setAnimState('sleeping');
         }, 600);
     };
 

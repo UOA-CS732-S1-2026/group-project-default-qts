@@ -70,7 +70,6 @@ function getImg(speciesId, stage) {
 export default function EvolutionOverlay({
   currentSpecies,
   currentStage,
-  targetStage,
   onEvolve,
   onSkip,
 }) {
@@ -79,20 +78,20 @@ export default function EvolutionOverlay({
 
   const normalizedCurrentSpecies = useMemo(() => normalizeSpeciesKey(currentSpecies), [currentSpecies]);
   const normalizedCurrentStage = useMemo(() => normalizeStage(currentStage), [currentStage]);
-  const normalizedTargetStage = useMemo(() => normalizeStage(targetStage), [targetStage]);
 
-  const handleEvolve = () => {
+  const handleEvolve = (speciesId) => {
+    const normalized = normalizeSpeciesKey(speciesId);
     setPhase('animating');
     setShowSparkles(true);
 
+    // After animation, mark done
     setTimeout(() => {
       setPhase('done');
-      onEvolve();
+      onEvolve(normalized);
     }, 2800);
   };
 
   const currentImg = getImg(normalizedCurrentSpecies, normalizedCurrentStage);
-  const nextImg = getImg(normalizedCurrentSpecies, normalizedTargetStage);
 
   return (
     <MotionDiv
@@ -113,9 +112,7 @@ export default function EvolutionOverlay({
           >
             <h2 className="evolution-title">🎉 Your pet is ready to evolve!</h2>
             <p className="evolution-subtitle">
-              {normalizedCurrentStage === 'egg'
-  ? 'Your egg is hatching into its next form!'
-  : 'Your pet is growing stronger!'}
+              Evolution in progress.
             </p>
 
             {/* Current pet */}
@@ -128,7 +125,9 @@ export default function EvolutionOverlay({
             <div className="evolution-confirm-actions">
               <button
                 className="evolution-confirm-btn"
-                onClick={handleEvolve}
+                onClick={() => {
+                  handleEvolve(normalizedCurrentSpecies);
+                }}
               >
                 Confirm evolve
               </button>
@@ -166,27 +165,11 @@ export default function EvolutionOverlay({
                 className="evolution-morph-img"
                 initial={{ scale: 1, opacity: 1 }}
                 animate={{
-                  scale: [1, 1.2, 0],
-                  opacity: [1, 0.6, 0],
+                  scale: [1, 1.25, 0],
+                  opacity: [1, 0.7, 0],
                   filter: ['brightness(1)', 'brightness(3)', 'brightness(5)'],
                 }}
                 transition={{ duration: 1.2, ease: 'easeIn' }}
-              />
-            )}
-
-            {/* New form appearing */}
-            {nextImg && (
-              <motion.img
-                src={nextImg}
-                alt="new form"
-                className="evolution-morph-img"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{
-                  scale: [0, 1.3, 1],
-                  opacity: [0, 0, 1],
-                  filter: ['brightness(5)', 'brightness(2)', 'brightness(1)'],
-                }}
-                transition={{ duration: 1.5, delay: 1.2, ease: 'easeOut' }}
               />
             )}
 
