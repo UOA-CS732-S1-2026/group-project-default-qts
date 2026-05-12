@@ -5,7 +5,6 @@
 
 **GrowFriend** is a full-stack gamified productivity application developed by **Defaul QTs**. It transforms the mundane nature of task management into an engaging journey of nurturing virtual pets. By completing personal tasks, participating in community quests, and utilizing a Pomodoro-style Focus Mode, users earn currency to evolve their digital companions through multiple life stages.
 
-![](frontend/src/assets/team-logo1.png)
 ---
 
 ## 👥 The Team: DefaultQTs
@@ -16,6 +15,8 @@
 - Yang Wu _(ywu329@aucklanduni.ac.nz)_
 - Vincent Chen _(kche264@aucklanduni.ac.nz)_
 - Tao Zhang _(tzha210@aucklanduni.ac.nz)_
+
+![](frontend/src/assets/team-logo1.png)
 
 ---
 
