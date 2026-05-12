@@ -81,8 +81,12 @@ function TaskCardFront({
     }
   }
 
-  const handleReassign = () => {
-    onUpdateTask(task.id, { status: 'open', assignee: null })
+  const handleReassign = async () => {
+    try {
+      await onUpdateTask(task.id, { status: 'open', assignee: null })
+    } catch (err) {
+      setToastMsg(err?.response?.data?.error?.message ?? err?.message ?? 'Failed to re-open task')
+    }
   }
 
   const openDisputeForm = (pov) => {
@@ -220,7 +224,7 @@ function TaskCardFront({
     }
   }
 
-  const isAssigneeActive = hideAccept && isAcceptable && !isSubmitted &&
+  const isAssigneeActive = hideAccept && isAcceptable && !isSubmitted && task.status !== 'disputed' &&
     (task.status === 'active' || (isAccepted && task.status === 'open') || (isAccepted && task.status === 'expired' && task.type === 'community'))
 
   return (
@@ -264,21 +268,23 @@ function TaskCardFront({
           ) : (
             <>
               {!hideAccept && isAcceptable && (() => {
+                const alreadyCompleted = task.isCompletedByMe && task.type === 'community';
                 const disabledMsg =
                   isOwnTask ? "You can't accept your own task" :
-                  task.isAcceptedByMe && task.type === 'community' ? "You've already completed this task" :
+                  alreadyCompleted ? "You've already completed this task" :
                   isAccepted ? "You've already accepted this task" :
                   task.status !== 'open' ? 'This task has already been taken' :
                   null;
+                const isDisabled = isAccepted || alreadyCompleted || task.status !== 'open' || isOwnTask;
                 return (
                   <div className={disabledMsg ? 'task-card-btn-tooltip-wrapper' : undefined} data-tooltip={disabledMsg ?? undefined}>
                     <button
                       className={`task-card-btn ${isAccepted ? 'task-card-btn--accepted' : 'task-card-btn--accept'}`}
-                      disabled={isAccepted || task.status !== 'open' || isOwnTask}
-                      style={(isAccepted || task.status !== 'open' || isOwnTask) ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-                      onClick={() => !isAccepted && task.status === 'open' && !isOwnTask && setShowAcceptConfirm(true)}
+                      disabled={isDisabled}
+                      style={isDisabled ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                      onClick={() => !isDisabled && setShowAcceptConfirm(true)}
                     >
-                      {isAccepted ? 'Accepted!' : 'Accept'}
+                      {isAccepted ? 'Accepted!' : alreadyCompleted ? 'Completed' : 'Accept'}
                     </button>
                   </div>
                 );
@@ -539,12 +545,20 @@ function TaskCardFront({
                 if (task.type === 'community') {
                   onUpdateTask(task.id, { status: 'pending_review', submittedAt: new Date().toISOString() })
                   setShowSubmitSuccess(true)
-                  setTimeout(() => setShowSubmitSuccess(false), 2000)
+                  setTimeout(() => {
+                    setShowSubmitSuccess(false)
+                    onDismissQuest?.(task.id)
+                    onClose()
+                  }, 2000)
                 } else {
                   setShowP2PSubmitSuccess(true)
-                  setTimeout(() => {
+                  setTimeout(async () => {
                     setShowP2PSubmitSuccess(false)
-                    onUpdateTask(task.id, { status: 'pending_confirmation', submittedAt: new Date().toISOString() })
+                    try {
+                      await onUpdateTask(task.id, { status: 'pending_confirmation', submittedAt: new Date().toISOString() })
+                    } catch (err) {
+                      setToastMsg(err?.response?.data?.error?.message ?? err?.message ?? 'Failed to submit task')
+                    }
                   }, 2500)
                 }
               }}

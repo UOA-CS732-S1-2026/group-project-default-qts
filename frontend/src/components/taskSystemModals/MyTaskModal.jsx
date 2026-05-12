@@ -222,23 +222,20 @@ function MyTaskModal({ onNavigate, questTargetId }) {
     }
 
     if (fields.status === 'pending_review' || fields.status === 'pending_confirmation') {
-      try {
-        const data = await submitTask(id);
-        const task = tasks.find((t) => t.id === id);
-        if (task?.type === 'community') {
-          // SYSTEM task stays OPEN on backend — set completed locally so Delete button appears
-          updateTask(id, { status: 'completed' });
-          // Community submit gives coins immediately — sync balance if returned
-          if (data?.coinsAwarded !== undefined && currentUser?.coins !== undefined) {
-            updateCoins(currentUser.coins + data.coinsAwarded);
-          }
-        } else if (data?.task?.status) {
-          updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
+      const data = await submitTask(id);
+      const task = tasks.find((t) => t.id === id);
+      if (task?.type === 'community') {
+        // Community submit gives coins immediately — sync balance if returned
+        if (data?.coinsAwarded !== undefined && currentUser?.coins !== undefined) {
+          updateCoins(currentUser.coins + data.coinsAwarded);
         }
-        // Refetch so the creator (Player B) sees the updated status on their next view
-        refetch();
-      } catch {
-        // Submit failed — task stays in current state
+        // Mark isCompletedByMe so System tab hides this task on next view
+        updateTask(id, { isCompletedByMe: true });
+        // Mark as dismissed immediately so the card auto-hides after the success overlay
+        setCancelledQuestIds((prev) => new Set([...prev, id]));
+        cleanupCancelledTask(id);
+      } else if (data?.task?.status) {
+        updateTask(id, { status: STATUS_B2F[data.task.status] ?? data.task.status });
       }
     } else {
       updateTask(id, fields);
@@ -248,6 +245,7 @@ function MyTaskModal({ onNavigate, questTargetId }) {
   const filteredQuest = useMemo(() => {
     let result = tasks.filter((t) => {
       if (t.type !== 'p2p' && t.type !== 'community') return false;
+      if (t.createdBy?.id === currentUserId) return false;
       if (cancelledQuestIds.has(t.id)) return false;
       const isDisputeResolved = t.status === 'cancelled' && t.type === 'p2p' && t.disputeRaisedBy;
       if (!ACTIVE_QUEST_STATUSES.includes(t.status) && !isDisputeResolved) return false;

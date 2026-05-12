@@ -387,7 +387,8 @@ const reopenTask = async (req, res) => {
       throw { status: 400, code: 'TASK_NOT_REOPENABLE', message: 'Only cancelled or expired tasks can be re-opened' };
     }
 
-    const isCreator = String(task.createdBy._id) === String(userId);
+    const creatorId = String(task.createdBy._id ?? task.createdBy);
+    const isCreator = creatorId === String(userId);
     const isAdmin = roles.includes('ADMIN');
     if (!isCreator && !isAdmin) {
       throw { status: 403, code: 'FORBIDDEN', message: 'Only the task creator or admin can re-open this task' };
@@ -405,7 +406,7 @@ const reopenTask = async (req, res) => {
 
     // Re-lock escrow using the current rewardCoins (may have been edited while CANCELLED).
     if (task.type === 'P2P' && task.rewardCoins > 0) {
-      const creator = await User.findById(String(task.createdBy._id)).session(dbSession);
+      const creator = await User.findById(creatorId).session(dbSession);
       if (creator.coins < task.rewardCoins) {
         throw { status: 400, code: 'INSUFFICIENT_COINS', message: 'Not enough coins to re-open this task' };
       }
@@ -413,7 +414,7 @@ const reopenTask = async (req, res) => {
       await creator.save({ session: dbSession });
 
       await CoinTransaction.create([{
-        userId: String(task.createdBy._id),
+        userId: creatorId,
         amount: -task.rewardCoins,
         balanceAfter: creator.coins,
         type: 'ESCROW_HOLD',
@@ -422,13 +423,12 @@ const reopenTask = async (req, res) => {
         note: `Escrow held for re-opened P2P task: ${task.title}`
       }], { session: dbSession });
 
-      await TaskEscrow.create([{
-        taskId: task._id,
-        payerUserId: String(task.createdBy._id),
-        amount: task.rewardCoins,
-        status: 'HELD',
-        heldAt: new Date()
-      }], { session: dbSession });
+      // Update existing escrow record instead of creating a new one (taskId has unique index)
+      await TaskEscrow.findOneAndUpdate(
+        { taskId: task._id },
+        { payerUserId: creatorId, amount: task.rewardCoins, status: 'HELD', heldAt: new Date(), releasedAt: null, paidOutAt: null, refundedAt: null },
+        { upsert: true, session: dbSession }
+      );
     }
 
     await dbSession.commitTransaction();
