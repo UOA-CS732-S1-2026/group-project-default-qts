@@ -217,7 +217,7 @@ const purchaseStoreItem = async (req, res) => {
         throw {
           status: 400,
           code: 'STORE_ITEM_LOCKED',
-          message: 'Random Egg is locked until a pet reaches Adult Level 10 with full growth'
+          message: 'Random Egg is locked until the first pet reaches max level'
         };
       }
     }
