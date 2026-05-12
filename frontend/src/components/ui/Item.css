@@ -178,4 +178,21 @@
     width: 64px;
     height: 64px;
   }
+
+  .item-tooltip {
+    min-width: 126px;
+    max-width: min(148px, calc(100vw - 56px));
+    padding: 6px 8px;
+    border-radius: 7px;
+    line-height: 1.25;
+  }
+
+  .item-tooltip-name {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  .item-tooltip-line {
+    font-size: 9px;
+  }
 }
