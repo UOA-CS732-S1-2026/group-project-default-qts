@@ -3,16 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SparkleParticles from './particles/SparkleParticles';
 import './EvolutionOverlay.css';
 
-// Default species list matching the actual asset filenames in src/assets/pets/
-const DEFAULT_SPECIES = [
-  { id: 'apteryx', name: 'Apteryx' },
-  { id: 'lemuera', name: 'Lemuera' },
-  { id: 'pateke', name: 'Pateke' },
-  { id: 'penguin', name: 'Penguin' },
-  { id: 'pukeko', name: 'Pukeko' },
-  { id: 'pyro', name: 'Pyro' },
-];
-
 const MotionDiv = motion.div;
 
 /* ── Asset map ─────────────────────────────────────── */
@@ -80,22 +70,17 @@ function getImg(speciesId, stage) {
 export default function EvolutionOverlay({
   currentSpecies,
   currentStage,
-  targetStage,
   onEvolve,
   onSkip,
-  speciesList = DEFAULT_SPECIES,
 }) {
   const [phase, setPhase] = useState('choose'); // 'choose' | 'animating' | 'done'
-  const [chosenSpecies, setChosenSpecies] = useState(null);
   const [showSparkles, setShowSparkles] = useState(false);
 
   const normalizedCurrentSpecies = useMemo(() => normalizeSpeciesKey(currentSpecies), [currentSpecies]);
   const normalizedCurrentStage = useMemo(() => normalizeStage(currentStage), [currentStage]);
-  const normalizedTargetStage = useMemo(() => normalizeStage(targetStage), [targetStage]);
 
   const handleEvolve = (speciesId) => {
     const normalized = normalizeSpeciesKey(speciesId);
-    setChosenSpecies(normalized);
     setPhase('animating');
     setShowSparkles(true);
 
@@ -107,7 +92,6 @@ export default function EvolutionOverlay({
   };
 
   const currentImg = getImg(normalizedCurrentSpecies, normalizedCurrentStage);
-  const nextImg = getImg(chosenSpecies || normalizedCurrentSpecies, normalizedTargetStage);
 
   return (
     <MotionDiv
@@ -128,7 +112,7 @@ export default function EvolutionOverlay({
           >
             <h2 className="evolution-title">🎉 Your pet is ready to evolve!</h2>
             <p className="evolution-subtitle">
-              {normalizedCurrentStage === 'egg' ? 'A companion will be chosen for you!' : 'Your pet is growing stronger!'}
+              Evolution in progress.
             </p>
 
             {/* Current pet */}
@@ -142,10 +126,7 @@ export default function EvolutionOverlay({
               <button
                 className="evolution-confirm-btn"
                 onClick={() => {
-                  const chosen = normalizedCurrentStage === 'egg'
-                    ? speciesList[Math.floor(Math.random() * speciesList.length)]?.id
-                    : normalizedCurrentSpecies;
-                  handleEvolve(chosen || normalizedCurrentSpecies);
+                  handleEvolve(normalizedCurrentSpecies);
                 }}
               >
                 Confirm evolve
@@ -184,27 +165,11 @@ export default function EvolutionOverlay({
                 className="evolution-morph-img"
                 initial={{ scale: 1, opacity: 1 }}
                 animate={{
-                  scale: [1, 1.2, 0],
-                  opacity: [1, 0.6, 0],
+                  scale: [1, 1.25, 0],
+                  opacity: [1, 0.7, 0],
                   filter: ['brightness(1)', 'brightness(3)', 'brightness(5)'],
                 }}
                 transition={{ duration: 1.2, ease: 'easeIn' }}
-              />
-            )}
-
-            {/* New form appearing */}
-            {nextImg && (
-              <motion.img
-                src={nextImg}
-                alt="new form"
-                className="evolution-morph-img"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{
-                  scale: [0, 1.3, 1],
-                  opacity: [0, 0, 1],
-                  filter: ['brightness(5)', 'brightness(2)', 'brightness(1)'],
-                }}
-                transition={{ duration: 1.5, delay: 1.2, ease: 'easeOut' }}
               />
             )}
 
