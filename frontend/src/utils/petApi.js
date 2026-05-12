@@ -54,7 +54,6 @@ export async function feedPet(petId, itemCode, token) {
             const message =
                 error.response?.data?.error?.message ||
                 error.response?.data?.message ||
-                error.message ||
                 'failed to feed pet';
 
             throw new Error(message);
