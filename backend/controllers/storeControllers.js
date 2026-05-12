@@ -28,8 +28,9 @@ async function getEggUnlockState(userId, session = null) {
   let query = UserPet.findOne({
     userId,
     stage: 'ADULT',
-    level: { $gte: 10 }
-  }).select('_id stage level status createdAt');
+    level: { $gte: 10 },
+    growthPoints: { $gte: 99 }
+  }).select('_id stage level growthPoints status createdAt');
 
   if (session) query = query.session(session);
 
@@ -37,7 +38,7 @@ async function getEggUnlockState(userId, session = null) {
 
   return {
     eggUnlocked: !!maxPet,
-    eggLockedReason: maxPet ? null : 'NO_MAX_LEVEL_PET',
+    eggLockedReason: maxPet ? null : 'NO_FULLY_MAXED_PET',
     firstPet: maxPet
   };
 }
@@ -216,7 +217,7 @@ const purchaseStoreItem = async (req, res) => {
         throw {
           status: 400,
           code: 'STORE_ITEM_LOCKED',
-          message: 'Random Egg is locked until the first pet reaches max level'
+          message: 'Random Egg is locked until a pet reaches Adult Level 10 with full growth'
         };
       }
     }
