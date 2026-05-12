@@ -66,6 +66,9 @@ function InventoryModal({ onClose }) {
   const [feedMessage, setFeedMessage] = useState('');
   const timeoutRef = useRef(null);
 
+  const isTouchDevice = typeof window !== 'undefined' &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
   function showFeedMessage(text) {
     setFeedMessage(text);
 
@@ -118,7 +121,7 @@ function InventoryModal({ onClose }) {
     const handleInventoryUpdate = (e) => {
       const updatedItem = e.detail?.inventoryItem;
       if (!updatedItem) return;
-      setInventoryItems(prevItems => 
+      setInventoryItems(prevItems =>
         prevItems.map(item => {
           // Match by itemCode (e.g., 'SNACK') and update quantity
           const isMatch = String(item.itemCode).toUpperCase() === String(updatedItem.itemCode).toUpperCase();
@@ -148,7 +151,7 @@ function InventoryModal({ onClose }) {
     };
   }, []);
 
-  const handleDoubleClick = (item) => {
+  const handleItemInteract = (item) => {
     if (item.type !== 'FOOD') return;
 
     const quantity = Number(item.quantity || 0);
@@ -234,15 +237,19 @@ function InventoryModal({ onClose }) {
               ) : (
                 <div className="inventory-grid">
                   {inventoryListItems.map((item) => (
-                    <Item
+                    <div
                       key={item.id || item.storeItemId || item.itemCode}
-                      image={getItemImage(item)}
-                      name={item.itemName || item.name || 'Unknown item'}
-                      itemCode={item.itemCode || item.code}
-                      quantity={item.quantity ?? 0}
-                      mode="inventory"
-                      onDoubleClick={() => handleDoubleClick(item)}
-                    />
+                      onClick={() => isTouchDevice && handleItemInteract(item)}
+                      onDoubleClick={() => handleItemInteract(item)}
+                    >
+                      <Item
+                        image={getItemImage(item)}
+                        name={item.itemName || item.name || 'Unknown item'}
+                        itemCode={item.itemCode || item.code}
+                        quantity={item.quantity ?? 0}
+                        mode="inventory"
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -290,7 +297,7 @@ function InventoryModal({ onClose }) {
       </aside>
 
 
-        {feedMessage && (
+      {feedMessage && (
         <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
           <div className="feed-confirm-content">
             <p>{feedMessage}</p>

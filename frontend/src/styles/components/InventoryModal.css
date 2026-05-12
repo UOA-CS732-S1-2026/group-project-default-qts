@@ -3,11 +3,11 @@
   flex-direction: column;
   gap: 10px;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
   box-sizing: border-box;
   padding-right: 8px;
-  overflow: hidden;
 }
+
 .inventory-header{
   display: flex;
   justify-content: space-between;
@@ -51,7 +51,7 @@
 /* sections layout */
 .inventory-wrapper{
   display: grid;
-  grid-template-columns: 1fr; /* stack sections vertically: Items first, then Pet Collection */
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   min-height: 0;
 }
@@ -156,8 +156,6 @@
   transform: translateX(0) translateY(0);
 }
 
-/* sections are stacked by default now; responsive adjustments not required */
-
 /* Overlay and sliding panel */
 .inventory-overlay{
   position: fixed;
@@ -205,19 +203,43 @@
   animation: inventorySlideOut 320ms ease-in forwards;
 }
 
-/* content area inside the sliding panel */
-
+/* Mobile: center modal and avoid slide transform override */
 @media (max-width: 420px) {
+  .inventory-overlay{
+    justify-content: center;
+  }
+
   .inventory-panel{
     width: 92vw;
     padding: 10px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 92vh;
+    animation: inventoryFadeIn 200ms ease-out forwards;
   }
+
+  .inventory-panel.inventory--closing{
+    animation: inventoryFadeOut 200ms ease-in forwards;
+  }
+
   .inventory-grid{ grid-template-columns: repeat(4, 1fr); }
   .pets-grid{ grid-template-columns: repeat(3, 1fr); }
 }
 
+@keyframes inventoryFadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes inventoryFadeOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.98); }
+}
+
+/* confirmation bubble */
 .feed-confirm-bubble {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -225,13 +247,15 @@
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  z-index: 1000;
+  z-index: 2000;
   text-align: center;
 }
+
 .feed-confirm-content p {
   margin: 0 0 16px 0;
   color: var(--text-color, #333);
 }
+
 .feed-confirm-actions {
   display: flex;
   gap: 12px;
