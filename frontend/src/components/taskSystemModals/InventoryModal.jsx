@@ -64,6 +64,7 @@ function InventoryModal({ onClose }) {
   const [confirmSwitchPet, setConfirmSwitchPet] = useState(null);
   const [error, setError] = useState('');
   const [feedMessage, setFeedMessage] = useState('');
+  const [petTooltip, setPetTooltip] = useState({ visible: false, x: 0, y: 0, pet: null });
   const timeoutRef = useRef(null);
 
   const isTouchDevice = typeof window !== 'undefined' &&
@@ -204,6 +205,32 @@ function InventoryModal({ onClose }) {
     }
   };
 
+  const showPetTooltip = (e, pet) => {
+    const target = e?.currentTarget;
+    if (!pet || !target) return;
+    const rect = target.getBoundingClientRect();
+    setPetTooltip({
+      visible: true,
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+      pet
+    });
+  };
+
+  const movePetTooltip = (e) => {
+    const target = e?.currentTarget;
+    if (!target) return;
+    setPetTooltip(prev => {
+      if (!prev.visible) return prev;
+      const rect = target.getBoundingClientRect();
+      return { ...prev, x: rect.left + rect.width / 2, y: rect.top };
+    });
+  };
+
+  const hidePetTooltip = () => {
+    setPetTooltip({ visible: false, x: 0, y: 0, pet: null });
+  };
+
   const inventoryListItems = inventoryItems.filter((item) => item.type === 'FOOD');
   const filledPetSlots = petCollection;
   const emptyPetSlots = Math.max(0, MIN_PET_SLOTS - filledPetSlots.length);
@@ -257,45 +284,62 @@ function InventoryModal({ onClose }) {
               
             <section className="pet-collection-section">
               <h4 className="section-title">Pet Collection</h4>
-                <div className="pets-scroll">
-                  <div className="pets-grid">
-                    {filledPetSlots.map((pet) => (
-                      <div
-                        key={pet.id}
-                        className="pet-slot"
-                        onDoubleClick={() => handlePetDoubleClick(pet)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handlePetDoubleClick(pet);
-                          }
-                        }}
-                        aria-label={`Inactive pet ${pet.nickname || pet.speciesName || 'pet'}. Double click to switch active pet.`}
-                      >
-                        <PetSprite
-                          species={getPetSpecies(pet)}
-                          stage={getPetStage(pet.stage)}
-                          animState="idle"
-                          size={64}
-                          showShadow={false}
-                        />
-                      </div>
-                    ))}
+              <div className="pets-scroll">
+                <div className="pets-grid">
+                  {filledPetSlots.map((pet) => (
+                    <div
+                      key={pet.id}
+                      className="pet-slot"
+                      onDoubleClick={() => handlePetDoubleClick(pet)}
+                      onMouseEnter={(e) => showPetTooltip(e, pet)}
+                      onMouseMove={movePetTooltip}
+                      onMouseLeave={hidePetTooltip}
+                      onFocus={(e) => showPetTooltip(e, pet)}
+                      onBlur={hidePetTooltip}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handlePetDoubleClick(pet);
+                        }
+                      }}
+                      aria-label={`Inactive pet ${pet.nickname || pet.speciesName || 'pet'}. Double click to switch active pet.`}
+                    >
+                      <PetSprite
+                        species={getPetSpecies(pet)}
+                        stage={getPetStage(pet.stage)}
+                        animState="idle"
+                        size={64}
+                        showShadow={false}
+                      />
+                    </div>
+                  ))}
 
-                    {Array.from({ length: emptyPetSlots }).map((_, i) => (
-                      <div key={i} className="pet-slot">
-                        <div className="pet-slot-img" />
-                      </div>
-                    ))}
-                  </div>
+                  {Array.from({ length: emptyPetSlots }).map((_, i) => (
+                    <div key={i} className="pet-slot">
+                      <div className="pet-slot-img" />
+                    </div>
+                  ))}
                 </div>
+              </div>
             </section>
           </div>
         </div>
       </aside>
 
+      {petTooltip.visible && petTooltip.pet && (
+        <div
+          className="pet-tooltip-overlay"
+          style={{ left: `${petTooltip.x}px`, top: `${petTooltip.y}px` }}
+        >
+          <div><strong>Nickname:</strong> {petTooltip.pet.nickname || 'Buddy'}</div>
+          <div><strong>Level:</strong> {Number(petTooltip.pet.level || 0)}</div>
+          {getPetStage(petTooltip.pet.stage) !== 'egg' && (
+            <div><strong>Type:</strong> {formatPetType(petTooltip.pet.speciesCode, petTooltip.pet.speciesName)}</div>
+          )}
+        </div>
+      )}
 
       {feedMessage && (
         <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
@@ -312,9 +356,7 @@ function InventoryModal({ onClose }) {
           </div>
         </div>
       )}
-      {/* Confirmation Bubble 
-          Need to create message handling. currently using generic response.
-      */}
+      {/* Confirmation Bubble */}
       {confirmItem && (
         <div className="feed-confirm-bubble" onClick={(e) => e.stopPropagation()}>
           <div className="feed-confirm-content">
