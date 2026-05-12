@@ -96,10 +96,21 @@
   justify-content: center;
   position: relative;
   cursor: pointer;
+  z-index: 1;
 }
 
 .item-card--inventory.item-card--empty {
+  opacity: 1;
+}
+
+.item-card--inventory.item-card--empty .item-image,
+.item-card--inventory.item-card--empty .item-qty {
   opacity: 0.55;
+}
+
+.item-card--inventory:hover,
+.item-card--inventory:focus-within {
+  z-index: 20;
 }
 
 .item-card--inventory .item-image-wrap {
@@ -166,5 +177,22 @@
   .item-card--store .item-image-wrap {
     width: 64px;
     height: 64px;
+  }
+
+  .item-tooltip {
+    min-width: 126px;
+    max-width: min(148px, calc(100vw - 56px));
+    padding: 6px 8px;
+    border-radius: 7px;
+    line-height: 1.25;
+  }
+
+  .item-tooltip-name {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  .item-tooltip-line {
+    font-size: 9px;
   }
 }

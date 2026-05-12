@@ -92,8 +92,20 @@ Unlike standard prototypes, GrowFriend includes a professional-grade testing sui
 git clone https://github.com/UOA-CS732-S1-2026/group-project-default-qts.git
 cd group-project-default-qts
 ```
+### 2. Redis Setup (Local/Docker server)
+1. Skip this step if you have Redis image in your Docker. If you do not have one. Run these commands in your Docker terminal
+```pwsh
+docker pull redis:7-alpine
+docker run --name growfriend-redis -p 6379:6379 -d redis:7-alpine
+```
+2. Add this variable (if does not exist) to backend .env
+```bash
+REDIS_URL=redis://localhost:6379 
+# OR
+REDIS_URL=redis://localhost:(YOUR_REDIS_PORT)
+```
 
-### 2. Backend Setup
+### 3. Backend Setup
 ```bash
 cd backend
 npm install
@@ -103,7 +115,7 @@ npm run seed  # Critical: Seeds pet species and store items
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 ```bash
 cd frontend
 npm install
@@ -112,6 +124,10 @@ npm install
 # VITE_API_BASE_URL=https://growfriend-api.onrender.com  # For production
 npm run dev
 ```
+
+
+
+
 
 ---
 
