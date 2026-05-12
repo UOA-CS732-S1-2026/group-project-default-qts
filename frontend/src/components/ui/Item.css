@@ -98,6 +98,10 @@
   cursor: pointer;
 }
 
+.item-card--inventory.item-card--empty {
+  opacity: 0.55;
+}
+
 .item-card--inventory .item-image-wrap {
   width: 40px;
   height: 40px;

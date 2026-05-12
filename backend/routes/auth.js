@@ -94,15 +94,11 @@ router.post('/register', async (req, res) => {
         }
 
 
-        if (!defaultSpecies) {
-          throw new Error('NO_PET_SPECIES');
-        }
-
         const pets = await UserPet.create(
           [{
             userId: createdUser._id,
             speciesId: defaultSpecies._id,
-            nickname: "AGoodEgg",
+            nickname: defaultSpecies.displayName,
             stage: 'EGG',
             level: 1,
             growthPoints: 0,
