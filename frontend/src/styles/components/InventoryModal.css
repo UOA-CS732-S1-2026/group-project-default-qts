@@ -3,7 +3,10 @@
   flex-direction: column;
   gap: 10px;
   height: 100%;
-  overflow: visible;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
   padding-right: 8px;
 }
@@ -114,13 +117,12 @@
 
 .inventory-panel{
   position: fixed;
-  max-height: 88vh;
   left: 0;
   top: 50%;
   transform: translate(-100%, -50%);
   width: min(520px, 92vw);
-  height: fit-content;
-  max-width: none;
+  max-height: calc(100dvh - 32px);
+  height: auto;
   border-right: var(--border-pixel);
   box-shadow: var(--shadow-pixel);
   background: var(--color-bg-modal);
@@ -129,7 +131,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow: visible;
+  overflow: hidden;
   z-index: 120;
   animation: inventorySlideIn 320ms ease-out forwards;
 }
@@ -253,4 +255,37 @@
   .inventory-panel.inventory--closing {
     animation: inventoryFadeOut 200ms ease-in forwards;
   }
+}
+
+@media (max-width: 768px) {
+  .inventory-overlay {
+    align-items: flex-start;
+  }
+
+  .inventory-panel {
+    top: 16px;
+    bottom: 16px;
+    transform: translateX(-100%);
+    width: calc(100vw - 32px);
+    max-height: none;
+    height: auto;
+  }
+
+  .inventory-panel.inventory--open {
+    animation: inventorySlideInMobile 320ms ease-out forwards;
+  }
+
+  .inventory-panel.inventory--closing {
+    animation: inventorySlideOutMobile 320ms ease-in forwards;
+  }
+}
+
+@keyframes inventorySlideInMobile {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes inventorySlideOutMobile {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
