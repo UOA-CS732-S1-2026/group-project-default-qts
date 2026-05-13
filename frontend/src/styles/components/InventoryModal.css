@@ -112,7 +112,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .inventory-panel{
@@ -238,54 +238,64 @@
   border-color: rgba(23, 23, 23, 0.96) transparent transparent transparent;
 }
 
-@supports (-webkit-touch-callout: none) {
-  .inventory-overlay {
-    align-items: center;
-    justify-content: center;
-  }
 
-  .inventory-panel {
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    max-height: 92vh;
-    animation: inventoryFadeIn 200ms ease-out forwards;
-  }
-
-  .inventory-panel.inventory--closing {
-    animation: inventoryFadeOut 200ms ease-in forwards;
-  }
-}
 
 @media (max-width: 768px) {
   .inventory-overlay {
     align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
   }
 
   .inventory-panel {
-    top: 16px;
-    bottom: 16px;
-    transform: translateX(-100%);
-    width: calc(100vw - 32px);
-    max-height: none;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: max(16px, env(safe-area-inset-top));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: auto;
     height: auto;
+    max-height: none;
+
+    transform: none !important;
+    animation: none !important;
+
+    overflow: hidden;
+    padding: 10px;
+    box-sizing: border-box;
   }
 
-  .inventory-panel.inventory--open {
-    animation: inventorySlideInMobile 320ms ease-out forwards;
+  .inventory-modal {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
   }
 
-  .inventory-panel.inventory--closing {
-    animation: inventorySlideOutMobile 320ms ease-in forwards;
+  .inventory-desc {
+    font-size: 12px;
+    line-height: 1.45;
   }
-}
 
-@keyframes inventorySlideInMobile {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
+  .inventory-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
 
-@keyframes inventorySlideOutMobile {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
+  .pets-scroll {
+    max-height: 260px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pets-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pet-slot {
+    height: 82px;
+  }
 }
